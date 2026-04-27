@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
-**Last updated:** 2026-04-27
+**Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Task 1 complete (2026-04-27). Task 2 next.
+**Build progress:** Phase A complete. Phase B Task 1 complete. Task 2 in progress (GATE 5 step 2c next).
 
 ---
 
@@ -45,6 +45,33 @@
   - CSS: table, status pills, filter bar, bank tags, icon buttons, empty/loading/error states
   - Secrets policy added to CLAUDE.md
 
+- 🔧 **Task 2 — Agent edit modal + destructive operations** (in progress, 2026-04-28)
+  - ✅ GATE 1 — Backend reads + edits: GET/PUT /api/admin/agents/{id} (cc3ac3f)
+  - ✅ GATE 2 — Backend destructive operations: disable, enable, regenerate-token, destroy (aea943d)
+    - Migration: added admin_id to status_events for audit trail
+    - New event types: disabled_by_admin, enabled_by_admin, token_regenerated, deleted_by_admin
+    - Idempotent disable/enable (no event logged if already in target state)
+    - Atomic transactions for regenerate-token and destroy
+  - ✅ GATE 3 — Modal CSS infrastructure: overlay, animations, scroll lock, z-index scale (91b7bb5)
+  - ✅ GATE 4 — Modal + ConfirmModal React components with focus trap (8dc9e9e)
+  - ✅ GATE 5 step 1 — GET /api/admin/payment-methods endpoint (ff5cb70)
+  - ✅ GATE 5 step 2a — Form/token/confirm CSS classes lifted from mockup (6f8f90b)
+  - ✅ GATE 5 step 2b — Modal variant prop for confirm stacking (b39c554)
+  - 🔧 GATE 5 step 2c — EditAgentModal.tsx + AgentsPage wiring (NEXT)
+
+### Resume next session
+
+- **Current state:** 7 commits pushed in Task 2, 57 tests passing, working tree clean
+- **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
+- **Files ready to depend on:**
+  - Backend: GET /api/admin/agents/{id}, PUT update, POST disable/enable/regenerate-token, DELETE
+  - Backend: GET /api/admin/payment-methods (returns 8 active methods with id/slug/display_name)
+  - CSS: all form, checkbox, token, modal, confirm-overlay classes in admin.css
+  - React: Modal.tsx (with variant prop), ConfirmModal.tsx (with error + isProcessing)
+- **Next file:** `resources/js/admin/components/EditAgentModal.tsx` (~380 lines)
+- **Then wire:** AgentsPage.tsx — enable Edit button, add editingAgentId state + agentsVersion refetch
+- **Reference:** detailed component structure (state shape, handlers, render outline, confirm modal copy) is in the conversation that produced these commits
+
 ### Gate review at end of Phase A
 
 Kidus should be able to:
@@ -80,7 +107,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Task 1 done, Task 2 next
+[🔧] Phase B — Admin agent CRUD          in progress — Task 2 GATE 5 step 2c next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications
