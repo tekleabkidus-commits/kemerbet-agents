@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Task 1 complete. Task 2 in progress (GATE 5 step 2c next).
+**Build progress:** Phase A complete. Phase B Task 1 complete. Task 2 implementation complete (smoke test pending).
 
 ---
 
@@ -57,20 +57,28 @@
   - ✅ GATE 5 step 1 — GET /api/admin/payment-methods endpoint (ff5cb70)
   - ✅ GATE 5 step 2a — Form/token/confirm CSS classes lifted from mockup (6f8f90b)
   - ✅ GATE 5 step 2b — Modal variant prop for confirm stacking (b39c554)
-  - 🔧 GATE 5 step 2c — EditAgentModal.tsx + AgentsPage wiring (NEXT)
+  - ✅ GATE 5 step 2c — EditAgentModal.tsx + AgentsPage wiring (1db7ed1)
+    - EditAgentModal: ~557 lines, 14 state pieces, cancellation flag for race-safe loading
+    - TokenDisplay (current token view) + TokenReveal (post-regen celebration with Telegram send)
+    - 4 ConfirmModal instances gated by confirmAction state (disable/enable/regenerate/delete)
+    - handleRegenerateToken defers onSaved to modal close (token reveal stays visible)
+    - AgentsPage: Edit button wired, agentsVersion counter triggers list refetch on save
+    - CSS: .modal-footer-right for split footer right-side button group
+  - **Status: implementation complete, awaiting browser smoke test**
 
 ### Resume next session
 
-- **Current state:** 7 commits pushed in Task 2, 57 tests passing, working tree clean
+- **Smoke test the full edit modal flow in the browser.** If smoke test passes, Task 2 ships and we move to Task 3 (create new agent).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Files ready to depend on:**
-  - Backend: GET /api/admin/agents/{id}, PUT update, POST disable/enable/regenerate-token, DELETE
-  - Backend: GET /api/admin/payment-methods (returns 8 active methods with id/slug/display_name)
-  - CSS: all form, checkbox, token, modal, confirm-overlay classes in admin.css
-  - React: Modal.tsx (with variant prop), ConfirmModal.tsx (with error + isProcessing)
-- **Next file:** `resources/js/admin/components/EditAgentModal.tsx` (~380 lines)
-- **Then wire:** AgentsPage.tsx — enable Edit button, add editingAgentId state + agentsVersion refetch
-- **Reference:** detailed component structure (state shape, handlers, render outline, confirm modal copy) is in the conversation that produced these commits
+- **Smoke test checklist:**
+  1. Click Edit pencil on an agent row → modal opens with agent data loaded
+  2. Change telegram username + toggle payment methods + edit notes → Save Changes → list refreshes
+  3. Click Regenerate → confirm modal → new token revealed with Copy + Send via Telegram
+  4. Dismiss token reveal → back to normal token display
+  5. Click Disable → confirm → agent shows as disabled, button changes to Re-enable
+  6. Click Re-enable → confirm → agent restored to active
+  7. Click Delete → confirm → modal closes, agent removed from list (visible under Deleted filter)
+  8. Test error state: open modal for a nonexistent agent ID → error message + Close button in footer
 
 ### Gate review at end of Phase A
 
@@ -107,7 +115,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Task 2 GATE 5 step 2c next
+[🔧] Phase B — Admin agent CRUD          in progress — Task 2 implementation complete, smoke test pending
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications
