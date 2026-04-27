@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
 **Last updated:** 2026-04-27
-**Current phase:** Phase A — Foundation (in progress)
-**Build progress:** Phase A complete (gate passed 2026-04-27). Phase B next.
+**Current phase:** Phase B — Admin agent CRUD (in progress)
+**Build progress:** Phase A complete. Phase B Task 1 complete (2026-04-27). Task 2 next.
 
 ---
 
@@ -31,6 +31,19 @@
 - ✅ Database seeder: 1 admin, 8 payment methods, 24 agents with tokens, 6 settings
   - Public agent block had 33 cards but only 24 unique telegram usernames. Duplicate slots deduplicated. Resolved 2026-04-27.
 - ✅ Seeder is fully idempotent (db:seed can re-run without changing data)
+
+### Done in Phase B
+
+- ✅ **Task 1 — Agent list endpoint + UI** (2026-04-27)
+  - `GET /api/admin/agents` with search, status, payment_method, sort, pagination
+  - `ListAgentsRequest` FormRequest with validation (422 on invalid params)
+  - `AgentController@index` with computed_status, eager-loaded payment methods
+  - Sort: number (default), last_seen (NULLS LAST). Click sorts deferred to Phase F
+  - 17 Pest tests (auth, filters, search, sort, validation, response shape)
+  - Separate test database (`kemerbet_agents_test`) via phpunit.xml + `composer test` script
+  - `AgentsPage.tsx`: full agent list with URL-synced filters, debounced search, pagination
+  - CSS: table, status pills, filter bar, bank tags, icon buttons, empty/loading/error states
+  - Secrets policy added to CLAUDE.md
 
 ### Gate review at end of Phase A
 
@@ -67,7 +80,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[ ] Phase B — Admin agent CRUD            ← next
+[🔧] Phase B — Admin agent CRUD          in progress — Task 1 done, Task 2 next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications
