@@ -21,5 +21,9 @@ Route::prefix('admin')->group(function () {
         Route::get('agents', [AgentController::class, 'index']);
         Route::get('agents/{agent}', [AgentController::class, 'show']);
         Route::put('agents/{agent}', [AgentController::class, 'update']);
+        Route::post('agents/{agent}/disable', [AgentController::class, 'disable']);
+        Route::post('agents/{agent}/enable', [AgentController::class, 'enable']);
+        Route::post('agents/{agent}/regenerate-token', [AgentController::class, 'regenerateToken']);
+        Route::delete('agents/{agent}', [AgentController::class, 'destroy']);
     });
 });

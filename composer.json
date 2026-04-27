@@ -51,7 +51,7 @@
             "@php artisan migrate --graceful --ansi"
         ],
         "test": [
-            "@php artisan migrate:fresh --database=pgsql --env=testing --force --quiet",
+            "DB_DATABASE=kemerbet_agents_test php artisan migrate:fresh --database=pgsql --force --quiet",
             "./vendor/bin/pest"
         ],
         "dev": [

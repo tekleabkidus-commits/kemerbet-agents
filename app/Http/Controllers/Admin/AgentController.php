@@ -7,7 +7,9 @@ use App\Http\Requests\Admin\ListAgentsRequest;
 use App\Http\Requests\Admin\UpdateAgentRequest;
 use App\Models\Agent;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class AgentController extends Controller
 {
@@ -108,14 +110,7 @@ class AgentController extends Controller
 
     public function show(Agent $agent): JsonResponse
     {
-        $agent->load([
-            'paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
-            'activeToken',
-        ]);
-
-        return response()->json([
-            'data' => $this->formatAgentDetail($agent),
-        ]);
+        return $this->respondWithDetail($agent);
     }
 
     public function update(UpdateAgentRequest $request, Agent $agent): JsonResponse
@@ -128,7 +123,103 @@ class AgentController extends Controller
             $agent->paymentMethods()->sync($validated['payment_method_ids']);
         }
 
-        $agent = $agent->fresh();
+        return $this->respondWithDetail($agent->fresh());
+    }
+
+    public function disable(Request $request, Agent $agent): JsonResponse
+    {
+        if ($agent->status === Agent::STATUS_DISABLED) {
+            return $this->respondWithDetail($agent);
+        }
+
+        $agent->update([
+            'status' => Agent::STATUS_DISABLED,
+            'live_until' => null,
+            'last_status_change_at' => now(),
+        ]);
+
+        $agent->statusEvents()->create([
+            'admin_id' => $request->user()->id,
+            'event_type' => 'disabled_by_admin',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return $this->respondWithDetail($agent->fresh());
+    }
+
+    public function enable(Request $request, Agent $agent): JsonResponse
+    {
+        if ($agent->status === Agent::STATUS_ACTIVE) {
+            return $this->respondWithDetail($agent);
+        }
+
+        $agent->update([
+            'status' => Agent::STATUS_ACTIVE,
+            'last_status_change_at' => now(),
+        ]);
+
+        $agent->statusEvents()->create([
+            'admin_id' => $request->user()->id,
+            'event_type' => 'enabled_by_admin',
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return $this->respondWithDetail($agent->fresh());
+    }
+
+    public function regenerateToken(Request $request, Agent $agent): JsonResponse
+    {
+        DB::transaction(function () use ($request, $agent) {
+            $agent->tokens()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+
+            $agent->tokens()->create([
+                'token' => bin2hex(random_bytes(32)),
+                'created_at' => now(),
+            ]);
+
+            $agent->update([
+                'live_until' => null,
+                'last_status_change_at' => now(),
+            ]);
+
+            $agent->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => 'token_regenerated',
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
+        });
+
+        return $this->respondWithDetail($agent->fresh());
+    }
+
+    public function store(): never
+    {
+        throw new \BadMethodCallException('AgentController@store not implemented yet.');
+    }
+
+    public function destroy(Request $request, Agent $agent): JsonResponse
+    {
+        DB::transaction(function () use ($request, $agent) {
+            $agent->tokens()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+
+            $agent->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => 'deleted_by_admin',
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
+
+            $agent->delete();
+        });
+
+        return $this->respondWithDetail($agent);
+    }
+
+    private function respondWithDetail(Agent $agent): JsonResponse
+    {
         $agent->load([
             'paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
             'activeToken',
@@ -137,16 +228,6 @@ class AgentController extends Controller
         return response()->json([
             'data' => $this->formatAgentDetail($agent),
         ]);
-    }
-
-    public function store(): never
-    {
-        throw new \BadMethodCallException('AgentController@store not implemented yet.');
-    }
-
-    public function destroy(): never
-    {
-        throw new \BadMethodCallException('AgentController@destroy not implemented yet.');
     }
 
     /**

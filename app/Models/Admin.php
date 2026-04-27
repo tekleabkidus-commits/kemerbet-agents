@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -25,5 +26,10 @@ class Admin extends Authenticatable
         return [
             'password' => 'hashed',
         ];
+    }
+
+    public function statusEvents(): HasMany
+    {
+        return $this->hasMany(StatusEvent::class);
     }
 }

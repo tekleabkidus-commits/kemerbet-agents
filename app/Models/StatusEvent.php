@@ -11,6 +11,7 @@ class StatusEvent extends Model
 
     protected $fillable = [
         'agent_id',
+        'admin_id',
         'event_type',
         'duration_minutes',
         'ip_address',
@@ -28,5 +29,10 @@ class StatusEvent extends Model
     public function agent(): BelongsTo
     {
         return $this->belongsTo(Agent::class);
+    }
+
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class);
     }
 }
