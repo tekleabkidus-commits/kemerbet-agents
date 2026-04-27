@@ -684,6 +684,12 @@ body {
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ============= TABLE ============= */
 
 .table-wrap {
@@ -894,6 +900,54 @@ body {
   color: var(--text);
   font-weight: 700;
   margin-bottom: 6px;
+}
+
+/* ============= UTILITY CLASSES ============= */
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.panel-head-clean {
+  border-bottom: none;
+}
+
+.results-count {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.clicks-zero .today {
+  color: var(--text-dim);
+}
+
+.loader-spin {
+  animation: spin 1s linear infinite;
+  opacity: 0.4;
+}
+
+.alert-pad {
+  padding: 18px;
+}
+
+.empty-clear-btn {
+  margin-top: 12px;
+}
+
+.col-id {
+  width: 50px;
+}
+
+.col-actions {
+  text-align: right;
+}
+
+.pagination-actions {
+  display: flex;
+  gap: 6px;
 }
 
 /* ============= PAGINATION ============= */
