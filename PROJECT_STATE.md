@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-27
 **Current phase:** Phase A — Foundation (in progress)
-**Build progress:** ~60% of Phase A (tasks 1-3 done, 4-5 remaining)
+**Build progress:** ~80% of Phase A (tasks 1-4 done, task 5 remaining)
 
 ---
 
@@ -22,6 +22,12 @@
 - ✅ 9 Eloquent models with relationships, casts, soft deletes
 - ✅ Sanctum admin auth (login/logout/me, rate-limited, persistent sessions)
 - ✅ 9 Pest feature tests for auth flow (all passing)
+- ✅ React SPA chassis: Vite + React 18 + TypeScript + Tailwind + path aliases
+- ✅ AuthProvider context with login/logout/me + Sanctum CSRF cookie flow
+- ✅ AdminLayout with sidebar matching dashboard mockup (6 nav items, user pill)
+- ✅ LoginPage pixel-matching login mockup (error handling, auto-focus, email trim)
+- ✅ ProtectedRoute / PublicOnlyRoute wrappers with loading states
+- ✅ Smoke tested end-to-end: login, sidebar nav, session persistence, route guards
 
 ---
 
@@ -30,9 +36,6 @@
 **Goal:** Get a working empty admin shell that Kidus can log into and see seeded agents.
 
 ### Remaining tasks
-
-4. **Admin login page** (React):
-   - Use the design from `docs/mockups/admin-login.html`
 
 5. **Seed script**:
    - 1 admin: `kidus@kemerbet.com` (password set on first run, prompted)
@@ -59,7 +62,15 @@ These are unresolved and may need Kidus's input as you build:
 - [ ] Final admin email (default: `kidus@kemerbet.com` — confirm before seeding)
 - [x] Postgres port: using 5433 (shared cluster with Birhan, separate database) — resolved 2026-04-27
 - [x] Admin session persistence: sessions never expire, no remember checkbox, logout-only. `SESSION_LIFETIME=525600`, `Auth::attempt($creds, true)` — resolved 2026-04-27
-- [ ] Whether to run admin SPA on the same port as API (Laravel dev server) or separate Vite dev server. Recommend Vite separate for Phase B.
+- [x] Dev server setup: SPA served via Laravel at `:8001/admin`, Vite HMR at `:5174`. Both `localhost` and `127.0.0.1` in `SANCTUM_STATEFUL_DOMAINS`, `SESSION_DOMAIN=null` — resolved 2026-04-27
+
+---
+
+## What we learned
+
+- `@viteReactRefresh` must come before `@vite()` in Blade — without it, React mount silently fails with a cryptic preamble error
+- `SANCTUM_STATEFUL_DOMAINS` must include both `localhost` and `127.0.0.1` variants — browsers resolve these differently
+- `SESSION_DOMAIN=null` is more forgiving than `localhost` — lets Laravel use the request host, avoiding domain mismatch
 
 ---
 

@@ -56,6 +56,7 @@ The visual design has been carefully iterated. Do not redesign without asking. L
 - **No "24/7" copy** anywhere — removed by design decision
 - **No "Range: X-Y Birr"** on agent cards — removed by design decision
 - **Admin sessions are persistent** — no expiry, no remember checkbox, only manual logout signs out
+- **Dev URL convention:** Access the admin SPA at `http://127.0.0.1:8001/admin` in development. `SANCTUM_STATEFUL_DOMAINS` includes both `localhost` and `127.0.0.1` variants for browser-resolution robustness. `SESSION_DOMAIN` is `null` (uses request host) for the same reason.
 
 The HTML mockups for these designs live in `docs/mockups/` (committed to the repo). Implementation must match these mockups visually. Treat them as the visual contract.
 
