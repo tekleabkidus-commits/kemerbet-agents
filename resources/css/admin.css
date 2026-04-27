@@ -517,6 +517,10 @@ body {
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
+.confirm-error {
+  margin-top: 14px;
+}
+
 /* ============= PAGE ACTIONS ============= */
 
 .page-actions {
@@ -547,6 +551,17 @@ body {
 .btn-danger:hover {
   background: var(--red-bg);
   border-color: rgba(239, 68, 68, 0.4);
+}
+
+.btn-warning {
+  background: var(--gold-bg);
+  color: var(--gold);
+  border-color: rgba(245, 197, 24, 0.25);
+}
+
+.btn-warning:hover {
+  background: rgba(245, 197, 24, 0.2);
+  border-color: rgba(245, 197, 24, 0.4);
 }
 
 .btn-sm {
@@ -1006,6 +1021,10 @@ body.modal-open {
   z-index: var(--z-modal);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   animation: modalSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.modal-small {
+  max-width: 440px;
 }
 
 .modal-header {
