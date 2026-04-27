@@ -255,6 +255,24 @@ body {
   padding: 18px;
 }
 
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  margin-bottom: 8px;
+}
+
+.panel-text {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.panel-empty {
+  text-align: center;
+  padding: 48px 20px;
+}
+
 /* ============= BUTTONS ============= */
 
 .btn {

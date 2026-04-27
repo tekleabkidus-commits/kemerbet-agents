@@ -4,6 +4,12 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import PublicOnlyRoute from '@/components/PublicOnlyRoute';
 import AdminLayout from '@/components/AdminLayout';
 import LoginPage from '@/pages/LoginPage';
+import DashboardPage from '@/pages/DashboardPage';
+import AgentsPage from '@/pages/AgentsPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
+import PaymentMethodsPage from '@/pages/PaymentMethodsPage';
+import SettingsPage from '@/pages/SettingsPage';
+import ActivityPage from '@/pages/ActivityPage';
 
 export default function App() {
     return (
@@ -15,12 +21,12 @@ export default function App() {
                     </Route>
                     <Route element={<ProtectedRoute />}>
                         <Route element={<AdminLayout />}>
-                            <Route path="/admin" element={<div>Dashboard (TODO)</div>} />
-                            <Route path="/admin/agents" element={<div>Agents (TODO)</div>} />
-                            <Route path="/admin/analytics" element={<div>Analytics (TODO)</div>} />
-                            <Route path="/admin/payment-methods" element={<div>Payment Methods (TODO)</div>} />
-                            <Route path="/admin/settings" element={<div>Settings (TODO)</div>} />
-                            <Route path="/admin/activity" element={<div>Activity (TODO)</div>} />
+                            <Route path="/admin" element={<DashboardPage />} />
+                            <Route path="/admin/agents" element={<AgentsPage />} />
+                            <Route path="/admin/analytics" element={<AnalyticsPage />} />
+                            <Route path="/admin/payment-methods" element={<PaymentMethodsPage />} />
+                            <Route path="/admin/settings" element={<SettingsPage />} />
+                            <Route path="/admin/activity" element={<ActivityPage />} />
                         </Route>
                     </Route>
                 </Routes>
