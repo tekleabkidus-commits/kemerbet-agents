@@ -136,4 +136,14 @@ Update this table in `PROJECT_STATE.md`, not here. This file is a living agreeme
 
 ---
 
+## Secrets policy (NON-NEGOTIABLE)
+
+- NEVER write passwords, API keys, tokens, phone numbers, or any user-identifying credentials into tinker commands, code files, config files, or any executed bash command.
+- When a password is needed (e.g., after migrate:fresh wipes the admin), output INSTRUCTIONS for the user to run themselves. Do not run the command with a literal password yourself.
+- If the workflow requires "set the password to X to test the login," stop and ask the user to do it in their terminal.
+- Phone numbers, real email addresses (other than the seeded kidus@kemerbet.com), and personal identifiers are off-limits.
+- This rule overrides convenience. If respecting it adds friction (e.g., user has to do the password reset themselves before the smoke test), accept the friction.
+
+---
+
 End of working agreement. Stay rigorous. Ask questions. Don't surprise.
