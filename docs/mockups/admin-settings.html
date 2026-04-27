@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kemerbet · Settings</title>
+<style>
+/* ============================================================
+   KEMERBET ADMIN · Shared Base CSS
+   Used across all admin pages (dashboard, agents, analytics, etc.)
+============================================================ */
+
+:root{
+  --bg:#0a1628;
+  --bg-elev-1:#0f1d36;
+  --bg-elev-2:#162542;
+  --bg-card:#11192a;
+  --bg-hover:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text:#ffffff;
+  --text-muted:#9ba8bd;
+  --text-dim:#6b7a8f;
+  --green:#1dd88c;
+  --green-dark:#078343;
+  --green-bg:rgba(0,168,107,0.12);
+  --gold:#f5c518;
+  --gold-bg:rgba(245,197,24,0.12);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,0.12);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,0.12);
+  --purple:#a855f7;
+  --purple-bg:rgba(168,85,247,0.12);
+  --sidebar-w:240px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+body{
+  font-family:'Inter',-apple-system,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  font-size:14px;
+  line-height:1.5;
+}
+
+/* ============= LAYOUT ============= */
+.app{
+  display:grid;
+  grid-template-columns:var(--sidebar-w) 1fr;
+  min-height:100vh;
+}
+
+/* ============= SIDEBAR ============= */
+.sidebar{
+  background:var(--bg-elev-1);
+  border-right:1px solid var(--border);
+  padding:20px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px 16px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:14px;
+}
+
+.brand-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),#ffa726);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.9rem;color:var(--bg);letter-spacing:-.5px;
+}
+
+.brand-text{flex:1;min-width:0}
+.brand-name{font-weight:800;font-size:.92rem;color:var(--text);letter-spacing:-.2px;line-height:1.1}
+.brand-sub{font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-top:2px}
+
+.nav-label{font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.2px;font-weight:800;padding:14px 10px 6px}
+
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  color:var(--text-muted);text-decoration:none;
+  font-size:.85rem;font-weight:600;cursor:pointer;
+  transition:all .15s ease;
+  border:none;background:transparent;
+  width:100%;text-align:left;font-family:inherit;
+}
+
+.nav-item:hover{background:var(--bg-hover);color:var(--text)}
+.nav-item.active{background:var(--green-bg);color:var(--green)}
+
+.nav-item .icon{font-size:1rem;width:18px;text-align:center;opacity:.85}
+.nav-item .badge{margin-left:auto;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--green-bg);color:var(--green);letter-spacing:.3px}
+
+.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+
+.user-pill{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-pill:hover{background:var(--bg-hover)}
+
+.user-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.78rem;color:#fff;flex-shrink:0;
+}
+
+.user-info{flex:1;min-width:0}
+.user-name{font-weight:700;font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:.66rem;color:var(--text-dim)}
+
+/* ============= MAIN ============= */
+.main{padding:24px 28px 60px;min-width:0}
+
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.page-head .subtitle{color:var(--text-muted);font-size:.85rem;margin-top:2px}
+.page-actions{display:flex;gap:8px;align-items:center}
+
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-dim);margin-bottom:6px}
+.breadcrumb a{color:var(--text-dim);text-decoration:none}
+.breadcrumb a:hover{color:var(--text)}
+
+/* ============= BUTTONS ============= */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:8px;border:1px solid transparent;
+  font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
+  transition:all .15s ease;text-decoration:none;letter-spacing:.2px;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--green-dark),#0d9460);
+  color:#fff;border-color:var(--green-dark);
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+.btn-primary:hover{background:linear-gradient(135deg,#0d9460,var(--green));transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,168,107,0.3)}
+
+.btn-secondary{background:var(--bg-card);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg-elev-2);border-color:var(--border-strong)}
+
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text)}
+
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(239,68,68,0.2)}
+.btn-danger:hover{background:var(--red-bg);border-color:rgba(239,68,68,0.4)}
+
+.btn-sm{padding:5px 10px;font-size:.72rem;border-radius:6px}
+.btn-lg{padding:11px 20px;font-size:.9rem}
+
+/* ============= PANEL ============= */
+.panel{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:20px;
+  overflow:hidden;
+}
+
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+
+.panel-title{font-size:.95rem;font-weight:800;letter-spacing:-.2px;display:flex;align-items:center;gap:8px}
+.panel-actions{display:flex;gap:6px;align-items:center}
+.panel-body{padding:18px}
+
+/* ============= FORMS ============= */
+.form-grid{display:grid;gap:18px}
+.form-row{display:grid;gap:8px}
+.form-row.two-col{grid-template-columns:1fr 1fr}
+
+.form-label{
+  font-size:.74rem;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;
+}
+
+.form-label .req{color:var(--red);margin-left:3px}
+.form-label .hint{
+  text-transform:none;letter-spacing:0;font-weight:500;
+  color:var(--text-dim);margin-left:6px;font-size:.78rem;
+}
+
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:10px 14px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  font-family:inherit;font-size:.88rem;
+  outline:none;transition:border-color .15s,background .15s;
+}
+
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  border-color:var(--green);
+  background:var(--bg-elev-1);
+}
+
+.form-input.with-prefix{padding-left:34px}
+
+.input-wrap{position:relative}
+.input-prefix{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text-dim);font-size:.88rem;font-weight:700;pointer-events:none;
+}
+
+.form-textarea{resize:vertical;min-height:80px;font-family:inherit}
+
+.form-help{font-size:.74rem;color:var(--text-dim);margin-top:4px}
+
+.form-error{font-size:.74rem;color:var(--red);margin-top:4px}
+
+/* Checkbox group */
+.check-group{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:8px;
+}
+
+.check-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  background:var(--bg-elev-2);
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .15s;
+  font-size:.85rem;font-weight:600;
+}
+
+.check-card:hover{border-color:var(--border-strong)}
+
+.check-card.checked{
+  background:var(--green-bg);
+  border-color:var(--green);
+  color:var(--green);
+}
+
+.check-card input[type="checkbox"]{
+  appearance:none;
+  width:16px;height:16px;
+  border:1.5px solid var(--border-strong);
+  border-radius:4px;
+  cursor:pointer;
+  position:relative;
+  flex-shrink:0;
+}
+
+.check-card.checked input[type="checkbox"]{
+  background:var(--green);
+  border-color:var(--green);
+}
+
+.check-card.checked input[type="checkbox"]::after{
+  content:"✓";position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  color:var(--bg);font-size:.7rem;font-weight:900;
+}
+
+/* Toggle switch */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+
+.toggle-info{flex:1;min-width:0;padding-right:14px}
+.toggle-title{font-weight:700;font-size:.88rem;margin-bottom:2px}
+.toggle-desc{font-size:.78rem;color:var(--text-muted)}
+
+.toggle{
+  width:42px;height:24px;
+  background:var(--bg);
+  border:1.5px solid var(--border-strong);
+  border-radius:999px;
+  cursor:pointer;
+  position:relative;
+  transition:all .2s;
+  flex-shrink:0;
+}
+
+.toggle::after{
+  content:"";position:absolute;
+  top:2px;left:2px;width:17px;height:17px;
+  background:var(--text-muted);
+  border-radius:50%;
+  transition:all .2s;
+}
+
+.toggle.on{background:var(--green-bg);border-color:var(--green)}
+.toggle.on::after{left:21px;background:var(--green)}
+
+/* Search bar */
+.search-bar{position:relative;flex:1;max-width:280px}
+.search-bar input{
+  width:100%;padding:7px 12px 7px 32px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:.82rem;
+  outline:none;transition:border-color .15s;
+}
+.search-bar input:focus{border-color:var(--green)}
+.search-bar::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.78rem;opacity:.5}
+
+.filter-select{
+  padding:7px 26px 7px 12px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:.82rem;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath fill='%239ba8bd' d='M5 6L0 0h10z'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+
+/* ============= STATUS PILL ============= */
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;
+  font-size:.66rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  border:1px solid;white-space:nowrap;
+}
+
+.status-pill.live{background:var(--green-bg);color:var(--green);border-color:rgba(0,168,107,0.25)}
+.status-pill.live::before{content:"";width:5px;height:5px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 1.5s infinite}
+
+.status-pill.offline{background:rgba(255,255,255,0.05);color:var(--text-muted);border-color:var(--border)}
+.status-pill.offline::before{content:"";width:5px;height:5px;background:var(--text-dim);border-radius:50%}
+
+.status-pill.disabled{background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,0.25)}
+.status-pill.disabled::before{content:"⊘";font-size:.7rem;line-height:1}
+
+.status-pill.success{background:var(--green-bg);color:var(--green);border-color:rgba(0,168,107,0.25)}
+.status-pill.warning{background:var(--gold-bg);color:var(--gold);border-color:rgba(245,197,24,0.25)}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ============= TABLE ============= */
+.table-wrap{overflow-x:auto}
+
+.table{width:100%;border-collapse:collapse;font-size:.84rem}
+.table thead{background:var(--bg-elev-1)}
+.table th{
+  text-align:left;padding:11px 14px;
+  font-weight:700;color:var(--text-muted);
+  font-size:.7rem;text-transform:uppercase;letter-spacing:1px;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+
+.table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table tbody tr{transition:background .12s}
+.table tbody tr:hover{background:var(--bg-hover)}
+.table tbody tr:last-child td{border-bottom:none}
+
+.cell-id{font-variant-numeric:tabular-nums;font-weight:800;color:var(--text-muted)}
+
+.cell-agent{display:flex;align-items:center;gap:10px;min-width:140px}
+.cell-agent .avatar{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.7rem;color:#fff;flex-shrink:0;
+}
+.cell-agent.disabled .avatar{background:linear-gradient(135deg,#3a4a64,#2a3850)}
+.cell-agent .info{min-width:0}
+.cell-agent .name{font-weight:700;color:var(--text);font-size:.85rem;letter-spacing:-.1px}
+.cell-agent .username{font-size:.72rem;color:var(--text-dim);margin-top:1px;font-family:'SF Mono',ui-monospace,monospace}
+
+.bank-tags{display:flex;gap:4px;flex-wrap:wrap}
+.bank-tag{
+  font-size:.66rem;padding:2px 6px;border-radius:4px;
+  background:var(--bg-elev-2);border:1px solid var(--border);
+  color:var(--text-muted);font-weight:700;white-space:nowrap;
+}
+
+.cell-clicks{font-variant-numeric:tabular-nums;font-weight:700}
+.cell-clicks .today{color:var(--green);font-size:.92rem}
+.cell-clicks .total{color:var(--text-dim);font-size:.72rem;font-weight:600}
+
+.cell-time{font-size:.78rem;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell-time.live{color:var(--green);font-weight:700}
+
+.cell-actions{display:flex;gap:4px;justify-content:flex-end;white-space:nowrap}
+
+.icon-btn{
+  width:28px;height:28px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--text-muted);cursor:pointer;font-size:.85rem;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .12s;
+}
+.icon-btn:hover{background:var(--bg-elev-2);color:var(--text);border-color:var(--border-strong)}
+.icon-btn.danger:hover{background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,0.3)}
+
+/* ============= EMPTY STATE ============= */
+.empty-state{
+  text-align:center;padding:48px 20px;
+  color:var(--text-muted);
+}
+.empty-state .icon{font-size:2.5rem;margin-bottom:14px;opacity:.4}
+.empty-state h3{font-size:1rem;color:var(--text);font-weight:700;margin-bottom:6px}
+
+/* ============= TOAST ============= */
+.toast{
+  position:fixed;top:20px;right:20px;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:10px;padding:12px 18px;
+  font-size:.86rem;font-weight:600;
+  z-index:300;display:flex;align-items:center;gap:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  transform:translateX(120%);transition:transform .3s ease;
+}
+.toast.show{transform:translateX(0)}
+.toast.success{border-color:rgba(0,168,107,0.4)}
+.toast.success .toast-icon{color:var(--green)}
+.toast.error{border-color:rgba(239,68,68,0.4)}
+.toast.error .toast-icon{color:var(--red)}
+
+/* ============= MODAL ============= */
+.modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  z-index:200;display:none;align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn .2s;
+}
+.modal-backdrop.show{display:flex}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.modal{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;width:100%;max-width:560px;
+  max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  animation:modalIn .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+
+@keyframes modalIn{from{transform:translateY(20px) scale(.96);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px;border-bottom:1px solid var(--border);
+}
+
+.modal-title{font-size:1.05rem;font-weight:800;letter-spacing:-.2px}
+.modal-close{
+  width:30px;height:30px;border-radius:8px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:1rem;transition:all .12s;
+}
+.modal-close:hover{background:var(--bg-elev-2);color:var(--text)}
+
+.modal-body{padding:22px;overflow-y:auto;flex:1}
+
+.modal-foot{
+  padding:14px 22px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:8px;
+  background:var(--bg-elev-1);
+}
+
+/* ============= MOBILE ============= */
+@media(max-width:880px){
+  :root{--sidebar-w:64px}
+  .sidebar{padding:14px 8px}
+  .brand-text,.user-info,.nav-item span:not(.icon),.nav-label{display:none}
+  .brand{justify-content:center;padding:8px 0 12px}
+  .nav-item{justify-content:center;padding:9px 6px}
+  .nav-item .badge{display:none}
+  .user-pill{justify-content:center;padding:8px 0}
+  .main{padding:18px 14px 50px}
+}
+.settings-tabs{
+  display:flex;
+  gap:4px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:24px;
+  overflow-x:auto;
+}
+
+.settings-tab{
+  padding:10px 16px;
+  background:transparent;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text-muted);
+  font-family:inherit;
+  font-weight:700;
+  font-size:.86rem;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .15s;
+}
+
+.settings-tab:hover{color:var(--text)}
+
+.settings-tab.active{
+  color:var(--green);
+  border-bottom-color:var(--green);
+}
+
+.panel-foot{
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+  background:var(--bg-elev-1);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.danger-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  background:var(--bg-elev-2);
+  border:1px solid rgba(239,68,68,0.15);
+  border-radius:10px;
+  gap:14px;
+}
+
+.danger-row > div:first-child{flex:1;min-width:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">K</div>
+      <div class="brand-text">
+        <div class="brand-name">Kemerbet</div>
+        <div class="brand-sub">Admin</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Main</div>
+    <a href="admin-dashboard.html" class="nav-item">
+      <span class="icon">▦</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="admin-agents.html" class="nav-item">
+      <span class="icon">◉</span>
+      <span>Agents</span>
+      <span class="badge">28</span>
+    </a>
+    <a href="admin-analytics.html" class="nav-item">
+      <span class="icon">◈</span>
+      <span>Analytics</span>
+    </a>
+
+    <div class="nav-label">Setup</div>
+    <a href="admin-payment-methods.html" class="nav-item">
+      <span class="icon">◫</span>
+      <span>Payment Methods</span>
+    </a>
+    <a href="admin-settings.html" class="nav-item active">
+      <span class="icon">⚙</span>
+      <span>Settings</span>
+    </a>
+
+    <div class="nav-label">Audit</div>
+    <a href="admin-activity.html" class="nav-item">
+      <span class="icon">≡</span>
+      <span>Activity Log</span>
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="user-pill">
+        <div class="user-avatar">K</div>
+        <div class="user-info">
+          <div class="user-name">Kidus T.</div>
+          <div class="user-role">Owner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+<main class="main">
+<div data-page-title="Settings"></div>
+<div class="page-head">
+  <div>
+    <h1>Settings</h1>
+    <div class="subtitle">Global configuration for the agent system</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="settings-tabs">
+  <button class="settings-tab active">General</button>
+  <button class="settings-tab">Public Page</button>
+  <button class="settings-tab">Security</button>
+  <button class="settings-tab">Account</button>
+</div>
+
+<!-- GENERAL SETTINGS -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Telegram Pre-filled Message</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label">Message Sent When Player Clicks Deposit</label>
+        <textarea class="form-textarea" id="prefillMsg" rows="3" style="font-size:.9rem">Hi Kemerbet agent, I want to deposit</textarea>
+        <div class="form-help">This message auto-fills in Telegram when a player clicks "Deposit" on any agent card. Players can edit before sending. Applies to all agents.</div>
+      </div>
+      <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">PREVIEW</div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:8px;padding:10px;border:1px solid var(--border)">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#229ED9,#1c7fad);display:flex;align-items:center;justify-content:center;font-size:.9rem">📨</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text)">@DOITFAST21 (Agent 7)</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-top:2px;font-style:italic" id="prefillPreview">Hi Kemerbet agent, I want to deposit</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn btn-secondary">Reset to Default</button>
+    <button class="btn btn-primary" onclick="showToast('Message updated')">Save</button>
+  </div>
+</div>
+
+<!-- AGENT BEHAVIOR -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Agent Behavior</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Show offline agents on public page</div>
+          <div class="toggle-desc">Display recently-offline agents below the live ones (faded)</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Hide offline agents after</label>
+        <select class="form-select" style="max-width:300px">
+          <option>6 hours</option>
+          <option selected>12 hours</option>
+          <option>24 hours</option>
+          <option>3 days</option>
+          <option>Never hide</option>
+        </select>
+        <div class="form-help">Agents not seen within this window won't show on the public page</div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Public page refresh interval</label>
+        <select class="form-select" style="max-width:300px">
+          <option>30 seconds</option>
+          <option selected>1 minute (recommended)</option>
+          <option>2 minutes</option>
+          <option>3 minutes</option>
+        </select>
+        <div class="form-help">How often the public page polls for live status updates</div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Warn players before clicking offline agents</div>
+          <div class="toggle-desc">Show a confirmation dialog when player clicks an offline agent</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Shuffle live agents on each refresh</div>
+          <div class="toggle-desc">Randomize order so no agent gets unfair top position</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+    </div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn btn-primary" onclick="showToast('Settings saved')">Save Changes</button>
+  </div>
+</div>
+
+<!-- AGENT NOTIFICATIONS -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Agent Notification Reminders</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Enable browser notifications globally</div>
+          <div class="toggle-desc">Master switch for all agent reminder notifications</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+      <div style="border:1px dashed var(--border);border-radius:10px;padding:14px;background:var(--bg-elev-2)">
+        <div style="font-size:.74rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">REMINDER SCHEDULE</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:.85rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>10 minutes before live time ends</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>5 minutes before live time ends</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>When agent goes offline</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>1 hour after going offline (come back reminder)</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn btn-primary" onclick="showToast('Notification settings saved')">Save</button>
+  </div>
+</div>
+
+<!-- DANGER ZONE -->
+<div class="panel" style="border-color:rgba(239,68,68,0.25)">
+  <div class="panel-head" style="border-color:rgba(239,68,68,0.15)">
+    <div class="panel-title" style="color:var(--red)">⚠ Danger Zone</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Force all agents offline</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Sets every live agent's status to offline immediately. Use during emergencies.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('force all offline')">Force Offline All</button>
+      </div>
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Regenerate all agent tokens</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Invalidates every existing token. You'll need to send new links to all 28 agents.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('regenerate all tokens')">Regenerate All</button>
+      </div>
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Clear all analytics data</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Deletes all click and visit events. Daily rollups remain. Cannot be undone.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('clear analytics data')">Clear Data</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Saved</span>
+</div>
+</main>
+</div>
+<script>
+// Live preview of pre-fill message
+const prefillInput = document.getElementById('prefillMsg');
+const prefillPreview = document.getElementById('prefillPreview');
+prefillInput.addEventListener('input', () => {
+  prefillPreview.textContent = prefillInput.value || '(empty message)';
+});
+
+// Tab switching (mock)
+document.querySelectorAll('.settings-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+function confirmAction(action){
+  if (confirm(`Are you sure you want to ${action}? This cannot be undone.`)){
+    showToast(`Action: ${action}`, 'success');
+  }
+}
+
+function showToast(text, type = 'success'){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+</script>
+</body></html>

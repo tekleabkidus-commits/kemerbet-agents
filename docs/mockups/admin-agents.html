@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kemerbet · Agents</title>
+<style>
+/* ============================================================
+   KEMERBET ADMIN · Shared Base CSS
+   Used across all admin pages (dashboard, agents, analytics, etc.)
+============================================================ */
+
+:root{
+  --bg:#0a1628;
+  --bg-elev-1:#0f1d36;
+  --bg-elev-2:#162542;
+  --bg-card:#11192a;
+  --bg-hover:rgba(255,255,255,0.04);
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text:#ffffff;
+  --text-muted:#9ba8bd;
+  --text-dim:#6b7a8f;
+  --green:#1dd88c;
+  --green-dark:#078343;
+  --green-bg:rgba(0,168,107,0.12);
+  --gold:#f5c518;
+  --gold-bg:rgba(245,197,24,0.12);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,0.12);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,0.12);
+  --purple:#a855f7;
+  --purple-bg:rgba(168,85,247,0.12);
+  --sidebar-w:240px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+body{
+  font-family:'Inter',-apple-system,system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  font-size:14px;
+  line-height:1.5;
+}
+
+/* ============= LAYOUT ============= */
+.app{
+  display:grid;
+  grid-template-columns:var(--sidebar-w) 1fr;
+  min-height:100vh;
+}
+
+/* ============= SIDEBAR ============= */
+.sidebar{
+  background:var(--bg-elev-1);
+  border-right:1px solid var(--border);
+  padding:20px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px 16px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:14px;
+}
+
+.brand-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--gold),#ffa726);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.9rem;color:var(--bg);letter-spacing:-.5px;
+}
+
+.brand-text{flex:1;min-width:0}
+.brand-name{font-weight:800;font-size:.92rem;color:var(--text);letter-spacing:-.2px;line-height:1.1}
+.brand-sub{font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-top:2px}
+
+.nav-label{font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.2px;font-weight:800;padding:14px 10px 6px}
+
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  color:var(--text-muted);text-decoration:none;
+  font-size:.85rem;font-weight:600;cursor:pointer;
+  transition:all .15s ease;
+  border:none;background:transparent;
+  width:100%;text-align:left;font-family:inherit;
+}
+
+.nav-item:hover{background:var(--bg-hover);color:var(--text)}
+.nav-item.active{background:var(--green-bg);color:var(--green)}
+
+.nav-item .icon{font-size:1rem;width:18px;text-align:center;opacity:.85}
+.nav-item .badge{margin-left:auto;font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--green-bg);color:var(--green);letter-spacing:.3px}
+
+.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+
+.user-pill{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
+.user-pill:hover{background:var(--bg-hover)}
+
+.user-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.78rem;color:#fff;flex-shrink:0;
+}
+
+.user-info{flex:1;min-width:0}
+.user-name{font-weight:700;font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:.66rem;color:var(--text-dim)}
+
+/* ============= MAIN ============= */
+.main{padding:24px 28px 60px;min-width:0}
+
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.page-head h1{font-size:1.55rem;font-weight:800;letter-spacing:-.4px}
+.page-head .subtitle{color:var(--text-muted);font-size:.85rem;margin-top:2px}
+.page-actions{display:flex;gap:8px;align-items:center}
+
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-dim);margin-bottom:6px}
+.breadcrumb a{color:var(--text-dim);text-decoration:none}
+.breadcrumb a:hover{color:var(--text)}
+
+/* ============= BUTTONS ============= */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:8px;border:1px solid transparent;
+  font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;
+  transition:all .15s ease;text-decoration:none;letter-spacing:.2px;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--green-dark),#0d9460);
+  color:#fff;border-color:var(--green-dark);
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+.btn-primary:hover{background:linear-gradient(135deg,#0d9460,var(--green));transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,168,107,0.3)}
+
+.btn-secondary{background:var(--bg-card);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--bg-elev-2);border-color:var(--border-strong)}
+
+.btn-ghost{background:transparent;color:var(--text-muted)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text)}
+
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(239,68,68,0.2)}
+.btn-danger:hover{background:var(--red-bg);border-color:rgba(239,68,68,0.4)}
+
+.btn-sm{padding:5px 10px;font-size:.72rem;border-radius:6px}
+.btn-lg{padding:11px 20px;font-size:.9rem}
+
+/* ============= PANEL ============= */
+.panel{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:20px;
+  overflow:hidden;
+}
+
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:10px;
+}
+
+.panel-title{font-size:.95rem;font-weight:800;letter-spacing:-.2px;display:flex;align-items:center;gap:8px}
+.panel-actions{display:flex;gap:6px;align-items:center}
+.panel-body{padding:18px}
+
+/* ============= FORMS ============= */
+.form-grid{display:grid;gap:18px}
+.form-row{display:grid;gap:8px}
+.form-row.two-col{grid-template-columns:1fr 1fr}
+
+.form-label{
+  font-size:.74rem;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;
+}
+
+.form-label .req{color:var(--red);margin-left:3px}
+.form-label .hint{
+  text-transform:none;letter-spacing:0;font-weight:500;
+  color:var(--text-dim);margin-left:6px;font-size:.78rem;
+}
+
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:10px 14px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  font-family:inherit;font-size:.88rem;
+  outline:none;transition:border-color .15s,background .15s;
+}
+
+.form-input:focus,.form-select:focus,.form-textarea:focus{
+  border-color:var(--green);
+  background:var(--bg-elev-1);
+}
+
+.form-input.with-prefix{padding-left:34px}
+
+.input-wrap{position:relative}
+.input-prefix{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text-dim);font-size:.88rem;font-weight:700;pointer-events:none;
+}
+
+.form-textarea{resize:vertical;min-height:80px;font-family:inherit}
+
+.form-help{font-size:.74rem;color:var(--text-dim);margin-top:4px}
+
+.form-error{font-size:.74rem;color:var(--red);margin-top:4px}
+
+/* Checkbox group */
+.check-group{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:8px;
+}
+
+.check-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  background:var(--bg-elev-2);
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .15s;
+  font-size:.85rem;font-weight:600;
+}
+
+.check-card:hover{border-color:var(--border-strong)}
+
+.check-card.checked{
+  background:var(--green-bg);
+  border-color:var(--green);
+  color:var(--green);
+}
+
+.check-card input[type="checkbox"]{
+  appearance:none;
+  width:16px;height:16px;
+  border:1.5px solid var(--border-strong);
+  border-radius:4px;
+  cursor:pointer;
+  position:relative;
+  flex-shrink:0;
+}
+
+.check-card.checked input[type="checkbox"]{
+  background:var(--green);
+  border-color:var(--green);
+}
+
+.check-card.checked input[type="checkbox"]::after{
+  content:"✓";position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  color:var(--bg);font-size:.7rem;font-weight:900;
+}
+
+/* Toggle switch */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+}
+
+.toggle-info{flex:1;min-width:0;padding-right:14px}
+.toggle-title{font-weight:700;font-size:.88rem;margin-bottom:2px}
+.toggle-desc{font-size:.78rem;color:var(--text-muted)}
+
+.toggle{
+  width:42px;height:24px;
+  background:var(--bg);
+  border:1.5px solid var(--border-strong);
+  border-radius:999px;
+  cursor:pointer;
+  position:relative;
+  transition:all .2s;
+  flex-shrink:0;
+}
+
+.toggle::after{
+  content:"";position:absolute;
+  top:2px;left:2px;width:17px;height:17px;
+  background:var(--text-muted);
+  border-radius:50%;
+  transition:all .2s;
+}
+
+.toggle.on{background:var(--green-bg);border-color:var(--green)}
+.toggle.on::after{left:21px;background:var(--green)}
+
+/* Search bar */
+.search-bar{position:relative;flex:1;max-width:280px}
+.search-bar input{
+  width:100%;padding:7px 12px 7px 32px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:.82rem;
+  outline:none;transition:border-color .15s;
+}
+.search-bar input:focus{border-color:var(--green)}
+.search-bar::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.78rem;opacity:.5}
+
+.filter-select{
+  padding:7px 26px 7px 12px;
+  background:var(--bg-elev-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:.82rem;cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3e%3cpath fill='%239ba8bd' d='M5 6L0 0h10z'/%3e%3c/svg%3e");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+
+/* ============= STATUS PILL ============= */
+.status-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:999px;
+  font-size:.66rem;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  border:1px solid;white-space:nowrap;
+}
+
+.status-pill.live{background:var(--green-bg);color:var(--green);border-color:rgba(0,168,107,0.25)}
+.status-pill.live::before{content:"";width:5px;height:5px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);animation:pulse 1.5s infinite}
+
+.status-pill.offline{background:rgba(255,255,255,0.05);color:var(--text-muted);border-color:var(--border)}
+.status-pill.offline::before{content:"";width:5px;height:5px;background:var(--text-dim);border-radius:50%}
+
+.status-pill.disabled{background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,0.25)}
+.status-pill.disabled::before{content:"⊘";font-size:.7rem;line-height:1}
+
+.status-pill.success{background:var(--green-bg);color:var(--green);border-color:rgba(0,168,107,0.25)}
+.status-pill.warning{background:var(--gold-bg);color:var(--gold);border-color:rgba(245,197,24,0.25)}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* ============= TABLE ============= */
+.table-wrap{overflow-x:auto}
+
+.table{width:100%;border-collapse:collapse;font-size:.84rem}
+.table thead{background:var(--bg-elev-1)}
+.table th{
+  text-align:left;padding:11px 14px;
+  font-weight:700;color:var(--text-muted);
+  font-size:.7rem;text-transform:uppercase;letter-spacing:1px;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+
+.table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table tbody tr{transition:background .12s}
+.table tbody tr:hover{background:var(--bg-hover)}
+.table tbody tr:last-child td{border-bottom:none}
+
+.cell-id{font-variant-numeric:tabular-nums;font-weight:800;color:var(--text-muted)}
+
+.cell-agent{display:flex;align-items:center;gap:10px;min-width:140px}
+.cell-agent .avatar{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.7rem;color:#fff;flex-shrink:0;
+}
+.cell-agent.disabled .avatar{background:linear-gradient(135deg,#3a4a64,#2a3850)}
+.cell-agent .info{min-width:0}
+.cell-agent .name{font-weight:700;color:var(--text);font-size:.85rem;letter-spacing:-.1px}
+.cell-agent .username{font-size:.72rem;color:var(--text-dim);margin-top:1px;font-family:'SF Mono',ui-monospace,monospace}
+
+.bank-tags{display:flex;gap:4px;flex-wrap:wrap}
+.bank-tag{
+  font-size:.66rem;padding:2px 6px;border-radius:4px;
+  background:var(--bg-elev-2);border:1px solid var(--border);
+  color:var(--text-muted);font-weight:700;white-space:nowrap;
+}
+
+.cell-clicks{font-variant-numeric:tabular-nums;font-weight:700}
+.cell-clicks .today{color:var(--green);font-size:.92rem}
+.cell-clicks .total{color:var(--text-dim);font-size:.72rem;font-weight:600}
+
+.cell-time{font-size:.78rem;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cell-time.live{color:var(--green);font-weight:700}
+
+.cell-actions{display:flex;gap:4px;justify-content:flex-end;white-space:nowrap}
+
+.icon-btn{
+  width:28px;height:28px;border-radius:6px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--text-muted);cursor:pointer;font-size:.85rem;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .12s;
+}
+.icon-btn:hover{background:var(--bg-elev-2);color:var(--text);border-color:var(--border-strong)}
+.icon-btn.danger:hover{background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,0.3)}
+
+/* ============= EMPTY STATE ============= */
+.empty-state{
+  text-align:center;padding:48px 20px;
+  color:var(--text-muted);
+}
+.empty-state .icon{font-size:2.5rem;margin-bottom:14px;opacity:.4}
+.empty-state h3{font-size:1rem;color:var(--text);font-weight:700;margin-bottom:6px}
+
+/* ============= TOAST ============= */
+.toast{
+  position:fixed;top:20px;right:20px;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:10px;padding:12px 18px;
+  font-size:.86rem;font-weight:600;
+  z-index:300;display:flex;align-items:center;gap:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  transform:translateX(120%);transition:transform .3s ease;
+}
+.toast.show{transform:translateX(0)}
+.toast.success{border-color:rgba(0,168,107,0.4)}
+.toast.success .toast-icon{color:var(--green)}
+.toast.error{border-color:rgba(239,68,68,0.4)}
+.toast.error .toast-icon{color:var(--red)}
+
+/* ============= MODAL ============= */
+.modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  z-index:200;display:none;align-items:center;justify-content:center;
+  padding:20px;animation:fadeIn .2s;
+}
+.modal-backdrop.show{display:flex}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.modal{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:14px;width:100%;max-width:560px;
+  max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  animation:modalIn .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+
+@keyframes modalIn{from{transform:translateY(20px) scale(.96);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+
+.modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 22px;border-bottom:1px solid var(--border);
+}
+
+.modal-title{font-size:1.05rem;font-weight:800;letter-spacing:-.2px}
+.modal-close{
+  width:30px;height:30px;border-radius:8px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-muted);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:1rem;transition:all .12s;
+}
+.modal-close:hover{background:var(--bg-elev-2);color:var(--text)}
+
+.modal-body{padding:22px;overflow-y:auto;flex:1}
+
+.modal-foot{
+  padding:14px 22px;border-top:1px solid var(--border);
+  display:flex;justify-content:flex-end;gap:8px;
+  background:var(--bg-elev-1);
+}
+
+/* ============= MOBILE ============= */
+@media(max-width:880px){
+  :root{--sidebar-w:64px}
+  .sidebar{padding:14px 8px}
+  .brand-text,.user-info,.nav-item span:not(.icon),.nav-label{display:none}
+  .brand{justify-content:center;padding:8px 0 12px}
+  .nav-item{justify-content:center;padding:9px 6px}
+  .nav-item .badge{display:none}
+  .user-pill{justify-content:center;padding:8px 0}
+  .main{padding:18px 14px 50px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">K</div>
+      <div class="brand-text">
+        <div class="brand-name">Kemerbet</div>
+        <div class="brand-sub">Admin</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Main</div>
+    <a href="admin-dashboard.html" class="nav-item">
+      <span class="icon">▦</span>
+      <span>Dashboard</span>
+    </a>
+    <a href="admin-agents.html" class="nav-item active">
+      <span class="icon">◉</span>
+      <span>Agents</span>
+      <span class="badge">28</span>
+    </a>
+    <a href="admin-analytics.html" class="nav-item">
+      <span class="icon">◈</span>
+      <span>Analytics</span>
+    </a>
+
+    <div class="nav-label">Setup</div>
+    <a href="admin-payment-methods.html" class="nav-item">
+      <span class="icon">◫</span>
+      <span>Payment Methods</span>
+    </a>
+    <a href="admin-settings.html" class="nav-item">
+      <span class="icon">⚙</span>
+      <span>Settings</span>
+    </a>
+
+    <div class="nav-label">Audit</div>
+    <a href="admin-activity.html" class="nav-item">
+      <span class="icon">≡</span>
+      <span>Activity Log</span>
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="user-pill">
+        <div class="user-avatar">K</div>
+        <div class="user-info">
+          <div class="user-name">Kidus T.</div>
+          <div class="user-role">Owner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+<main class="main">
+<div data-page-title="Agents"></div>
+<!-- PAGE HEAD -->
+<div class="page-head">
+  <div>
+    <h1>Agents</h1>
+    <div class="subtitle">Manage all agents, tokens, and payment methods · 28 total · 11 live</div>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-secondary btn-sm">Export CSV</button>
+    <button class="btn btn-primary" onclick="openNewAgent()">+ New Agent</button>
+  </div>
+</div>
+
+<!-- FILTERS BAR -->
+<div class="panel">
+  <div class="panel-head" style="border-bottom:none">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="search-bar"><input type="text" placeholder="Search by number, username…" id="searchInput"></div>
+      <select class="filter-select" id="statusFilter">
+        <option value="all">All status</option>
+        <option value="live">Live now</option>
+        <option value="offline">Offline</option>
+        <option value="disabled">Disabled</option>
+        <option value="deleted">Deleted</option>
+      </select>
+      <select class="filter-select" id="paymentFilter">
+        <option value="all">All payment methods</option>
+        <option value="telebirr">TeleBirr</option>
+        <option value="mpesa">M-Pesa</option>
+        <option value="cbe">CBE Birr</option>
+        <option value="dashen">Dashen</option>
+        <option value="awash">Awash</option>
+      </select>
+      <select class="filter-select" id="sortBy">
+        <option value="number">Sort by number</option>
+        <option value="clicks">Sort by clicks today</option>
+        <option value="total_clicks">Sort by total clicks</option>
+        <option value="last_seen">Sort by last seen</option>
+      </select>
+    </div>
+    <div style="font-size:.78rem;color:var(--text-muted)">
+      <span id="resultCount">Showing 28 of 28</span>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="table" id="agentsTable">
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th>Agent</th>
+          <th>Status</th>
+          <th>Payment Methods</th>
+          <th>Today / Total</th>
+          <th>Last Seen</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="agentsBody"></tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text-muted)">
+    <div>Page 1 of 2</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" disabled style="opacity:.4">← Previous</button>
+      <button class="btn btn-secondary btn-sm">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EDIT AGENT MODAL ============ -->
+<div class="modal-backdrop" id="editModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="editModalTitle">Edit Agent</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:2px">Update agent details and payment methods</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="form-row two-col">
+          <div>
+            <label class="form-label">Display Number<span class="req">*</span></label>
+            <input type="number" class="form-input" id="f_number" value="7" min="1" max="9999">
+            <div class="form-help">Shown as "Agent N" on the public page</div>
+          </div>
+          <div>
+            <label class="form-label">Status</label>
+            <select class="form-select" id="f_status">
+              <option value="active">Active</option>
+              <option value="disabled">Disabled (hidden)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Telegram Username<span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-prefix">@</span>
+            <input type="text" class="form-input with-prefix" id="f_telegram" value="DOITFAST21" placeholder="username">
+          </div>
+          <div class="form-help">5–32 characters · letters, numbers, underscores · no @ prefix</div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Payment Methods<span class="req">*</span> <span class="hint">select all the agent supports</span></label>
+          <div class="check-group" id="paymentMethodsGroup">
+            <label class="check-card checked"><input type="checkbox" checked><span>TeleBirr</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>M-Pesa</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>CBE Birr</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>Dashen Bank</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>Awash Bank</span></label>
+            <label class="check-card"><input type="checkbox"><span>Bank of Abyssinia</span></label>
+            <label class="check-card"><input type="checkbox"><span>Cooperative Bank</span></label>
+            <label class="check-card"><input type="checkbox"><span>Wegagen Bank</span></label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Notes <span class="hint">private — only visible to you</span></label>
+          <textarea class="form-textarea" id="f_notes" placeholder="e.g., works evenings only, prefers TeleBirr deposits, lives in Addis…"></textarea>
+        </div>
+
+        <!-- TOKEN MANAGEMENT -->
+        <div class="form-row">
+          <label class="form-label">Agent Secret Link</label>
+          <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <input type="text" readonly id="tokenUrl" class="form-input" value="https://kemerbet-agents.com/a/a8f3d92e7b1c4c0d8b2e5a7d3f9c1e6b" style="font-family:'SF Mono',monospace;font-size:.78rem;background:var(--bg)" onclick="this.select()">
+              <button class="btn btn-secondary btn-sm" onclick="copyToken()" style="flex-shrink:0">📋 Copy</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.74rem;color:var(--text-dim)">
+              <span>Created Apr 12, 2026 · Last used 3 minutes ago</span>
+              <button class="btn btn-ghost btn-sm" onclick="confirmRegenerate()" style="color:var(--gold)">↻ Regenerate</button>
+            </div>
+          </div>
+          <div class="form-help">⚠️ Regenerating instantly revokes the old link. Send the new one to the agent.</div>
+        </div>
+
+        <!-- PER-AGENT STATS -->
+        <div class="form-row">
+          <label class="form-label">Stats Summary</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+            <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">TODAY</div>
+              <div style="font-size:1.2rem;font-weight:800;color:var(--green)">23</div>
+              <div style="font-size:.7rem;color:var(--text-dim)">clicks</div>
+            </div>
+            <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">7 DAYS</div>
+              <div style="font-size:1.2rem;font-weight:800">142</div>
+              <div style="font-size:.7rem;color:var(--text-dim)">clicks</div>
+            </div>
+            <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">ALL TIME</div>
+              <div style="font-size:1.2rem;font-weight:800">847</div>
+              <div style="font-size:.7rem;color:var(--text-dim)">clicks</div>
+            </div>
+            <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;padding:12px">
+              <div style="font-size:.65rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">LIVE TIME</div>
+              <div style="font-size:1.2rem;font-weight:800">87h</div>
+              <div style="font-size:.7rem;color:var(--text-dim)">total</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:space-between">
+      <div>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete()">Delete Agent</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAgent()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NEW AGENT MODAL ============ -->
+<div class="modal-backdrop" id="newAgentModal" onclick="if(event.target===this)closeNewAgent()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Add New Agent</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:2px">A secret link will be generated for the agent</div>
+      </div>
+      <button class="modal-close" onclick="closeNewAgent()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="form-row two-col">
+          <div>
+            <label class="form-label">Display Number<span class="req">*</span></label>
+            <input type="number" class="form-input" value="29" min="1" max="9999">
+            <div class="form-help">Next available: 29</div>
+          </div>
+          <div>
+            <label class="form-label">Telegram Username<span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-prefix">@</span>
+              <input type="text" class="form-input with-prefix" placeholder="username">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Payment Methods<span class="req">*</span></label>
+          <div class="check-group">
+            <label class="check-card checked"><input type="checkbox" checked><span>TeleBirr</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>M-Pesa</span></label>
+            <label class="check-card checked"><input type="checkbox" checked><span>CBE Birr</span></label>
+            <label class="check-card"><input type="checkbox"><span>Dashen Bank</span></label>
+            <label class="check-card"><input type="checkbox"><span>Awash Bank</span></label>
+            <label class="check-card"><input type="checkbox"><span>Bank of Abyssinia</span></label>
+            <label class="check-card"><input type="checkbox"><span>Cooperative Bank</span></label>
+            <label class="check-card"><input type="checkbox"><span>Wegagen Bank</span></label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Notes <span class="hint">optional, private</span></label>
+          <textarea class="form-textarea" placeholder="e.g., recommended by Yonatan, available evenings…"></textarea>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeNewAgent()">Cancel</button>
+      <button class="btn btn-primary" onclick="createAgentAndShowToken()">Create & Generate Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOKEN REVEAL MODAL ============ -->
+<div class="modal-backdrop" id="tokenRevealModal" onclick="if(event.target===this)closeTokenReveal()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" style="color:var(--green)">✓ Agent Created</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:2px">Send this secret link to the agent — they will need it to go online</div>
+      </div>
+      <button class="modal-close" onclick="closeTokenReveal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:linear-gradient(135deg,rgba(0,168,107,0.12),rgba(0,168,107,0.04));border:1px solid rgba(0,168,107,0.3);border-radius:12px;padding:18px;margin-bottom:14px">
+        <div style="font-size:.7rem;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">SECRET LINK FOR AGENT 29</div>
+        <input type="text" readonly value="https://kemerbet-agents.com/a/9f7b3c8e1a4d6f2b5c0e8a3d7f1b9c4e" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'SF Mono',monospace;font-size:.8rem;margin-bottom:10px" onclick="this.select()">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-primary" onclick="copyNewToken()">📋 Copy Link</button>
+          <button class="btn btn-secondary" onclick="shareViaTelegram()">📨 Share on Telegram</button>
+        </div>
+      </div>
+      <div style="background:var(--gold-bg);border:1px solid rgba(245,197,24,0.25);border-radius:10px;padding:14px;font-size:.82rem;color:var(--text);line-height:1.5">
+        <strong style="color:var(--gold)">⚠ Important:</strong> This link is the agent's only way to manage their status. Anyone with this link can toggle the agent online/offline. Don't share it publicly — send only to the agent. You can regenerate it anytime if leaked.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeTokenReveal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Saved</span>
+</div>
+</main>
+</div>
+<script>
+// ============ MOCK DATA ============
+const ALL_AGENTS = [
+  {n:7, u:'DOITFAST21', s:'live', live_left:'37m left', methods:['TeleBirr','M-Pesa','CBE','Dashen','Awash'], today:23, total:847, last:'live', last_text:'Online now'},
+  {n:14, u:'tewodros_ab', s:'live', live_left:'1h 13m left', methods:['TeleBirr','CBE','Awash'], today:18, total:412, last:'live', last_text:'Online now'},
+  {n:3, u:'yehoneagent', s:'live', live_left:'56m left', methods:['TeleBirr','M-Pesa','CBE','Dashen','Awash','BoA'], today:31, total:1204, last:'live', last_text:'Online now'},
+  {n:19, u:'kemerdepositagent', s:'live', live_left:'18m left', methods:['TeleBirr','CBE'], today:9, total:289, last:'live', last_text:'Online now'},
+  {n:1, u:'DOITFAST21', s:'live', live_left:'52m left', methods:['TeleBirr','M-Pesa','CBE','Dashen','Awash'], today:11, total:1893, last:'live', last_text:'Online now'},
+  {n:22, u:'obina_t', s:'live', live_left:'1h 22m left', methods:['TeleBirr','M-Pesa','CBE'], today:14, total:392, last:'live', last_text:'Online now'},
+  {n:11, u:'balem18', s:'live', live_left:'7m left', methods:['TeleBirr','CBE','Dashen','Awash'], today:7, total:178, last:'live', last_text:'Online now'},
+  {n:5, u:'pipo33', s:'live', live_left:'33m left', methods:['TeleBirr','M-Pesa','Awash'], today:5, total:267, last:'live', last_text:'Online now'},
+  {n:26, u:'leo021902', s:'live', live_left:'1h 47m left', methods:['TeleBirr','CBE','Dashen','Awash','BoA'], today:8, total:124, last:'live', last_text:'Online now'},
+  {n:17, u:'betyetch', s:'live', live_left:'24m left', methods:['TeleBirr','M-Pesa','CBE'], today:3, total:89, last:'live', last_text:'Online now'},
+  {n:9, u:'FASTAGENT28', s:'live', live_left:'1h 4m left', methods:['TeleBirr','CBE','Dashen'], today:6, total:312, last:'live', last_text:'Online now'},
+  {n:4, u:'kemeragent_4', s:'offline', methods:['TeleBirr','M-Pesa','CBE'], today:12, total:589, last_text:'12m ago'},
+  {n:12, u:'obina_t', s:'offline', methods:['TeleBirr','CBE','Awash'], today:8, total:234, last_text:'44m ago'},
+  {n:8, u:'Aandu22', s:'offline', methods:['TeleBirr','M-Pesa'], today:3, total:156, last_text:'1h 30m ago'},
+  {n:13, u:'kemerbett', s:'offline', methods:['TeleBirr','CBE','Dashen'], today:2, total:98, last_text:'2h 15m ago'},
+  {n:6, u:'Besuufekad', s:'offline', methods:['TeleBirr','M-Pesa','CBE','Awash'], today:4, total:267, last_text:'4h ago'},
+  {n:27, u:'benias_z', s:'offline', methods:['TeleBirr','M-Pesa'], today:1, total:43, last_text:'7h ago'},
+  {n:18, u:'babiyosi', s:'offline', methods:['TeleBirr','CBE'], today:0, total:189, last_text:'10h ago'},
+  {n:2, u:'Alemishetkemer', s:'offline', methods:['TeleBirr','M-Pesa','CBE'], today:0, total:412, last_text:'1d ago'},
+  {n:10, u:'biruk2910', s:'offline', methods:['TeleBirr','CBE'], today:0, total:67, last_text:'1d ago'},
+  {n:15, u:'abrsixo', s:'offline', methods:['TeleBirr','M-Pesa'], today:0, total:134, last_text:'2d ago'},
+  {n:16, u:'abrsixo', s:'offline', methods:['TeleBirr','CBE'], today:0, total:89, last_text:'2d ago'},
+  {n:20, u:'kemerdepositagent', s:'offline', methods:['TeleBirr','CBE'], today:0, total:201, last_text:'2d ago'},
+  {n:21, u:'kemerbett', s:'offline', methods:['TeleBirr','M-Pesa'], today:0, total:78, last_text:'3d ago'},
+  {n:23, u:'kemeragent_4', s:'offline', methods:['TeleBirr','CBE'], today:0, total:156, last_text:'3d ago'},
+  {n:24, u:'yehoneagent', s:'offline', methods:['TeleBirr','M-Pesa','CBE'], today:0, total:212, last_text:'3d ago'},
+  {n:25, u:'oldagentaccount', s:'disabled', methods:['TeleBirr'], today:0, total:23, last_text:'3d ago'},
+  {n:28, u:'biruk2910', s:'offline', methods:['TeleBirr','CBE'], today:0, total:34, last_text:'5d ago'}
+];
+
+// ============ RENDER ============
+function pad(n){return String(n).padStart(2,'0')}
+
+function renderRow(a){
+  const tagsHtml = (a.methods.slice(0,3).map(m => `<span class="bank-tag">${m}</span>`).join(''))
+    + (a.methods.length > 3 ? `<span class="bank-tag">+${a.methods.length - 3}</span>` : '');
+
+  let statusHtml;
+  if (a.s === 'live') statusHtml = `<span class="status-pill live">Live · ${a.live_left}</span>`;
+  else if (a.s === 'disabled') statusHtml = `<span class="status-pill disabled">Disabled</span>`;
+  else statusHtml = `<span class="status-pill offline">Offline</span>`;
+
+  let actionsHtml = `<button class="icon-btn" title="Edit" onclick="openEdit(${a.n})">✎</button>`;
+  if (a.s === 'live') actionsHtml += `<button class="icon-btn" title="Force Offline">◐</button>`;
+  else if (a.s === 'disabled') actionsHtml += `<button class="icon-btn" title="Re-enable" style="color:var(--green)">▶</button>`;
+  else actionsHtml += `<button class="icon-btn" title="Disable">⊘</button>`;
+  actionsHtml += `<button class="icon-btn" title="Regenerate Token">↻</button>`;
+  actionsHtml += `<button class="icon-btn danger" title="Delete">×</button>`;
+
+  return `
+    <tr>
+      <td class="cell-id">${pad(a.n)}</td>
+      <td>
+        <div class="cell-agent ${a.s === 'disabled' ? 'disabled' : ''}">
+          <div class="avatar">${pad(a.n)}</div>
+          <div class="info">
+            <div class="name">Agent ${a.n}</div>
+            <div class="username">@${a.u}</div>
+          </div>
+        </div>
+      </td>
+      <td>${statusHtml}</td>
+      <td><div class="bank-tags">${tagsHtml}</div></td>
+      <td class="cell-clicks">
+        <div class="today">${a.today}</div>
+        <div class="total">${a.total.toLocaleString()} total</div>
+      </td>
+      <td class="cell-time ${a.last === 'live' ? 'live' : ''}">${a.last_text}</td>
+      <td><div class="cell-actions">${actionsHtml}</div></td>
+    </tr>
+  `;
+}
+
+function applyFilters(){
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const sortBy = document.getElementById('sortBy').value;
+
+  let filtered = ALL_AGENTS.filter(a => {
+    if (search){
+      if (!String(a.n).includes(search) && !a.u.toLowerCase().includes(search)) return false;
+    }
+    if (status !== 'all' && a.s !== status) return false;
+    return true;
+  });
+
+  if (sortBy === 'clicks') filtered.sort((a,b) => b.today - a.today);
+  else if (sortBy === 'total_clicks') filtered.sort((a,b) => b.total - a.total);
+  else if (sortBy === 'last_seen'){
+    const order = {'live':0,'offline':1,'disabled':2};
+    filtered.sort((a,b) => (order[a.s] || 99) - (order[b.s] || 99));
+  } else filtered.sort((a,b) => a.n - b.n);
+
+  document.getElementById('agentsBody').innerHTML = filtered.map(renderRow).join('');
+  document.getElementById('resultCount').textContent = `Showing ${filtered.length} of ${ALL_AGENTS.length}`;
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('sortBy').addEventListener('change', applyFilters);
+document.getElementById('paymentFilter').addEventListener('change', applyFilters);
+
+applyFilters();
+
+// ============ MODALS ============
+function openEdit(n){
+  const a = ALL_AGENTS.find(x => x.n === n);
+  if (!a) return;
+  document.getElementById('editModalTitle').textContent = `Edit Agent ${n}`;
+  document.getElementById('f_number').value = a.n;
+  document.getElementById('f_telegram').value = a.u;
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeModal(){ document.getElementById('editModal').classList.remove('show') }
+
+function openNewAgent(){ document.getElementById('newAgentModal').classList.add('show') }
+function closeNewAgent(){ document.getElementById('newAgentModal').classList.remove('show') }
+
+function closeTokenReveal(){ document.getElementById('tokenRevealModal').classList.remove('show') }
+
+function createAgentAndShowToken(){
+  closeNewAgent();
+  setTimeout(() => {
+    document.getElementById('tokenRevealModal').classList.add('show');
+  }, 200);
+}
+
+function copyToken(){
+  const t = document.getElementById('tokenUrl');
+  t.select();
+  document.execCommand('copy');
+  showToast('Link copied to clipboard');
+}
+
+function copyNewToken(){
+  showToast('Link copied — ready to send to agent');
+}
+
+function shareViaTelegram(){
+  showToast('Opening Telegram…');
+}
+
+function saveAgent(){
+  closeModal();
+  showToast('Agent saved');
+}
+
+function confirmRegenerate(){
+  if (confirm('Regenerate token? The old link will stop working immediately.')){
+    showToast('New token generated', 'success');
+  }
+}
+
+function confirmDelete(){
+  if (confirm('Delete this agent? They will be hidden from the public page. You can restore from the deleted filter.')){
+    closeModal();
+    showToast('Agent deleted', 'error');
+  }
+}
+
+// ============ CHECKBOXES ============
+document.querySelectorAll('.check-card').forEach(card => {
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT') return;
+    const cb = card.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    card.classList.toggle('checked', cb.checked);
+  });
+});
+
+// ============ TOAST ============
+function showToast(text, type = 'success'){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  toast.querySelector('.toast-icon').textContent = type === 'error' ? '✕' : '✓';
+  toast.className = 'toast show ' + type;
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+// ============ ESC TO CLOSE ============
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    closeModal(); closeNewAgent(); closeTokenReveal();
+  }
+});
+</script>
+</body></html>
