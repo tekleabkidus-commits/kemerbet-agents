@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ListAgentsRequest;
+use App\Http\Requests\Admin\UpdateAgentRequest;
 use App\Models\Agent;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
 
 class AgentController extends Controller
 {
@@ -104,24 +106,90 @@ class AgentController extends Controller
         ]);
     }
 
+    public function show(Agent $agent): JsonResponse
+    {
+        $agent->load([
+            'paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
+            'activeToken',
+        ]);
+
+        return response()->json([
+            'data' => $this->formatAgentDetail($agent),
+        ]);
+    }
+
+    public function update(UpdateAgentRequest $request, Agent $agent): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $agent->update(Arr::only($validated, ['telegram_username', 'notes']));
+
+        if (isset($validated['payment_method_ids'])) {
+            $agent->paymentMethods()->sync($validated['payment_method_ids']);
+        }
+
+        $agent = $agent->fresh();
+        $agent->load([
+            'paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
+            'activeToken',
+        ]);
+
+        return response()->json([
+            'data' => $this->formatAgentDetail($agent),
+        ]);
+    }
+
     public function store(): never
     {
         throw new \BadMethodCallException('AgentController@store not implemented yet.');
     }
 
-    public function show(): never
-    {
-        throw new \BadMethodCallException('AgentController@show not implemented yet.');
-    }
-
-    public function update(): never
-    {
-        throw new \BadMethodCallException('AgentController@update not implemented yet.');
-    }
-
     public function destroy(): never
     {
         throw new \BadMethodCallException('AgentController@destroy not implemented yet.');
+    }
+
+    /**
+     * Builds the detail response shape for show() and update().
+     * NOT used by index() — list rows don't need active_token_url or token timestamps.
+     */
+    private function formatAgentDetail(Agent $agent): array
+    {
+        $now = now();
+        $computedStatus = $this->computeStatus($agent, $now);
+        $secondsRemaining = null;
+
+        if ($computedStatus === 'live' && $agent->live_until !== null) {
+            $secondsRemaining = max(0, $now->diffInSeconds($agent->live_until, false));
+        }
+
+        $activeTokenUrl = null;
+        if ($agent->activeToken) {
+            $activeTokenUrl = config('app.url').'/a/'.$agent->activeToken->token;
+        }
+
+        return [
+            'id' => $agent->id,
+            'display_number' => $agent->display_number,
+            'telegram_username' => $agent->telegram_username,
+            'status' => $agent->status,
+            'computed_status' => $computedStatus,
+            'live_until' => $agent->live_until?->toIso8601String(),
+            'seconds_remaining' => $secondsRemaining,
+            'last_status_change_at' => $agent->last_status_change_at?->toIso8601String(),
+            'payment_methods' => $agent->paymentMethods->map(fn ($pm) => [
+                'id' => $pm->id,
+                'slug' => $pm->slug,
+                'display_name' => $pm->display_name,
+            ]),
+            'notes' => $agent->notes,
+            'active_token_url' => $activeTokenUrl,
+            'active_token_created_at' => $agent->activeToken?->created_at?->toIso8601String(),
+            'active_token_last_used_at' => $agent->activeToken?->last_used_at?->toIso8601String(),
+            'clicks_today' => 0, // TODO: Phase F — wire to click_events aggregate
+            'clicks_total' => 0, // TODO: Phase F — wire to daily_stats + click_events
+            'created_at' => $agent->created_at->toIso8601String(),
+        ];
     }
 
     private function computeStatus(Agent $agent, \DateTimeInterface $now): string

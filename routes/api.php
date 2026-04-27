@@ -19,5 +19,7 @@ Route::prefix('admin')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
 
         Route::get('agents', [AgentController::class, 'index']);
+        Route::get('agents/{agent}', [AgentController::class, 'show']);
+        Route::put('agents/{agent}', [AgentController::class, 'update']);
     });
 });
