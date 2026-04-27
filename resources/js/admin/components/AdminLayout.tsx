@@ -36,7 +36,7 @@ export default function AdminLayout() {
                     <Users size={18} className="icon" />
                     <span>Agents</span>
                     {/* TODO: wire to real agent count in Phase B */}
-                    <span className="badge">28</span>
+                    <span className="badge">24</span>
                 </NavLink>
 
                 <NavLink to="/admin/analytics" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>

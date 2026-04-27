@@ -28,7 +28,8 @@
 - ✅ LoginPage pixel-matching login mockup (error handling, auto-focus, email trim)
 - ✅ ProtectedRoute / PublicOnlyRoute wrappers with loading states
 - ✅ Smoke tested end-to-end: login, sidebar nav, session persistence, route guards
-- ✅ Database seeder: 1 admin, 8 payment methods, 28 agents with tokens, 6 settings
+- ✅ Database seeder: 1 admin, 8 payment methods, 24 agents with tokens, 6 settings
+  - Public agent block had 33 cards but only 24 unique telegram usernames. Duplicate slots deduplicated. Resolved 2026-04-27.
 - ✅ Seeder is fully idempotent (db:seed can re-run without changing data)
 
 ### Gate review at end of Phase A
