@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-27
 **Current phase:** Phase A — Foundation (in progress)
-**Build progress:** ~80% of Phase A (tasks 1-4 done, task 5 remaining)
+**Build progress:** 100% of Phase A (all 5 tasks done, pending gate review)
 
 ---
 
@@ -28,20 +28,8 @@
 - ✅ LoginPage pixel-matching login mockup (error handling, auto-focus, email trim)
 - ✅ ProtectedRoute / PublicOnlyRoute wrappers with loading states
 - ✅ Smoke tested end-to-end: login, sidebar nav, session persistence, route guards
-
----
-
-## What's next — Phase A: Foundation (remaining)
-
-**Goal:** Get a working empty admin shell that Kidus can log into and see seeded agents.
-
-### Remaining tasks
-
-5. **Seed script**:
-   - 1 admin: `kidus@kemerbet.com` (password set on first run, prompted)
-   - 8 default payment methods (TeleBirr, M-Pesa, CBE Birr, Dashen, Awash, BoA, Coop, Wegagen)
-   - 28 agents from the existing static HTML (display numbers 1–28, telegram usernames preserved, all assigned default payment methods)
-   - Tokens for each agent (for Phase C use)
+- ✅ Database seeder: 1 admin, 8 payment methods, 28 agents with tokens, 6 settings
+- ✅ Seeder is fully idempotent (db:seed can re-run without changing data)
 
 ### Gate review at end of Phase A
 

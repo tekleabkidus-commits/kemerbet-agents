@@ -77,6 +77,9 @@ The HTML mockups for these designs live in `docs/mockups/` (committed to the rep
 - Soft deletes on main entity tables (admins, agents, payment_methods).
 - Never alter a table by dropping + recreating; always use proper migrations.
 
+### Seeder
+- Seeder uses `'secret-password'` as the admin password in non-interactive mode. To change it after seeding, use: `php artisan tinker`, then `App\Models\Admin::find(1)->update(['password' => 'new-password'])`.
+
 ### Security
 - Sanctum cookie auth for admin (CSRF + HttpOnly cookies). No JWTs.
 - Agent endpoints use token-in-body validation. Fail closed (404 not 401) on invalid token.
