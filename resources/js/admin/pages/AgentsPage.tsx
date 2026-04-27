@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Pencil, RefreshCw, Trash2, Plus, Loader2 } from 'lucide-react';
 import api from '@/api';
+import EditAgentModal from '@/components/EditAgentModal';
 
 // --- Types ---
 
@@ -112,7 +113,7 @@ function FilterBar({ search, status, paymentMethod, sort, onSearch, onStatus, on
     );
 }
 
-function AgentRow({ agent: a }: { agent: Agent }) {
+function AgentRow({ agent: a, onEdit }: { agent: Agent; onEdit: (id: number) => void }) {
     const num = pad(a.display_number);
     const extra = a.payment_methods.length - 3;
     const statusLabel = a.computed_status === 'live' ? 'Live' : a.computed_status === 'disabled' ? 'Disabled' : 'Offline';
@@ -146,7 +147,7 @@ function AgentRow({ agent: a }: { agent: Agent }) {
             </td>
             <td>
                 <div className="cell-actions">
-                    <button className="icon-btn" disabled title={t2}><Pencil size={13} /></button>
+                    <button className="icon-btn" onClick={() => onEdit(a.id)}><Pencil size={13} /></button>
                     <button className="icon-btn" disabled title={t2}><RefreshCw size={13} /></button>
                     <button className="icon-btn danger" disabled title={t2}><Trash2 size={13} /></button>
                 </div>
@@ -163,6 +164,8 @@ export default function AgentsPage() {
     const [meta, setMeta] = useState<Meta>({ current_page: 1, last_page: 1, per_page: 20, total: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [editingAgentId, setEditingAgentId] = useState<number | null>(null);
+    const [agentsVersion, setAgentsVersion] = useState(0);
 
     const search = params.get('search') ?? '';
     const status = params.get('status') ?? 'all';
@@ -216,7 +219,7 @@ export default function AgentsPage() {
             .catch(() => { if (!cancelled) setError('Failed to load agents. Try refreshing.'); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [search, status, paymentMethod, sort, page]);
+    }, [search, status, paymentMethod, sort, page, agentsVersion]);
 
     const hasFilters = search || status !== 'all' || paymentMethod || sort !== 'number';
     const clearFilters = () => { setParams({}); setSearchInput(''); };
@@ -287,7 +290,7 @@ export default function AgentsPage() {
                                 </thead>
                                 <tbody>
                                     {agents.map((agent) => (
-                                        <AgentRow key={agent.id} agent={agent} />
+                                        <AgentRow key={agent.id} agent={agent} onEdit={setEditingAgentId} />
                                     ))}
                                 </tbody>
                             </table>
@@ -317,6 +320,12 @@ export default function AgentsPage() {
                     </>
                 )}
             </div>
+
+            <EditAgentModal
+                agentId={editingAgentId}
+                onClose={() => setEditingAgentId(null)}
+                onSaved={() => setAgentsVersion((v) => v + 1)}
+            />
         </>
     );
 }
