@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-27
 **Current phase:** Phase A — Foundation (in progress)
-**Build progress:** 100% of Phase A (all 5 tasks done, pending gate review)
+**Build progress:** Phase A complete (gate passed 2026-04-27). Phase B next.
 
 ---
 
@@ -65,8 +65,8 @@ These are unresolved and may need Kidus's input as you build:
 ## Phase progress map
 
 ```
-[ ] Phase A — Foundation                  ← we are here
-[ ] Phase B — Admin agent CRUD
+[✅] Phase A — Foundation                 completed 2026-04-27
+[ ] Phase B — Admin agent CRUD            ← next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications
