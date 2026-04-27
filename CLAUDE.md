@@ -55,6 +55,7 @@ The visual design has been carefully iterated. Do not redesign without asking. L
 - **Admin design:** dark navy with sidebar, dense tables, color-coded status pills
 - **No "24/7" copy** anywhere — removed by design decision
 - **No "Range: X-Y Birr"** on agent cards — removed by design decision
+- **Admin sessions are persistent** — no expiry, no remember checkbox, only manual logout signs out
 
 The HTML mockups for these designs live in `docs/mockups/` (committed to the repo). Implementation must match these mockups visually. Treat them as the visual contract.
 

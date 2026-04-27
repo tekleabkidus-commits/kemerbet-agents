@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
-**Last updated:** 2026-04-27 (initial setup)
-**Current phase:** Phase A — Foundation (not started)
-**Build progress:** 0% (just bootstrapped)
+**Last updated:** 2026-04-27
+**Current phase:** Phase A — Foundation (in progress)
+**Build progress:** ~60% of Phase A (tasks 1-3 done, 4-5 remaining)
 
 ---
 
@@ -18,39 +18,20 @@
 - ✅ Git initialized + GitHub remote configured
 - ✅ Specification doc at `docs/SPECIFICATION.md`
 - ✅ Visual mockups at `docs/mockups/` (public block, agent secret page, all admin pages)
+- ✅ All 10 database migrations + legacy table cleanup + remember_token
+- ✅ 9 Eloquent models with relationships, casts, soft deletes
+- ✅ Sanctum admin auth (login/logout/me, rate-limited, persistent sessions)
+- ✅ 9 Pest feature tests for auth flow (all passing)
 
 ---
 
-## What's next — Phase A: Foundation
+## What's next — Phase A: Foundation (remaining)
 
 **Goal:** Get a working empty admin shell that Kidus can log into and see seeded agents.
 
-### Tasks (work through in order)
+### Remaining tasks
 
-1. **Database migrations** — create all tables per Section 3 of the spec:
-   - `admins`
-   - `agents`
-   - `payment_methods`
-   - `agent_payment_methods` (pivot)
-   - `agent_tokens`
-   - `status_events`
-   - `click_events`
-   - `visit_events`
-   - `daily_stats`
-   - `settings`
-
-2. **Eloquent models** with relationships:
-   - `Admin`, `Agent`, `PaymentMethod`, `AgentToken`, `StatusEvent`, `ClickEvent`, `VisitEvent`, `Setting`
-   - Soft deletes where specified
-   - Casts for jsonb, timestamps, decimals
-
-3. **Sanctum admin auth**:
-   - `POST /api/admin/login`
-   - `POST /api/admin/logout`
-   - `GET /api/admin/me`
-   - Rate limit: 5/min per IP on login
-
-4. **Admin login page** (Blade or React, simple):
+4. **Admin login page** (React):
    - Use the design from `docs/mockups/admin-login.html`
 
 5. **Seed script**:
@@ -76,7 +57,8 @@ Kidus should be able to:
 These are unresolved and may need Kidus's input as you build:
 
 - [ ] Final admin email (default: `kidus@kemerbet.com` — confirm before seeding)
-- [ ] Postgres port: spec says 5434, but for simplicity setup uses default 5432. If 5434 is needed, edit postgresql.conf and update `.env`.
+- [x] Postgres port: using 5433 (shared cluster with Birhan, separate database) — resolved 2026-04-27
+- [x] Admin session persistence: sessions never expire, no remember checkbox, logout-only. `SESSION_LIFETIME=525600`, `Auth::attempt($creds, true)` — resolved 2026-04-27
 - [ ] Whether to run admin SPA on the same port as API (Laravel dev server) or separate Vite dev server. Recommend Vite separate for Phase B.
 
 ---

@@ -118,19 +118,8 @@ body{
 }
 .input-with-icon .form-input{padding-left:42px}
 
-.form-row.checkbox{
-  display:flex;align-items:center;gap:8px;
-  font-size:.85rem;color:var(--text-muted);
-  cursor:pointer;
-  margin-bottom:24px;
-}
-
-.form-row.checkbox input{
-  width:16px;height:16px;
-  accent-color:var(--green);
-}
-
 .btn-login{
+  margin-top:24px;
   width:100%;
   padding:13px;
   background:linear-gradient(135deg,var(--green-dark),#0d9460);
@@ -151,16 +140,6 @@ body{
 }
 
 .btn-login:active{transform:translateY(0)}
-
-.help-row{
-  margin-top:20px;
-  text-align:center;
-  font-size:.78rem;
-  color:var(--text-dim);
-}
-
-.help-row a{color:var(--green);text-decoration:none;font-weight:600}
-.help-row a:hover{text-decoration:underline}
 
 .security-note{
   margin-top:24px;
@@ -206,16 +185,7 @@ body{
         </div>
       </div>
 
-      <label class="form-row checkbox">
-        <input type="checkbox" checked>
-        <span>Stay signed in for 30 days</span>
-      </label>
-
       <button type="submit" class="btn-login">Sign in →</button>
-
-      <div class="help-row">
-        Forgot password? <a href="#">Reset it</a>
-      </div>
     </form>
 
     <div class="security-note">
