@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Task 1 complete. Task 2 implementation complete (smoke test pending).
+**Build progress:** Phase A complete. Phase B Tasks 1+2 complete. Task 3 next.
 
 ---
 
@@ -45,40 +45,23 @@
   - CSS: table, status pills, filter bar, bank tags, icon buttons, empty/loading/error states
   - Secrets policy added to CLAUDE.md
 
-- 🔧 **Task 2 — Agent edit modal + destructive operations** (in progress, 2026-04-28)
-  - ✅ GATE 1 — Backend reads + edits: GET/PUT /api/admin/agents/{id} (cc3ac3f)
-  - ✅ GATE 2 — Backend destructive operations: disable, enable, regenerate-token, destroy (aea943d)
-    - Migration: added admin_id to status_events for audit trail
-    - New event types: disabled_by_admin, enabled_by_admin, token_regenerated, deleted_by_admin
-    - Idempotent disable/enable (no event logged if already in target state)
-    - Atomic transactions for regenerate-token and destroy
-  - ✅ GATE 3 — Modal CSS infrastructure: overlay, animations, scroll lock, z-index scale (91b7bb5)
-  - ✅ GATE 4 — Modal + ConfirmModal React components with focus trap (8dc9e9e)
-  - ✅ GATE 5 step 1 — GET /api/admin/payment-methods endpoint (ff5cb70)
-  - ✅ GATE 5 step 2a — Form/token/confirm CSS classes lifted from mockup (6f8f90b)
-  - ✅ GATE 5 step 2b — Modal variant prop for confirm stacking (b39c554)
-  - ✅ GATE 5 step 2c — EditAgentModal.tsx + AgentsPage wiring (1db7ed1)
-    - EditAgentModal: ~557 lines, 14 state pieces, cancellation flag for race-safe loading
-    - TokenDisplay (current token view) + TokenReveal (post-regen celebration with Telegram send)
-    - 4 ConfirmModal instances gated by confirmAction state (disable/enable/regenerate/delete)
-    - handleRegenerateToken defers onSaved to modal close (token reveal stays visible)
-    - AgentsPage: Edit button wired, agentsVersion counter triggers list refetch on save
-    - CSS: .modal-footer-right for split footer right-side button group
-  - **Status: implementation complete, awaiting browser smoke test**
+- ✅ **Task 2 — Agent edit modal + destructive operations** (2026-04-28, smoke test passed)
+  - 4 destructive backend operations (disable, enable, regenerate-token, delete) with audit logging via status_events.admin_id
+  - EditAgentModal: ~557 lines, 14 state pieces, race-safe loading with cancellation flag
+  - Modal infrastructure: focus trap, scroll lock, z-index scale, confirm overlay stacking
+  - TokenDisplay + TokenReveal sub-components, 4 ConfirmModal instances gated by confirmAction
+  - AgentsPage wired: Edit button opens modal, agentsVersion counter triggers list refetch
+  - 10 commits across 5 gates, 57 tests passing, smoke test passed 2026-04-28
 
 ### Resume next session
 
-- **Smoke test the full edit modal flow in the browser.** If smoke test passes, Task 2 ships and we move to Task 3 (create new agent).
+- **Task 3 — Create new agent + token reveal flow**
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Smoke test checklist:**
-  1. Click Edit pencil on an agent row → modal opens with agent data loaded
-  2. Change telegram username + toggle payment methods + edit notes → Save Changes → list refreshes
-  3. Click Regenerate → confirm modal → new token revealed with Copy + Send via Telegram
-  4. Dismiss token reveal → back to normal token display
-  5. Click Disable → confirm → agent shows as disabled, button changes to Re-enable
-  6. Click Re-enable → confirm → agent restored to active
-  7. Click Delete → confirm → modal closes, agent removed from list (visible under Deleted filter)
-  8. Test error state: open modal for a nonexistent agent ID → error message + Close button in footer
+- **What Task 3 needs:**
+  - Backend: POST /api/admin/agents (store endpoint — currently throws BadMethodCallException)
+  - Frontend: CreateAgentModal or repurpose EditAgentModal with create mode
+  - Token reveal on first creation (agent gets a token immediately)
+  - Wire the "New Agent" button in AgentsPage (currently disabled)
 
 ### Gate review at end of Phase A
 
@@ -115,7 +98,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Task 2 implementation complete, smoke test pending
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2 done, Task 3 next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications
