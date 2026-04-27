@@ -14,6 +14,7 @@ interface ModalProps {
     footerSplit?: boolean;
     size?: 'default' | 'small';
     showCloseButton?: boolean;
+    variant?: 'edit' | 'confirm';
 }
 
 export default function Modal({
@@ -26,6 +27,7 @@ export default function Modal({
     footerSplit = false,
     size = 'default',
     showCloseButton = true,
+    variant = 'edit',
 }: ModalProps) {
     const overlayRef = useRef<HTMLDivElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -94,7 +96,7 @@ export default function Modal({
 
     return (
         <div
-            className="modal-overlay open"
+            className={`modal-overlay open ${variant === 'confirm' ? 'modal-overlay-confirm' : ''}`}
             ref={overlayRef}
             onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
         >

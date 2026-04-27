@@ -36,6 +36,7 @@ export default function ConfirmModal({
             isOpen={isOpen}
             onClose={isProcessing ? () => {} : onClose}
             title={title}
+            variant="confirm"
             size="small"
             showCloseButton={!isProcessing}
             footer={
