@@ -107,6 +107,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     const [allMethods, setAllMethods] = useState<PaymentMethod[]>([]);
 
     // Form state
+    const [displayNumber, setDisplayNumber] = useState(1);
     const [telegramUsername, setTelegramUsername] = useState('');
     const [notes, setNotes] = useState('');
     const [selectedMethodIds, setSelectedMethodIds] = useState<number[]>([]);
@@ -126,6 +127,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     useEffect(() => {
         if (agentId === null) {
             setAgent(null);
+            setDisplayNumber(1);
             setTelegramUsername('');
             setNotes('');
             setSelectedMethodIds([]);
@@ -156,6 +158,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                 if (cancelled) return;
                 const a = agentRes.data.data;
                 setAgent(a);
+                setDisplayNumber(a.display_number);
                 setTelegramUsername(a.telegram_username);
                 setNotes(a.notes ?? '');
                 setSelectedMethodIds(a.payment_methods.map((pm) => pm.id));
@@ -180,6 +183,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
         setSaveError(null);
 
         api.put<{ data: AgentDetail }>(`/api/admin/agents/${agent.id}`, {
+            display_number: displayNumber,
             telegram_username: telegramUsername,
             notes: notes || null,
             payment_method_ids: selectedMethodIds,
@@ -340,6 +344,20 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                     <div className="alert alert-error">{error}</div>
                 ) : agent && (
                     <div className="form-grid">
+                        {/* Display number */}
+                        <div className="form-row">
+                            <label className="form-label">
+                                Display Number <span className="req">*</span> <span className="hint">order on public page</span>
+                            </label>
+                            <input
+                                type="number"
+                                min={1}
+                                className="form-input"
+                                value={displayNumber}
+                                onChange={(e) => setDisplayNumber(parseInt(e.target.value) || 0)}
+                            />
+                        </div>
+
                         {/* Telegram username */}
                         <div className="form-row">
                             <label className="form-label">
