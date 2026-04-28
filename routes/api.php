@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Agent\AgentSecretController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,3 +35,20 @@ Route::prefix('admin')->group(function () {
         Route::post('agents/{agent}/restore', [AgentController::class, 'restore'])->withTrashed();
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Agent Secret Page API
+|--------------------------------------------------------------------------
+| Token-in-URL authentication. No Sanctum. Rate-limited.
+*/
+
+Route::prefix('agent/{token}')
+    ->where(['token' => '[a-f0-9]{64}'])
+    ->middleware('throttle:agent-actions')
+    ->group(function () {
+        Route::get('state', [AgentSecretController::class, 'state']);
+        Route::post('go-online', [AgentSecretController::class, 'goOnline']);
+        Route::post('extend', [AgentSecretController::class, 'extend']);
+        Route::post('go-offline', [AgentSecretController::class, 'goOffline']);
+    });

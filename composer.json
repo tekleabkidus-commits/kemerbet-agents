@@ -50,6 +50,7 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
+        "pint": "./vendor/bin/pint --dirty",
         "test": [
             "DB_DATABASE=kemerbet_agents_test php artisan migrate:fresh --database=pgsql --force --quiet",
             "./vendor/bin/pest"
