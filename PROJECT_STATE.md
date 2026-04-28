@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2+3 complete. Task 4 next.
+**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4 implementation complete (Task 4 smoke test pending).
 
 ---
 
@@ -68,15 +68,31 @@
     - 4 new Pest tests for display_number validation (72 total)
   - 8 commits total, 72 tests passing, create flow smoke test passed 2026-04-28
 
+- 🔧 **Task 4 — Activity Log** (implementation complete 2026-04-28, smoke test pending)
+  - Backend: GET /api/admin/activity with filters (event_type[], admin_id, agent_id, date range, sort, pagination) (445d3d4)
+    - Eager-loads agent (withTrashed) + admin — soft-deleted agents visible in audit trail
+    - StatusEvent model: 8 event type constants, AgentController refactored to use them
+    - 11 Pest tests in ActivityTest.php (83 total)
+  - Frontend: ActivityPage.tsx ~310 lines with URL-synced filters, event badges, descriptions (63c0cd6)
+    - formatDescription for all 8 event types with duration support and deleted suffix
+    - Event badges color-coded: agent (green), admin (blue), destructive (red)
+  - Sidebar nav: Activity item with ScrollText icon under "Audit" section (already existed in AdminLayout)
+  - Cross-link: EditAgentModal "View activity" button → /admin/activity?agent_id={id} (fa4a3ee)
+    - ActivityPage silently filters by agent_id, shows banner with agent label + "Show all events"
+  - 3 commits, 83 tests passing
+
 ### Resume next session
 
-- **Smoke test display_number editing in the browser.** Then move to Task 4 (Activity Log).
+- **Smoke test the activity log in the browser.** If smoke test passes, Task 4 ships and we move to Task 5 (restore deleted agents).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Smoke test checklist for display_number:**
-  1. Open Edit modal → Display Number field shows current value as first field
-  2. Change to unused number → Save → list refreshes with new number, row reorders
-  3. Change to number taken by active agent → Save → "display number has already been taken" error
-  4. Change to number that belonged to soft-deleted agent → Save → succeeds (recycled)
+- **Smoke test checklist:**
+  1. Click Activity in sidebar → page loads with events (or empty state if no events yet)
+  2. Generate events: create/disable/enable/delete an agent → verify events appear in activity log
+  3. Filter by event type → only matching events shown
+  4. Filter by date range → only events in range shown
+  5. Open EditAgentModal → click "View activity" → navigates to filtered activity page
+  6. Filter banner shows "Showing activity for Agent N (@username)" with "Show all events" clear button
+  7. Verify soft-deleted agent events show "(deleted)" suffix in descriptions
 
 ### Gate review at end of Phase A
 
@@ -113,7 +129,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3 done, Task 4 next
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4 done, Task 4 smoke test pending
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
