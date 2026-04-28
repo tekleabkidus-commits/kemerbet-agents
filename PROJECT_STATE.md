@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2+3 implementation complete (Task 3 smoke test pending).
+**Build progress:** Phase A complete. Phase B Tasks 1+2+3 complete. Task 4 next.
 
 ---
 
@@ -53,7 +53,7 @@
   - AgentsPage wired: Edit button opens modal, agentsVersion counter triggers list refetch
   - 10 commits across 5 gates, 57 tests passing, smoke test passed 2026-04-28
 
-- 🔧 **Task 3 — Create new agent + token reveal** (implementation complete 2026-04-28, smoke test pending)
+- ✅ **Task 3 — Create new agent + display_number editing** (2026-04-28)
   - Backend: POST /api/admin/agents with CreateAgentRequest validation (5114afa)
     - Auto-assigned display_number via max(withTrashed) + 1 (soft-delete collision safe)
     - Token auto-generated, DB::transaction wraps agent + payment methods + token + status_event
@@ -63,21 +63,20 @@
   - Frontend: NewAgentModal.tsx ~243 lines, two-state render: form → token reveal (76d62c3)
     - AgentsPage: +New Agent button enabled, wired to open NewAgentModal
     - onCreated deferred until modal closes (consistent with EditAgentModal pattern)
-  - 4 commits, 68 tests passing
+  - Display number editing added: partial unique index migration + EditAgentModal field (02c97c3, 7116b2f)
+    - Soft-deleted agents' numbers released for reuse (partial index WHERE deleted_at IS NULL)
+    - 4 new Pest tests for display_number validation (72 total)
+  - 8 commits total, 72 tests passing, create flow smoke test passed 2026-04-28
 
 ### Resume next session
 
-- **Smoke test the new agent creation flow in the browser.** If smoke test passes, Task 3 ships and we move to Task 4.
+- **Smoke test display_number editing in the browser.** Then move to Task 4 (Activity Log).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Smoke test checklist:**
-  1. Click +New Agent → modal opens with payment methods loaded
-  2. Fill telegram username + select payment methods + optional notes → Create Agent
-  3. Token reveal appears with "Agent Created" title, Copy + Send via Telegram + Dismiss
-  4. Click Done → modal closes, new agent appears in list
-  5. Verify display_number is auto-assigned (should be 25 with seeded data)
-  6. Test validation: submit with empty username → 422 error shown
-  7. Test validation: submit with no payment methods selected → 422 error shown
-  8. Cancel button closes modal without creating
+- **Smoke test checklist for display_number:**
+  1. Open Edit modal → Display Number field shows current value as first field
+  2. Change to unused number → Save → list refreshes with new number, row reorders
+  3. Change to number taken by active agent → Save → "display number has already been taken" error
+  4. Change to number that belonged to soft-deleted agent → Save → succeeds (recycled)
 
 ### Gate review at end of Phase A
 
@@ -114,7 +113,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3 done, Task 3 smoke test pending
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3 done, Task 4 next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
