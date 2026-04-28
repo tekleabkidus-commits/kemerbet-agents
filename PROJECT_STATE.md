@@ -36,6 +36,34 @@
 
 Full admin agent CRUD lifecycle: list, create, edit, display_number editing, disable/enable, token regeneration, soft-delete, restore, activity audit log. 92 tests passing across 5 test files.
 
+---
+
+## Phase C — Agent Secret Page Plan
+
+### Design decisions (locked 2026-04-28)
+
+1. **Auth model:** URL-based at `/a/{token}` — token IS the credential. No login form.
+2. **Durations:** 30/60/120 min daytime (7 AM–11 PM Africa/Addis_Ababa), 30/60 min sleeping hours (11 PM–7 AM). Strict cutoff at 11:00 PM.
+3. **Presence model:** Expiration-based, no heartbeat. `live_until` is the single source of truth.
+4. **Renewal:** STRICT REPLACEMENT — `live_until = now + duration`. All buttons always available. Agent could reduce remaining time by clicking a smaller duration. Accepted UX risk; button copy mitigates.
+5. **Button labels:**
+   - Offline state: "Go online for 30 min" / "Go online for 1 hour" / "Go online for 2 hours"
+   - Live state: "Stay online for 30 minutes" / "Stay online for 1 hour" / "Stay online for 2 hours"
+   - Both states use same backend endpoint, just different copy.
+6. **Bundle:** Separate React entry at `resources/js/agent/main.tsx` via Vite multi-entry config.
+7. **Design:** HTML mockup first at `docs/design-mockups/agent-page.html`, code follows mockup.
+
+### Task breakdown
+
+- **Task 0:** HTML mockup (5 visual states: loading, invalid, disabled, offline, live)
+- **Task 1:** AgentSecretController backend — 4 endpoints (GET show, POST go-online, POST extend, POST go-offline). Extend uses same logic as go-online. Separate endpoints for audit log differentiation (`went_online` vs `extended`).
+- **Task 2:** Time-based duration validation rule (Africa/Addis_Ababa timezone-aware)
+- **Task 3:** Vite multi-entry config + agent React entry
+- **Task 4:** Agent page state machine + countdown timer
+- **Task 5:** Smoke test
+
+---
+
 ### Done in Phase B
 
 - ✅ **Task 1 — Agent list endpoint + UI** (2026-04-27)
@@ -100,7 +128,9 @@ Full admin agent CRUD lifecycle: list, create, edit, display_number editing, dis
 
 ### Resume next session
 
-- **Phase B gate review** (walk through admin lifecycle end-to-end), then plan Phase C (agent secret page).
+- **Phase C starts with HTML mockup creation** (Task 0).
+- Resume: `cd ~/kemerbet-agents && claude`
+- First action: build the agent page mockup at `docs/design-mockups/agent-page.html` matching locked design tokens (mint, navy, off-white, no red).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
 
 ### Gate review at end of Phase A
