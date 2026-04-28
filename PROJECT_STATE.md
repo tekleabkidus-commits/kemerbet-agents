@@ -101,7 +101,7 @@ These are unresolved and may need Kidus's input as you build:
 [🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2 done, Task 3 next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
-[ ] Phase E — Notifications
+[ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
 [ ] Phase F — Analytics
 [ ] Phase G — Polish & deploy
 ```
