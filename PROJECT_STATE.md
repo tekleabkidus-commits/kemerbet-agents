@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4 implementation complete (Task 4 smoke test pending).
+**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4 complete. Task 5 next.
 
 ---
 
@@ -68,7 +68,7 @@
     - 4 new Pest tests for display_number validation (72 total)
   - 8 commits total, 72 tests passing, create flow smoke test passed 2026-04-28
 
-- 🔧 **Task 4 — Activity Log** (implementation complete 2026-04-28, smoke test pending)
+- ✅ **Task 4 — Activity Log** (2026-04-28, smoke test passed)
   - Backend: GET /api/admin/activity with filters (event_type[], admin_id, agent_id, date range, sort, pagination) (445d3d4)
     - Eager-loads agent (withTrashed) + admin — soft-deleted agents visible in audit trail
     - StatusEvent model: 8 event type constants, AgentController refactored to use them
@@ -83,16 +83,14 @@
 
 ### Resume next session
 
-- **Smoke test the activity log in the browser.** If smoke test passes, Task 4 ships and we move to Task 5 (restore deleted agents).
+- **Task 5 — Restore deleted agents**
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Smoke test checklist:**
-  1. Click Activity in sidebar → page loads with events (or empty state if no events yet)
-  2. Generate events: create/disable/enable/delete an agent → verify events appear in activity log
-  3. Filter by event type → only matching events shown
-  4. Filter by date range → only events in range shown
-  5. Open EditAgentModal → click "View activity" → navigates to filtered activity page
-  6. Filter banner shows "Showing activity for Agent N (@username)" with "Show all events" clear button
-  7. Verify soft-deleted agent events show "(deleted)" suffix in descriptions
+- **What Task 5 needs:**
+  - Backend: POST /api/admin/agents/{id}/restore (resolve soft-deleted agent, restore it)
+  - New StatusEvent constant: EVENT_RESTORED_BY_ADMIN + add to EVENT_TYPES array
+  - AgentsPage: Restore button visible on agents in the "Deleted" filter view
+  - Auto-assign fresh display_number on restore (no number reservation for deleted agents)
+  - Activity log: restored_by_admin event type support in ActivityPage formatDescription
 
 ### Gate review at end of Phase A
 
@@ -129,7 +127,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4 done, Task 4 smoke test pending
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4 done, Task 5 next
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
