@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\PaymentMethodController;
@@ -20,6 +21,7 @@ Route::prefix('admin')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
 
         Route::get('payment-methods', [PaymentMethodController::class, 'index']);
+        Route::get('activity', [ActivityController::class, 'index']);
 
         Route::get('agents', [AgentController::class, 'index']);
         Route::post('agents', [AgentController::class, 'store']);

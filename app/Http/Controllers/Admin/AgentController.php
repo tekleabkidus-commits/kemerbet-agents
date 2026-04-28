@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\CreateAgentRequest;
 use App\Http\Requests\Admin\ListAgentsRequest;
 use App\Http\Requests\Admin\UpdateAgentRequest;
 use App\Models\Agent;
+use App\Models\StatusEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -141,7 +142,7 @@ class AgentController extends Controller
 
         $agent->statusEvents()->create([
             'admin_id' => $request->user()->id,
-            'event_type' => 'disabled_by_admin',
+            'event_type' => StatusEvent::EVENT_DISABLED_BY_ADMIN,
             'ip_address' => $request->ip(),
             'created_at' => now(),
         ]);
@@ -162,7 +163,7 @@ class AgentController extends Controller
 
         $agent->statusEvents()->create([
             'admin_id' => $request->user()->id,
-            'event_type' => 'enabled_by_admin',
+            'event_type' => StatusEvent::EVENT_ENABLED_BY_ADMIN,
             'ip_address' => $request->ip(),
             'created_at' => now(),
         ]);
@@ -187,7 +188,7 @@ class AgentController extends Controller
 
             $agent->statusEvents()->create([
                 'admin_id' => $request->user()->id,
-                'event_type' => 'token_regenerated',
+                'event_type' => StatusEvent::EVENT_TOKEN_REGENERATED,
                 'ip_address' => $request->ip(),
                 'created_at' => now(),
             ]);
@@ -221,7 +222,7 @@ class AgentController extends Controller
 
             $agent->statusEvents()->create([
                 'admin_id' => $request->user()->id,
-                'event_type' => 'created_by_admin',
+                'event_type' => StatusEvent::EVENT_CREATED_BY_ADMIN,
                 'ip_address' => $request->ip(),
                 'created_at' => now(),
             ]);
@@ -240,7 +241,7 @@ class AgentController extends Controller
 
             $agent->statusEvents()->create([
                 'admin_id' => $request->user()->id,
-                'event_type' => 'deleted_by_admin',
+                'event_type' => StatusEvent::EVENT_DELETED_BY_ADMIN,
                 'ip_address' => $request->ip(),
                 'created_at' => now(),
             ]);
