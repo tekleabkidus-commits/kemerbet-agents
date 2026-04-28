@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2 complete. Task 3 next.
+**Build progress:** Phase A complete. Phase B Tasks 1+2+3 implementation complete (Task 3 smoke test pending).
 
 ---
 
@@ -53,15 +53,31 @@
   - AgentsPage wired: Edit button opens modal, agentsVersion counter triggers list refetch
   - 10 commits across 5 gates, 57 tests passing, smoke test passed 2026-04-28
 
+- 🔧 **Task 3 — Create new agent + token reveal** (implementation complete 2026-04-28, smoke test pending)
+  - Backend: POST /api/admin/agents with CreateAgentRequest validation (5114afa)
+    - Auto-assigned display_number via max(withTrashed) + 1 (soft-delete collision safe)
+    - Token auto-generated, DB::transaction wraps agent + payment methods + token + status_event
+    - New event_type: created_by_admin (audit trail with admin_id + ip_address)
+    - 11 Pest tests in AgentCreateTest.php
+  - Refactor: TokenReveal extracted to shared component (2f5f79a), warning prop added (18b8bc7)
+  - Frontend: NewAgentModal.tsx ~243 lines, two-state render: form → token reveal (76d62c3)
+    - AgentsPage: +New Agent button enabled, wired to open NewAgentModal
+    - onCreated deferred until modal closes (consistent with EditAgentModal pattern)
+  - 4 commits, 68 tests passing
+
 ### Resume next session
 
-- **Task 3 — Create new agent + token reveal flow**
+- **Smoke test the new agent creation flow in the browser.** If smoke test passes, Task 3 ships and we move to Task 4.
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **What Task 3 needs:**
-  - Backend: POST /api/admin/agents (store endpoint — currently throws BadMethodCallException)
-  - Frontend: CreateAgentModal or repurpose EditAgentModal with create mode
-  - Token reveal on first creation (agent gets a token immediately)
-  - Wire the "New Agent" button in AgentsPage (currently disabled)
+- **Smoke test checklist:**
+  1. Click +New Agent → modal opens with payment methods loaded
+  2. Fill telegram username + select payment methods + optional notes → Create Agent
+  3. Token reveal appears with "Agent Created" title, Copy + Send via Telegram + Dismiss
+  4. Click Done → modal closes, new agent appears in list
+  5. Verify display_number is auto-assigned (should be 25 with seeded data)
+  6. Test validation: submit with empty username → 422 error shown
+  7. Test validation: submit with no payment methods selected → 422 error shown
+  8. Cancel button closes modal without creating
 
 ### Gate review at end of Phase A
 
@@ -98,7 +114,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2 done, Task 3 next
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3 done, Task 3 smoke test pending
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
