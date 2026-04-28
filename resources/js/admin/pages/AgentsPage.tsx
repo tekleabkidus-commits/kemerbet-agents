@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Pencil, RefreshCw, Trash2, Plus, Loader2 } from 'lucide-react';
 import api from '@/api';
 import EditAgentModal from '@/components/EditAgentModal';
+import NewAgentModal from '@/components/NewAgentModal';
 
 // --- Types ---
 
@@ -165,6 +166,7 @@ export default function AgentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [editingAgentId, setEditingAgentId] = useState<number | null>(null);
+    const [isNewAgentOpen, setIsNewAgentOpen] = useState(false);
     const [agentsVersion, setAgentsVersion] = useState(0);
 
     const search = params.get('search') ?? '';
@@ -236,7 +238,7 @@ export default function AgentsPage() {
                     </div>
                 </div>
                 <div className="page-actions">
-                    <button className="btn btn-primary" disabled title="Coming in Task 2">
+                    <button className="btn btn-primary" onClick={() => setIsNewAgentOpen(true)}>
                         <Plus size={14} /> New Agent
                     </button>
                 </div>
@@ -325,6 +327,12 @@ export default function AgentsPage() {
                 agentId={editingAgentId}
                 onClose={() => setEditingAgentId(null)}
                 onSaved={() => setAgentsVersion((v) => v + 1)}
+            />
+
+            <NewAgentModal
+                isOpen={isNewAgentOpen}
+                onClose={() => setIsNewAgentOpen(false)}
+                onCreated={() => setAgentsVersion((v) => v + 1)}
             />
         </>
     );
