@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
 **Last updated:** 2026-04-28
-**Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4+5 implementation complete (Task 5 smoke test pending).
+**Current phase:** Phase C — Agent secret page (next)
+**Build progress:** Phase A complete. Phase B COMPLETE (all 5 tasks shipped). Phase C next.
 
 ---
 
@@ -31,6 +31,10 @@
 - ✅ Database seeder: 1 admin, 8 payment methods, 24 agents with tokens, 6 settings
   - Public agent block had 33 cards but only 24 unique telegram usernames. Duplicate slots deduplicated. Resolved 2026-04-27.
 - ✅ Seeder is fully idempotent (db:seed can re-run without changing data)
+
+### ✅ PHASE B COMPLETE (2026-04-28)
+
+Full admin agent CRUD lifecycle: list, create, edit, display_number editing, disable/enable, token regeneration, soft-delete, restore, activity audit log. 92 tests passing across 5 test files.
 
 ### Done in Phase B
 
@@ -81,7 +85,7 @@
     - ActivityPage silently filters by agent_id, shows banner with agent label + "Show all events"
   - 3 commits, 83 tests passing
 
-- 🔧 **Task 5 — Restore deleted agents** (implementation complete 2026-04-28, smoke test pending)
+- ✅ **Task 5 — Restore deleted agents** (2026-04-28, smoke test passed)
   - Backend: POST /api/admin/agents/{id}/restore with ->withTrashed() route binding (89fc3db)
     - Display number reassignment BEFORE restore() to avoid partial unique index collision
     - Token reactivation via orderBy(created_at desc, id desc) for predictable most-recent semantics
@@ -96,16 +100,8 @@
 
 ### Resume next session
 
-- **Smoke test the restore flow in the browser.** If smoke test passes, Task 5 ships and Phase B gate review begins.
+- **Phase B gate review** (walk through admin lifecycle end-to-end), then plan Phase C (agent secret page).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Smoke test checklist:**
-  1. Filter agents by "Deleted" → deleted agents appear with Restore button (no Edit/Regen/Trash icons)
-  2. Click Restore → ConfirmModal: "The agent will be restored as disabled. Their previous secret link will be reactivated."
-  3. Confirm → TokenReveal shows the reactivated URL with Copy + Send via Telegram
-  4. Click Done → agent disappears from deleted view (now active, status=disabled)
-  5. Switch to "Disabled" or "All status" filter → agent visible with new display_number
-  6. Check Activity log → "Kidus restored Agent N" event appears
-  7. Verify the reactivated token URL works (navigate to /a/{token} in browser)
 
 ### Gate review at end of Phase A
 
@@ -142,8 +138,8 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4+5 done, smoke test pending
-[ ] Phase C — Agent secret page
+[✅] Phase B — Admin agent CRUD          completed 2026-04-28
+[ ] Phase C — Agent secret page           ← next
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
 [ ] Phase F — Analytics
