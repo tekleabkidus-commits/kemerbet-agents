@@ -40,27 +40,35 @@ Full admin agent CRUD lifecycle: list, create, edit, display_number editing, dis
 
 ## Phase C — Agent Secret Page Plan
 
-### Design decisions (locked 2026-04-28)
+### Design decisions (locked 2026-04-28, updated with mockup)
 
-1. **Auth model:** URL-based at `/a/{token}` — token IS the credential. No login form.
-2. **Durations:** 30/60/120 min daytime (7 AM–11 PM Africa/Addis_Ababa), 30/60 min sleeping hours (11 PM–7 AM). Strict cutoff at 11:00 PM.
-3. **Presence model:** Expiration-based, no heartbeat. `live_until` is the single source of truth.
-4. **Renewal:** STRICT REPLACEMENT — `live_until = now + duration`. All buttons always available. Agent could reduce remaining time by clicking a smaller duration. Accepted UX risk; button copy mitigates.
-5. **Button labels:**
-   - Offline state: "Go online for 30 min" / "Go online for 1 hour" / "Go online for 2 hours"
-   - Live state: "Stay online for 30 minutes" / "Stay online for 1 hour" / "Stay online for 2 hours"
-   - Both states use same backend endpoint, just different copy.
-6. **Bundle:** Separate React entry at `resources/js/agent/main.tsx` via Vite multi-entry config.
-7. **Design:** HTML mockup first at `docs/design-mockups/agent-page.html`, code follows mockup.
+1. **Auth:** URL-based at `/a/{token}` — token IS the credential.
+2. **Durations:** 15/30/45/60/120 min daytime (7 AM–11 PM Africa/Addis_Ababa), 15/30/45/60 min sleeping hours (11 PM–7 AM). Strict cutoff at 11:00 PM. "Recommended" badge on 120 button during daytime.
+3. **Presence model:** Expiration-based, no heartbeat. `live_until` is the source of truth.
+4. **Renewal:** Strict replacement — `live_until = now + duration`. All buttons always available.
+5. **Visual contract (LOCKED):** `docs/design-mockups/agent-page.html` is the EXACT design. No deviations allowed.
+   - Dark navy theme (`#1a2b4a`) with green/gold radial glows
+   - Primary actions: green `#00a86b` (live status, extend), gold `#f5c518` (brand, recommended duration)
+   - Red `#ef4444` allowed for danger actions (set offline, modal confirm)
+   - Mobile-first, max-width 480px
+   - Bottom-sheet modals (slide up from bottom)
+   - Toast notifications (top-center)
+   - SF Mono / JetBrains Mono / monospace for countdown numbers
+   - Inter font family for everything else
+6. **Bundle:** Separate React entry at `resources/js/agent/main.tsx` via Vite multi-entry.
+7. **NEW PROJECT-WIDE RULE:** All visual contracts (mockups) are LOCKED once approved. No design changes during implementation. Additions allowed only for new states/components, must match existing design language exactly.
 
-### Task breakdown
+### Task breakdown (8 tasks)
 
-- **Task 0:** HTML mockup (5 visual states: loading, invalid, disabled, offline, live)
-- **Task 1:** AgentSecretController backend — 4 endpoints (GET show, POST go-online, POST extend, POST go-offline). Extend uses same logic as go-online. Separate endpoints for audit log differentiation (`went_online` vs `extended`).
+- **Task 0:** HTML mockup — **DONE** (locked design contract at `docs/design-mockups/agent-page.html`)
+- **Task 1:** Backend agent endpoints (GET show, POST go-online, POST extend, POST go-offline)
 - **Task 2:** Time-based duration validation rule (Africa/Addis_Ababa timezone-aware)
-- **Task 3:** Vite multi-entry config + agent React entry
-- **Task 4:** Agent page state machine + countdown timer
-- **Task 5:** Smoke test
+- **Task 3:** Agent metrics endpoint (today's clicks, live time today, recent activity for THIS agent)
+- **Task 4:** Vite multi-entry config + agent React entry
+- **Task 5:** Agent page React component implementing all states from mockup (port HTML → JSX with state hooks)
+- **Task 6:** Countdown timer hook with progress bar calculation
+- **Task 7:** Browser notification permission banner UI (request permission, persist preference; firing logic stays in Phase E)
+- **Task 8:** Smoke test
 
 ---
 
@@ -128,9 +136,9 @@ Full admin agent CRUD lifecycle: list, create, edit, display_number editing, dis
 
 ### Resume next session
 
-- **Phase C starts with HTML mockup creation** (Task 0).
-- Resume: `cd ~/kemerbet-agents && claude`
-- First action: build the agent page mockup at `docs/design-mockups/agent-page.html` matching locked design tokens (mint, navy, off-white, no red).
+- **Phase C Task 1** starts with backend AgentSecretController planning.
+- Mockup is locked at `docs/design-mockups/agent-page.html` — visual contract, no deviations.
+- First action: plan AgentSecretController endpoints based on what the mockup needs (state, metrics, activity feed).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
 
 ### Gate review at end of Phase A

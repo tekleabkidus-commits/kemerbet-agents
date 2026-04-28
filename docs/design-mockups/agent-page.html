@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Agent Dashboard · Kemerbet</title>
+<style>
+:root{
+  --bg:#1a2b4a;
+  --bg-darker:#0f1d36;
+  --green:#00a86b;
+  --green-light:#1dd88c;
+  --green-dark:#078343;
+  --gold:#f5c518;
+  --gold-light:#ffd93d;
+  --text:#ffffff;
+  --text-muted:#8a98ac;
+  --text-dim:#5d6b80;
+  --card-bg:rgba(255,255,255,0.04);
+  --card-border:rgba(255,255,255,0.08);
+  --danger:#ef4444;
+  --danger-bg:rgba(239,68,68,0.1);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+html,body{
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse at top,rgba(0,168,107,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse at bottom,rgba(245,197,24,0.06) 0%,transparent 60%);
+  color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{
+  max-width:480px;
+  margin:0 auto;
+  padding:24px 18px 40px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* TOP BAR */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:.8rem;
+  font-weight:700;
+  color:var(--gold);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.brand-dot{
+  width:8px;
+  height:8px;
+  background:var(--gold);
+  border-radius:50%;
+  box-shadow:0 0 10px var(--gold);
+}
+
+.bell-btn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.1rem;
+  color:var(--text-muted);
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;
+}
+
+.bell-btn:active{transform:scale(.95)}
+
+.bell-btn.alert::after{
+  content:"";
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:8px;
+  height:8px;
+  background:var(--gold);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--gold);
+}
+
+/* GREETING */
+.greeting{
+  margin-bottom:24px;
+}
+
+.greeting .hi{
+  font-size:.85rem;
+  color:var(--text-muted);
+  margin-bottom:6px;
+}
+
+.greeting h1{
+  font-size:1.8rem;
+  font-weight:800;
+  letter-spacing:-.5px;
+  line-height:1.1;
+}
+
+.greeting .num{
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* STATUS CARD - HERO */
+.status-card{
+  position:relative;
+  border-radius:24px;
+  padding:32px 24px;
+  margin-bottom:20px;
+  overflow:hidden;
+  border:1px solid var(--card-border);
+  transition:all .4s ease;
+}
+
+.status-card.live{
+  background:linear-gradient(135deg,rgba(0,168,107,0.18),rgba(7,131,67,0.08));
+  border-color:rgba(0,168,107,0.35);
+  box-shadow:0 0 0 1px rgba(0,168,107,0.15),0 20px 60px -20px rgba(0,168,107,0.4);
+}
+
+.status-card.offline{
+  background:var(--card-bg);
+}
+
+.status-card::before{
+  content:"";
+  position:absolute;
+  top:-50%;
+  left:-50%;
+  width:200%;
+  height:200%;
+  background:radial-gradient(circle,rgba(0,168,107,0.15) 0%,transparent 50%);
+  opacity:0;
+  transition:opacity .4s ease;
+  pointer-events:none;
+}
+
+.status-card.live::before{
+  opacity:1;
+  animation:breathe 4s ease-in-out infinite;
+}
+
+@keyframes breathe{
+  0%,100%{transform:scale(1);opacity:.7}
+  50%{transform:scale(1.05);opacity:1}
+}
+
+.status-label{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:16px;
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  position:relative;
+  z-index:1;
+}
+
+.status-card.live .status-label{color:var(--green-light)}
+.status-card.offline .status-label{color:var(--text-dim)}
+
+.status-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+
+.status-card.live .status-dot{
+  background:var(--green-light);
+  box-shadow:0 0 12px var(--green-light);
+  animation:pulse 1.5s infinite;
+}
+
+.status-card.offline .status-dot{
+  background:var(--text-dim);
+}
+
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.4;transform:scale(.85)}
+}
+
+.status-headline{
+  font-size:2rem;
+  font-weight:900;
+  letter-spacing:-1px;
+  margin-bottom:6px;
+  position:relative;
+  z-index:1;
+}
+
+.status-card.live .status-headline{color:var(--text)}
+.status-card.offline .status-headline{color:var(--text)}
+
+.status-sub{
+  font-size:.95rem;
+  color:var(--text-muted);
+  position:relative;
+  z-index:1;
+  margin-bottom:24px;
+}
+
+/* COUNTDOWN */
+.countdown{
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+  margin-bottom:24px;
+  position:relative;
+  z-index:1;
+}
+
+.countdown-num{
+  font-family:'SF Mono','JetBrains Mono','Roboto Mono',ui-monospace,monospace;
+  font-size:3.5rem;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-2px;
+  color:var(--text);
+  line-height:1;
+}
+
+.countdown-unit{
+  font-size:.95rem;
+  color:var(--text-muted);
+  font-weight:600;
+  margin-right:8px;
+}
+
+/* PROGRESS BAR */
+.progress-wrap{
+  height:6px;
+  background:rgba(255,255,255,0.08);
+  border-radius:999px;
+  overflow:hidden;
+  margin-bottom:20px;
+  position:relative;
+  z-index:1;
+}
+
+.progress-bar{
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--green-light));
+  border-radius:999px;
+  transition:width 1s linear;
+  width:65%;
+  box-shadow:0 0 12px rgba(0,168,107,0.5);
+}
+
+/* STATUS ACTIONS */
+.status-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  position:relative;
+  z-index:1;
+}
+
+.status-actions.single{
+  grid-template-columns:1fr;
+}
+
+.action-btn{
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  font-size:.92rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s;
+  font-family:inherit;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+
+.action-btn.extend{
+  background:var(--gold);
+  color:#1a1a2e;
+}
+
+.action-btn.extend:active{
+  transform:scale(.97);
+  background:var(--gold-light);
+}
+
+.action-btn.set-offline{
+  background:rgba(239,68,68,0.12);
+  color:var(--danger);
+  border:1px solid rgba(239,68,68,0.2);
+}
+
+.action-btn.set-offline:active{
+  background:rgba(239,68,68,0.2);
+}
+
+/* GO LIVE SECTION (when offline) */
+.go-live-section{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:20px;
+  padding:22px;
+  margin-bottom:20px;
+}
+
+.section-title{
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.section-title::before{
+  content:"";
+  width:3px;
+  height:14px;
+  background:var(--gold);
+  border-radius:2px;
+}
+
+.duration-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.dur-btn{
+  padding:18px 8px;
+  border-radius:14px;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid var(--card-border);
+  color:var(--text);
+  font-family:inherit;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s;
+  text-align:center;
+}
+
+.dur-btn:active{transform:scale(.96)}
+
+.dur-btn.recommended{
+  background:linear-gradient(135deg,rgba(0,168,107,0.15),rgba(7,131,67,0.08));
+  border-color:rgba(0,168,107,0.4);
+  position:relative;
+}
+
+.dur-btn.recommended::after{
+  content:"BEST";
+  position:absolute;
+  top:-8px;
+  right:6px;
+  font-size:.55rem;
+  font-weight:800;
+  background:var(--green);
+  color:#fff;
+  padding:2px 6px;
+  border-radius:999px;
+  letter-spacing:.5px;
+}
+
+.dur-num{
+  font-size:1.4rem;
+  font-weight:900;
+  letter-spacing:-1px;
+  line-height:1;
+  margin-bottom:4px;
+}
+
+.dur-label{
+  font-size:.7rem;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  font-weight:600;
+}
+
+.divider-or{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:16px 0;
+  color:var(--text-dim);
+  font-size:.7rem;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  font-weight:600;
+}
+
+.divider-or::before,
+.divider-or::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--card-border);
+}
+
+.offline-btn{
+  width:100%;
+  padding:14px;
+  background:transparent;
+  border:1.5px solid var(--card-border);
+  color:var(--text-muted);
+  border-radius:14px;
+  font-family:inherit;
+  font-weight:600;
+  font-size:.9rem;
+  cursor:pointer;
+  transition:all .2s;
+}
+
+.offline-btn:active{
+  background:rgba(255,255,255,0.04);
+  transform:scale(.98);
+}
+
+/* INFO STRIP */
+.info-strip{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-bottom:20px;
+}
+
+.info-tile{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:14px;
+}
+
+.info-tile .label{
+  font-size:.68rem;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:1px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.info-tile .value{
+  font-size:1.15rem;
+  font-weight:800;
+  color:var(--text);
+  font-variant-numeric:tabular-nums;
+}
+
+.info-tile .sub{
+  font-size:.7rem;
+  color:var(--text-dim);
+  margin-top:2px;
+}
+
+/* NOTIFICATIONS BANNER */
+.notif-banner{
+  background:linear-gradient(135deg,rgba(245,197,24,0.12),rgba(245,197,24,0.04));
+  border:1px solid rgba(245,197,24,0.25);
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:20px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.notif-icon{
+  width:40px;
+  height:40px;
+  background:rgba(245,197,24,0.15);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.3rem;
+  flex-shrink:0;
+}
+
+.notif-text{flex:1;min-width:0}
+
+.notif-title{
+  font-size:.88rem;
+  font-weight:700;
+  margin-bottom:2px;
+}
+
+.notif-desc{
+  font-size:.75rem;
+  color:var(--text-muted);
+  line-height:1.4;
+}
+
+.notif-enable{
+  background:var(--gold);
+  color:#1a1a2e;
+  border:none;
+  padding:8px 14px;
+  border-radius:10px;
+  font-weight:700;
+  font-size:.78rem;
+  cursor:pointer;
+  flex-shrink:0;
+  font-family:inherit;
+}
+
+.notif-enable:active{transform:scale(.95)}
+
+.notif-banner.success{
+  background:rgba(0,168,107,0.08);
+  border-color:rgba(0,168,107,0.25);
+}
+
+.notif-banner.success .notif-icon{
+  background:rgba(0,168,107,0.15);
+}
+
+/* ACTIVITY */
+.activity{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:20px;
+  padding:22px;
+  margin-bottom:20px;
+}
+
+.activity-list{
+  list-style:none;
+}
+
+.activity-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid var(--card-border);
+  font-size:.85rem;
+}
+
+.activity-item:last-child{border-bottom:none}
+
+.activity-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.activity-dot.online{background:var(--green-light)}
+.activity-dot.offline{background:var(--text-dim)}
+.activity-dot.extend{background:var(--gold)}
+
+.activity-text{
+  flex:1;
+  min-width:0;
+}
+
+.activity-action{
+  font-weight:600;
+  color:var(--text);
+}
+
+.activity-detail{
+  font-size:.75rem;
+  color:var(--text-muted);
+}
+
+.activity-time{
+  font-size:.72rem;
+  color:var(--text-dim);
+  flex-shrink:0;
+  font-variant-numeric:tabular-nums;
+}
+
+/* FOOTER */
+.footer{
+  margin-top:auto;
+  padding-top:24px;
+  text-align:center;
+  font-size:.78rem;
+  color:var(--text-dim);
+}
+
+.footer a{
+  color:var(--gold);
+  text-decoration:none;
+  font-weight:600;
+}
+
+/* MODAL */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(6px);
+  z-index:100;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+}
+
+.modal-backdrop.show{display:flex}
+
+.modal{
+  background:var(--bg-darker);
+  border:1px solid var(--card-border);
+  border-radius:24px 24px 0 0;
+  padding:28px 22px 32px;
+  width:100%;
+  max-width:480px;
+  animation:slideUp .25s ease-out;
+}
+
+@keyframes slideUp{
+  from{transform:translateY(100%)}
+  to{transform:translateY(0)}
+}
+
+.modal-handle{
+  width:40px;
+  height:4px;
+  background:var(--card-border);
+  border-radius:999px;
+  margin:0 auto 18px;
+}
+
+.modal h2{
+  font-size:1.3rem;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.modal p{
+  font-size:.9rem;
+  color:var(--text-muted);
+  margin-bottom:20px;
+  line-height:1.5;
+}
+
+.modal-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.modal-btn{
+  padding:14px;
+  border-radius:14px;
+  border:none;
+  font-family:inherit;
+  font-weight:700;
+  font-size:.92rem;
+  cursor:pointer;
+}
+
+.modal-btn.cancel{
+  background:var(--card-bg);
+  color:var(--text-muted);
+  border:1px solid var(--card-border);
+}
+
+.modal-btn.confirm{
+  background:var(--danger);
+  color:#fff;
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%) translateY(-100px);
+  background:var(--bg-darker);
+  border:1px solid var(--card-border);
+  border-radius:14px;
+  padding:14px 20px;
+  font-size:.88rem;
+  font-weight:600;
+  z-index:200;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  transition:transform .3s ease;
+}
+
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.toast.success{border-color:rgba(0,168,107,0.4)}
+.toast.success .toast-icon{color:var(--green-light)}
+
+.toast.warning{border-color:rgba(245,197,24,0.4)}
+.toast.warning .toast-icon{color:var(--gold)}
+
+@media(max-width:380px){
+  .greeting h1{font-size:1.5rem}
+  .countdown-num{font-size:2.8rem}
+  .duration-grid{gap:8px}
+  .dur-btn{padding:14px 6px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      Kemerbet · Agent Portal
+    </div>
+    <button class="bell-btn alert" id="bellBtn" aria-label="Notifications">🔔</button>
+  </div>
+
+  <!-- GREETING -->
+  <div class="greeting">
+    <div class="hi">ሰላም 👋</div>
+    <h1>Hi, you are <span class="num">Agent #07</span></h1>
+  </div>
+
+  <!-- STATUS CARD: LIVE state -->
+  <div class="status-card live" id="statusCard">
+    <div class="status-label">
+      <span class="status-dot"></span>
+      You are live
+    </div>
+    <div class="status-headline">Online</div>
+    <div class="status-sub">Players can see your card and message you.</div>
+
+    <div class="countdown">
+      <span class="countdown-num" id="cdHours">01</span>
+      <span class="countdown-unit">h</span>
+      <span class="countdown-num" id="cdMinutes">23</span>
+      <span class="countdown-unit">m</span>
+      <span class="countdown-num" id="cdSeconds">45</span>
+      <span class="countdown-unit">s</span>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:65%"></div>
+    </div>
+
+    <div class="status-actions">
+      <button class="action-btn extend" onclick="openExtend()">⚡ Extend Time</button>
+      <button class="action-btn set-offline" onclick="openOfflineConfirm()">Set Offline</button>
+    </div>
+  </div>
+
+  <!-- INFO STRIP -->
+  <div class="info-strip">
+    <div class="info-tile">
+      <div class="label">Today's clicks</div>
+      <div class="value">12</div>
+      <div class="sub">↑ 4 vs yesterday</div>
+    </div>
+    <div class="info-tile">
+      <div class="label">Live time today</div>
+      <div class="value">3h 42m</div>
+      <div class="sub">Across 4 sessions</div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS BANNER -->
+  <div class="notif-banner" id="notifBanner">
+    <div class="notif-icon">🔔</div>
+    <div class="notif-text">
+      <div class="notif-title">Get reminders</div>
+      <div class="notif-desc">10 & 5 min before your time ends</div>
+    </div>
+    <button class="notif-enable" onclick="enableNotifs()">Enable</button>
+  </div>
+
+  <!-- ACTIVITY -->
+  <div class="activity">
+    <div class="section-title">Recent Activity</div>
+    <ul class="activity-list">
+      <li class="activity-item">
+        <span class="activity-dot online"></span>
+        <div class="activity-text">
+          <div class="activity-action">Went online</div>
+          <div class="activity-detail">2 hour session</div>
+        </div>
+        <div class="activity-time">36m ago</div>
+      </li>
+      <li class="activity-item">
+        <span class="activity-dot offline"></span>
+        <div class="activity-text">
+          <div class="activity-action">Set offline manually</div>
+          <div class="activity-detail">After 1h 14m live</div>
+        </div>
+        <div class="activity-time">3h ago</div>
+      </li>
+      <li class="activity-item">
+        <span class="activity-dot online"></span>
+        <div class="activity-text">
+          <div class="activity-action">Went online</div>
+          <div class="activity-detail">1 hour 30 min session</div>
+        </div>
+        <div class="activity-time">4h ago</div>
+      </li>
+      <li class="activity-item">
+        <span class="activity-dot extend"></span>
+        <div class="activity-text">
+          <div class="activity-action">Extended time</div>
+          <div class="activity-detail">Added 30 minutes</div>
+        </div>
+        <div class="activity-time">Yesterday</div>
+      </li>
+      <li class="activity-item">
+        <span class="activity-dot offline"></span>
+        <div class="activity-text">
+          <div class="activity-action">Time ended</div>
+          <div class="activity-detail">2h session completed</div>
+        </div>
+        <div class="activity-time">Yesterday</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Need help? <a href="#">Contact admin</a><br>
+    <span style="opacity:.6;font-size:.7rem;margin-top:4px;display:inline-block">Token: ••••••••a8f3</span>
+  </div>
+
+</div>
+
+<!-- OFFLINE CONFIRM MODAL -->
+<div class="modal-backdrop" id="offlineModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Go offline now?</h2>
+    <p>Players will stop seeing you in the live list. You can come back online any time.</p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal()">Stay live</button>
+      <button class="modal-btn confirm" onclick="confirmOffline()">Yes, go offline</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Status updated</span>
+</div>
+
+<script>
+// ========= MOCK STATE =========
+// In production this comes from /api/agent/state
+const state = {
+  isLive: true,
+  liveUntil: Date.now() + (1*60*60*1000 + 23*60*1000 + 45*1000), // 1h 23m 45s
+  totalDuration: 2*60*60*1000, // 2h total session
+  notificationsEnabled: false
+};
+
+// ========= COUNTDOWN =========
+const cdHours = document.getElementById('cdHours');
+const cdMinutes = document.getElementById('cdMinutes');
+const cdSeconds = document.getElementById('cdSeconds');
+const progressBar = document.getElementById('progressBar');
+const statusCard = document.getElementById('statusCard');
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function updateCountdown(){
+  if (!state.isLive) return;
+  const remaining = state.liveUntil - Date.now();
+  if (remaining <= 0){
+    transitionToOffline();
+    return;
+  }
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  cdHours.textContent = pad(h);
+  cdMinutes.textContent = pad(m);
+  cdSeconds.textContent = pad(s);
+  const pct = (remaining / state.totalDuration) * 100;
+  progressBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// ========= RENDER OFFLINE STATE =========
+function renderOffline(){
+  statusCard.classList.remove('live');
+  statusCard.classList.add('offline');
+  statusCard.innerHTML = `
+    <div class="status-label">
+      <span class="status-dot"></span>
+      You are offline
+    </div>
+    <div class="status-headline">Offline</div>
+    <div class="status-sub">Last online 3 minutes ago. Pick a duration below to come back.</div>
+
+    <div class="status-actions single">
+      <button class="action-btn extend" onclick="scrollToGoLive()">⚡ Go Online Now</button>
+    </div>
+  `;
+
+  // Inject "Go Live" section if not present
+  if (!document.getElementById('goLiveSection')){
+    const html = `
+      <div class="go-live-section" id="goLiveSection">
+        <div class="section-title">Choose duration</div>
+        <div class="duration-grid">
+          <button class="dur-btn" onclick="goLive(15)">
+            <div class="dur-num">15</div>
+            <div class="dur-label">minutes</div>
+          </button>
+          <button class="dur-btn" onclick="goLive(30)">
+            <div class="dur-num">30</div>
+            <div class="dur-label">minutes</div>
+          </button>
+          <button class="dur-btn" onclick="goLive(45)">
+            <div class="dur-num">45</div>
+            <div class="dur-label">minutes</div>
+          </button>
+          <button class="dur-btn" onclick="goLive(60)">
+            <div class="dur-num">1</div>
+            <div class="dur-label">hour</div>
+          </button>
+          <button class="dur-btn recommended" onclick="goLive(120)">
+            <div class="dur-num">2</div>
+            <div class="dur-label">hours</div>
+          </button>
+          <button class="dur-btn" disabled style="opacity:.4;cursor:not-allowed">
+            <div class="dur-num">—</div>
+            <div class="dur-label">custom</div>
+          </button>
+        </div>
+        <div class="divider-or">or stay offline</div>
+        <button class="offline-btn" disabled style="opacity:.5">You are already offline</button>
+      </div>
+    `;
+    statusCard.insertAdjacentHTML('afterend', html);
+  }
+}
+
+function transitionToOffline(){
+  state.isLive = false;
+  renderOffline();
+  showToast('You are now offline', 'warning', '⚠️');
+}
+
+// ========= ACTIONS =========
+function openExtend(){
+  showToast('Extend opens duration picker', 'success', '⚡');
+  // In production: scroll to / open duration grid even while live
+}
+
+function openOfflineConfirm(){
+  document.getElementById('offlineModal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('offlineModal').classList.remove('show');
+}
+
+function confirmOffline(){
+  closeModal();
+  transitionToOffline();
+}
+
+function goLive(minutes){
+  state.isLive = true;
+  state.totalDuration = minutes * 60 * 1000;
+  state.liveUntil = Date.now() + state.totalDuration;
+  // restore live UI by reloading the demo (in production, just re-render)
+  location.reload();
+}
+
+function scrollToGoLive(){
+  document.getElementById('goLiveSection')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function enableNotifs(){
+  if (!('Notification' in window)){
+    showToast('Notifications not supported', 'warning', '⚠️');
+    return;
+  }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted'){
+      state.notificationsEnabled = true;
+      const banner = document.getElementById('notifBanner');
+      banner.classList.add('success');
+      banner.innerHTML = `
+        <div class="notif-icon">✓</div>
+        <div class="notif-text">
+          <div class="notif-title">Notifications enabled</div>
+          <div class="notif-desc">You'll get reminders before your time ends</div>
+        </div>
+      `;
+      document.getElementById('bellBtn').classList.remove('alert');
+      showToast('Notifications enabled', 'success', '✓');
+    } else {
+      showToast('Permission denied', 'warning', '⚠️');
+    }
+  });
+}
+
+// ========= TOAST =========
+function showToast(text, type='success', icon='✓'){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  toast.querySelector('.toast-icon').textContent = icon;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+</script>
+
+</body>
+</html>
