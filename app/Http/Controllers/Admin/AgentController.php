@@ -118,7 +118,7 @@ class AgentController extends Controller
     {
         $validated = $request->validated();
 
-        $agent->update(Arr::only($validated, ['telegram_username', 'notes']));
+        $agent->update(Arr::only($validated, ['display_number', 'telegram_username', 'notes']));
 
         if (isset($validated['payment_method_ids'])) {
             $agent->paymentMethods()->sync($validated['payment_method_ids']);

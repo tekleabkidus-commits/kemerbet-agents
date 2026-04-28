@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAgentRequest extends FormRequest
 {
@@ -14,6 +15,14 @@ class UpdateAgentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'display_number' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                Rule::unique('agents', 'display_number')
+                    ->ignore($this->route('agent')->id)
+                    ->whereNull('deleted_at'),
+            ],
             'telegram_username' => [
                 'sometimes',
                 'string',

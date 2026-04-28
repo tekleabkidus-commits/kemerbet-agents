@@ -201,3 +201,60 @@ test('partial update with only notes leaves other fields unchanged', function ()
     $updatedMethodIds = $agent->fresh()->paymentMethods->pluck('id')->sort()->values()->all();
     expect($updatedMethodIds)->toBe($originalMethodIds);
 });
+
+// =============================================================
+// Update display_number
+// =============================================================
+
+test('updates display_number to unused number', function () {
+    $agent = Agent::where('display_number', 1)->first();
+
+    $response = $this->actingAs($this->admin)
+        ->putJson("/api/admin/agents/{$agent->id}", [
+            'display_number' => 99,
+        ]);
+
+    $response->assertOk();
+    expect($response->json('data.display_number'))->toBe(99);
+    expect(Agent::find($agent->id)->display_number)->toBe(99);
+});
+
+test('returns 422 when display_number is taken by active agent', function () {
+    $agent1 = Agent::where('display_number', 1)->first();
+    $agent2 = Agent::where('display_number', 2)->first();
+
+    $this->actingAs($this->admin)
+        ->putJson("/api/admin/agents/{$agent1->id}", [
+            'display_number' => $agent2->display_number,
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['display_number']);
+});
+
+test('allows display_number that belonged to soft-deleted agent', function () {
+    $agent1 = Agent::where('display_number', 1)->first();
+    $agent2 = Agent::where('display_number', 2)->first();
+
+    // Soft-delete agent 2 — its number should be released
+    $agent2->delete();
+
+    $response = $this->actingAs($this->admin)
+        ->putJson("/api/admin/agents/{$agent1->id}", [
+            'display_number' => 2,
+        ]);
+
+    $response->assertOk();
+    expect($response->json('data.display_number'))->toBe(2);
+});
+
+test('allows updating same display_number as no-op', function () {
+    $agent = Agent::where('display_number', 1)->first();
+
+    $response = $this->actingAs($this->admin)
+        ->putJson("/api/admin/agents/{$agent->id}", [
+            'display_number' => 1,
+        ]);
+
+    $response->assertOk();
+    expect($response->json('data.display_number'))->toBe(1);
+});
