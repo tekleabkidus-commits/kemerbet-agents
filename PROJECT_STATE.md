@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-04-28
 **Current phase:** Phase B — Admin agent CRUD (in progress)
-**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4 complete. Task 5 next.
+**Build progress:** Phase A complete. Phase B Tasks 1+2+3+4+5 implementation complete (Task 5 smoke test pending).
 
 ---
 
@@ -81,16 +81,31 @@
     - ActivityPage silently filters by agent_id, shows banner with agent label + "Show all events"
   - 3 commits, 83 tests passing
 
+- 🔧 **Task 5 — Restore deleted agents** (implementation complete 2026-04-28, smoke test pending)
+  - Backend: POST /api/admin/agents/{id}/restore with ->withTrashed() route binding (89fc3db)
+    - Display number reassignment BEFORE restore() to avoid partial unique index collision
+    - Token reactivation via orderBy(created_at desc, id desc) for predictable most-recent semantics
+    - Defensive fallback: creates new token if agent has zero tokens
+    - New EVENT_RESTORED_BY_ADMIN constant (9th event type)
+    - 9 Pest tests in AgentRestoreTest.php (92 total)
+  - Frontend: AgentsPage restore flow inline with ConfirmModal → TokenReveal (f9181a9)
+    - Restore button replaces Edit/Regenerate/Delete icons on deleted view
+    - TokenReveal shows reactivated URL with reactivation-specific warning
+    - ActivityPage formatDescription updated for restored_by_admin
+  - 2 commits, 92 tests passing
+
 ### Resume next session
 
-- **Task 5 — Restore deleted agents**
+- **Smoke test the restore flow in the browser.** If smoke test passes, Task 5 ships and Phase B gate review begins.
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **What Task 5 needs:**
-  - Backend: POST /api/admin/agents/{id}/restore (resolve soft-deleted agent, restore it)
-  - New StatusEvent constant: EVENT_RESTORED_BY_ADMIN + add to EVENT_TYPES array
-  - AgentsPage: Restore button visible on agents in the "Deleted" filter view
-  - Auto-assign fresh display_number on restore (no number reservation for deleted agents)
-  - Activity log: restored_by_admin event type support in ActivityPage formatDescription
+- **Smoke test checklist:**
+  1. Filter agents by "Deleted" → deleted agents appear with Restore button (no Edit/Regen/Trash icons)
+  2. Click Restore → ConfirmModal: "The agent will be restored as disabled. Their previous secret link will be reactivated."
+  3. Confirm → TokenReveal shows the reactivated URL with Copy + Send via Telegram
+  4. Click Done → agent disappears from deleted view (now active, status=disabled)
+  5. Switch to "Disabled" or "All status" filter → agent visible with new display_number
+  6. Check Activity log → "Kidus restored Agent N" event appears
+  7. Verify the reactivated token URL works (navigate to /a/{token} in browser)
 
 ### Gate review at end of Phase A
 
@@ -127,7 +142,7 @@ These are unresolved and may need Kidus's input as you build:
 
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
-[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4 done, Task 5 next
+[🔧] Phase B — Admin agent CRUD          in progress — Tasks 1+2+3+4+5 done, smoke test pending
 [ ] Phase C — Agent secret page
 [ ] Phase D — Public API + HTML block
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
