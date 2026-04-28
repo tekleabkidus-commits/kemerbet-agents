@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Pencil, RefreshCw, Trash2, Plus, Loader2 } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, Plus, Loader2, RotateCcw } from 'lucide-react';
 import api from '@/api';
+import ConfirmModal from '@/components/ConfirmModal';
 import EditAgentModal from '@/components/EditAgentModal';
+import Modal from '@/components/Modal';
 import NewAgentModal from '@/components/NewAgentModal';
+import TokenReveal from '@/components/TokenReveal';
 
 // --- Types ---
 
@@ -34,6 +37,12 @@ interface Meta {
     last_page: number;
     per_page: number;
     total: number;
+}
+
+interface RestoredAgent {
+    display_number: number;
+    telegram_username: string;
+    active_token_url: string | null;
 }
 
 // TODO: Wire to GET /api/admin/payment-methods in Phase B Task 5
@@ -114,7 +123,12 @@ function FilterBar({ search, status, paymentMethod, sort, onSearch, onStatus, on
     );
 }
 
-function AgentRow({ agent: a, onEdit }: { agent: Agent; onEdit: (id: number) => void }) {
+function AgentRow({ agent: a, onEdit, isDeletedView, onRestore }: {
+    agent: Agent;
+    onEdit: (id: number) => void;
+    isDeletedView: boolean;
+    onRestore: (id: number) => void;
+}) {
     const num = pad(a.display_number);
     const extra = a.payment_methods.length - 3;
     const statusLabel = a.computed_status === 'live' ? 'Live' : a.computed_status === 'disabled' ? 'Disabled' : 'Offline';
@@ -148,9 +162,17 @@ function AgentRow({ agent: a, onEdit }: { agent: Agent; onEdit: (id: number) => 
             </td>
             <td>
                 <div className="cell-actions">
-                    <button className="icon-btn" onClick={() => onEdit(a.id)}><Pencil size={13} /></button>
-                    <button className="icon-btn" disabled title={t2}><RefreshCw size={13} /></button>
-                    <button className="icon-btn danger" disabled title={t2}><Trash2 size={13} /></button>
+                    {isDeletedView ? (
+                        <button className="btn btn-secondary btn-sm" onClick={() => onRestore(a.id)}>
+                            <RotateCcw size={12} /> Restore
+                        </button>
+                    ) : (
+                        <>
+                            <button className="icon-btn" onClick={() => onEdit(a.id)}><Pencil size={13} /></button>
+                            <button className="icon-btn" disabled title={t2}><RefreshCw size={13} /></button>
+                            <button className="icon-btn danger" disabled title={t2}><Trash2 size={13} /></button>
+                        </>
+                    )}
                 </div>
             </td>
         </tr>
@@ -168,6 +190,13 @@ export default function AgentsPage() {
     const [editingAgentId, setEditingAgentId] = useState<number | null>(null);
     const [isNewAgentOpen, setIsNewAgentOpen] = useState(false);
     const [agentsVersion, setAgentsVersion] = useState(0);
+
+    // Restore flow
+    const [restoringAgentId, setRestoringAgentId] = useState<number | null>(null);
+    const [isRestoring, setIsRestoring] = useState(false);
+    const [restoreError, setRestoreError] = useState<string | null>(null);
+    const [restoredAgent, setRestoredAgent] = useState<RestoredAgent | null>(null);
+    const [copied, setCopied] = useState(false);
 
     const search = params.get('search') ?? '';
     const status = params.get('status') ?? 'all';
@@ -226,6 +255,44 @@ export default function AgentsPage() {
     const hasFilters = search || status !== 'all' || paymentMethod || sort !== 'number';
     const clearFilters = () => { setParams({}); setSearchInput(''); };
     const goToPage = (p: number) => updateParam('page', p > 1 ? String(p) : '', false);
+    const isDeletedView = status === 'deleted';
+
+    const restoringAgent = restoringAgentId ? agents.find((a) => a.id === restoringAgentId) : null;
+
+    function handleRestore() {
+        if (!restoringAgentId) return;
+        setIsRestoring(true);
+        setRestoreError(null);
+
+        api.post(`/api/admin/agents/${restoringAgentId}/restore`)
+            .then((res) => {
+                const d = res.data.data;
+                setRestoringAgentId(null);
+                setRestoredAgent({
+                    display_number: d.display_number,
+                    telegram_username: d.telegram_username,
+                    active_token_url: d.active_token_url,
+                });
+            })
+            .catch((err) => {
+                const msg = err?.response?.data?.message ?? 'Failed to restore agent.';
+                setRestoreError(msg);
+            })
+            .finally(() => setIsRestoring(false));
+    }
+
+    function handleRestoreRevealClose() {
+        setRestoredAgent(null);
+        setCopied(false);
+        setAgentsVersion((v) => v + 1);
+    }
+
+    function handleCopyToken(url: string) {
+        navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }
 
     return (
         <>
@@ -292,7 +359,7 @@ export default function AgentsPage() {
                                 </thead>
                                 <tbody>
                                     {agents.map((agent) => (
-                                        <AgentRow key={agent.id} agent={agent} onEdit={setEditingAgentId} />
+                                        <AgentRow key={agent.id} agent={agent} onEdit={setEditingAgentId} isDeletedView={isDeletedView} onRestore={setRestoringAgentId} />
                                     ))}
                                 </tbody>
                             </table>
@@ -334,6 +401,41 @@ export default function AgentsPage() {
                 onClose={() => setIsNewAgentOpen(false)}
                 onCreated={() => setAgentsVersion((v) => v + 1)}
             />
+
+            <ConfirmModal
+                isOpen={restoringAgentId !== null}
+                onClose={() => { setRestoringAgentId(null); setRestoreError(null); }}
+                onConfirm={handleRestore}
+                title={`Restore Agent ${restoringAgent?.display_number ?? ''}`}
+                message="The agent will be restored as disabled. Their previous secret link will be reactivated."
+                confirmLabel="Restore"
+                confirmStyle="warning"
+                isProcessing={isRestoring}
+                error={restoreError ?? undefined}
+            />
+
+            <Modal
+                isOpen={restoredAgent !== null}
+                onClose={handleRestoreRevealClose}
+                title="Agent Restored"
+                subtitle={restoredAgent ? `Agent ${restoredAgent.display_number}` : undefined}
+                footer={
+                    <button type="button" className="btn btn-primary" onClick={handleRestoreRevealClose}>
+                        Done
+                    </button>
+                }
+            >
+                {restoredAgent?.active_token_url && (
+                    <TokenReveal
+                        tokenUrl={restoredAgent.active_token_url}
+                        telegramUsername={restoredAgent.telegram_username}
+                        onCopy={() => handleCopyToken(restoredAgent.active_token_url!)}
+                        copied={copied}
+                        onDismiss={handleRestoreRevealClose}
+                        warning="This is the agent's previous link, now reactivated. Resend it to the agent if needed."
+                    />
+                )}
+            </Modal>
         </>
     );
 }

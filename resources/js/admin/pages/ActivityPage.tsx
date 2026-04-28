@@ -47,6 +47,7 @@ const EVENT_TYPE_OPTIONS: { value: string; label: string; group: 'agent' | 'admi
     { value: 'created_by_admin', label: 'Created', group: 'admin' },
     { value: 'enabled_by_admin', label: 'Re-enabled', group: 'admin' },
     { value: 'token_regenerated', label: 'Token regenerated', group: 'admin' },
+    { value: 'restored_by_admin', label: 'Restored', group: 'admin' },
     { value: 'disabled_by_admin', label: 'Disabled', group: 'destructive' },
     { value: 'deleted_by_admin', label: 'Deleted', group: 'destructive' },
 ];
@@ -59,6 +60,7 @@ const BADGE_LABELS: Record<string, string> = {
     disabled_by_admin: 'Disabled',
     enabled_by_admin: 'Enabled',
     token_regenerated: 'Token',
+    restored_by_admin: 'Restored',
     deleted_by_admin: 'Deleted',
 };
 
@@ -69,6 +71,7 @@ const BADGE_CLASS: Record<string, string> = {
     created_by_admin: 'admin',
     enabled_by_admin: 'admin',
     token_regenerated: 'admin',
+    restored_by_admin: 'admin',
     disabled_by_admin: 'destructive',
     deleted_by_admin: 'destructive',
 };
@@ -121,6 +124,9 @@ function formatDescription(event: ActivityEvent): { text: string; isDeleted: boo
             break;
         case 'token_regenerated':
             text = `${admin} regenerated token for ${agent}`;
+            break;
+        case 'restored_by_admin':
+            text = `${admin} restored ${agent}`;
             break;
         case 'deleted_by_admin':
             text = `${admin} deleted ${agent}`;
