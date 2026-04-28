@@ -23,6 +23,8 @@ class StatusEvent extends Model
 
     public const EVENT_DELETED_BY_ADMIN = 'deleted_by_admin';
 
+    public const EVENT_RESTORED_BY_ADMIN = 'restored_by_admin';
+
     public const EVENT_TYPES = [
         self::EVENT_WENT_ONLINE,
         self::EVENT_WENT_OFFLINE,
@@ -32,6 +34,7 @@ class StatusEvent extends Model
         self::EVENT_ENABLED_BY_ADMIN,
         self::EVENT_TOKEN_REGENERATED,
         self::EVENT_DELETED_BY_ADMIN,
+        self::EVENT_RESTORED_BY_ADMIN,
     ];
 
     public $timestamps = false;

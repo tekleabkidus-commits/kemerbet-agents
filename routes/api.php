@@ -31,5 +31,6 @@ Route::prefix('admin')->group(function () {
         Route::post('agents/{agent}/enable', [AgentController::class, 'enable']);
         Route::post('agents/{agent}/regenerate-token', [AgentController::class, 'regenerateToken']);
         Route::delete('agents/{agent}', [AgentController::class, 'destroy']);
+        Route::post('agents/{agent}/restore', [AgentController::class, 'restore'])->withTrashed();
     });
 });

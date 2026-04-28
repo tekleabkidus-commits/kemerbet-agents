@@ -252,6 +252,52 @@ class AgentController extends Controller
         return $this->respondWithDetail($agent);
     }
 
+    public function restore(Request $request, Agent $agent): JsonResponse
+    {
+        if (! $agent->trashed()) {
+            return response()->json(['message' => 'Agent is not deleted.'], 422);
+        }
+
+        DB::transaction(function () use ($request, $agent) {
+            // Assign new display_number BEFORE restoring to avoid unique constraint
+            // collision — the partial index (WHERE deleted_at IS NULL) means the old
+            // display_number could conflict with an active agent once deleted_at is cleared.
+            $nextNumber = (Agent::withTrashed()->max('display_number') ?? 0) + 1;
+
+            $agent->update([
+                'display_number' => $nextNumber,
+                'status' => Agent::STATUS_DISABLED,
+                'live_until' => null,
+                'last_status_change_at' => now(),
+            ]);
+
+            $agent->restore();
+
+            // SECURITY NOTE: Per design decision, restore reactivates the agent's most recent
+            // token rather than generating a new one. This means previously-distributed URLs
+            // (potentially shared in customer chats, screenshots, etc.) become functional again.
+            // Admin accepts this tradeoff as documented in PROJECT_STATE.md Task 5 design.
+            $latestToken = $agent->tokens()->orderBy('created_at', 'desc')->orderBy('id', 'desc')->first();
+            if ($latestToken) {
+                $latestToken->update(['revoked_at' => null]);
+            } else {
+                $agent->tokens()->create([
+                    'token' => bin2hex(random_bytes(32)),
+                    'created_at' => now(),
+                ]);
+            }
+
+            $agent->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => StatusEvent::EVENT_RESTORED_BY_ADMIN,
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
+        });
+
+        return $this->respondWithDetail($agent->fresh());
+    }
+
     private function respondWithDetail(Agent $agent): JsonResponse
     {
         $agent->load([
