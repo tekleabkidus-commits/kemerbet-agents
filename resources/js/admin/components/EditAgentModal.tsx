@@ -406,6 +406,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                                     onCopy={() => handleCopyToken(newTokenUrl)}
                                     copied={copied}
                                     onDismiss={() => { setNewTokenUrl(null); setCopied(false); }}
+                                    warning="The old link has been revoked and the agent was taken offline. They will need to use this new link to go live again."
                                 />
                             ) : agent.active_token_url ? (
                                 <TokenDisplay

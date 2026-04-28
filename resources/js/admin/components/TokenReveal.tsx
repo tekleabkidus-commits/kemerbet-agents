@@ -6,6 +6,7 @@ interface TokenRevealProps {
     onCopy: () => void;
     copied: boolean;
     onDismiss: () => void;
+    warning?: string;
 }
 
 export default function TokenReveal({
@@ -14,6 +15,7 @@ export default function TokenReveal({
     onCopy,
     copied,
     onDismiss,
+    warning,
 }: TokenRevealProps) {
     const telegramLink = `https://t.me/${telegramUsername}?text=${encodeURIComponent(tokenUrl)}`;
 
@@ -42,10 +44,11 @@ export default function TokenReveal({
                     Dismiss
                 </button>
             </div>
-            <div className="token-warning">
-                <strong>Important:</strong> The old link has been revoked and the agent was taken offline.
-                They will need to use this new link to go live again.
-            </div>
+            {warning && (
+                <div className="token-warning">
+                    <strong>Important:</strong> {warning}
+                </div>
+            )}
         </div>
     );
 }
