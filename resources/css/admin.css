@@ -1451,3 +1451,60 @@ body.modal-open {
     max-height: calc(100vh - 40px);
   }
 }
+
+/* ============= ACTIVITY ============= */
+
+.event-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.event-badge.agent {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.event-badge.admin {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+.event-badge.destructive {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.event-description {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.event-description .deleted-tag {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.date-input {
+  padding: 7px 12px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.date-input:focus {
+  border-color: var(--green);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
