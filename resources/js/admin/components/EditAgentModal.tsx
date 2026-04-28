@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Copy, Check, RefreshCw, Loader2, ShieldOff, ShieldCheck, Trash2 } from 'lucide-react';
 import api from '@/api';
 import Modal from './Modal';
@@ -102,6 +103,8 @@ function errorMessage(err: unknown): string {
 // --- Main component ---
 
 export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentModalProps) {
+    const navigate = useNavigate();
+
     // Data
     const [agent, setAgent] = useState<AgentDetail | null>(null);
     const [allMethods, setAllMethods] = useState<PaymentMethod[]>([]);
@@ -305,6 +308,14 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                                 <Trash2 size={13} /> Delete
                             </button>
                             <div className="modal-footer-right">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={() => { onClose(); navigate(`/admin/activity?agent_id=${agent.id}`); }}
+                                    disabled={isSaving}
+                                >
+                                    View activity
+                                </button>
                                 <button
                                     type="button"
                                     className="btn btn-secondary"

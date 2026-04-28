@@ -225,6 +225,7 @@ export default function ActivityPage() {
     const [error, setError] = useState<string | null>(null);
 
     const eventType = params.get('event_type') ?? '';
+    const agentId = params.get('agent_id') ?? '';
     const dateFrom = params.get('date_from') ?? '';
     const dateTo = params.get('date_to') ?? '';
     const page = parseInt(params.get('page') ?? '1', 10);
@@ -250,6 +251,7 @@ export default function ActivityPage() {
 
         const q = new URLSearchParams();
         if (eventType) q.set('event_type[]', eventType);
+        if (agentId) q.set('agent_id', agentId);
         if (dateFrom) q.set('date_from', dateFrom);
         if (dateTo) q.set('date_to', dateTo);
         if (page > 1) q.set('page', String(page));
@@ -261,9 +263,14 @@ export default function ActivityPage() {
             .finally(() => { if (!cancelled) setLoading(false); });
 
         return () => { cancelled = true; };
-    }, [eventType, dateFrom, dateTo, page]);
+    }, [eventType, agentId, dateFrom, dateTo, page]);
 
-    const hasFilters = eventType || dateFrom || dateTo;
+    const hasFilters = eventType || agentId || dateFrom || dateTo;
+
+    // Derive agent label for filter banner from first event in response
+    const filteredAgent = agentId && events.length > 0 && events[0].agent
+        ? `Agent ${events[0].agent.display_number} (@${events[0].agent.telegram_username})`
+        : agentId ? `Agent #${agentId}` : null;
     const clearFilters = () => setParams({});
     const goToPage = (p: number) => updateParam('page', p > 1 ? String(p) : '', false);
 
@@ -287,6 +294,19 @@ export default function ActivityPage() {
                     onDateTo={(v) => updateParam('date_to', v)}
                     showing={events.length} total={meta.total}
                 />
+
+                {filteredAgent && (
+                    <div className="filter-banner">
+                        <span>Showing activity for {filteredAgent}</span>
+                        <button
+                            type="button"
+                            className="filter-banner-clear"
+                            onClick={() => updateParam('agent_id', '')}
+                        >
+                            Show all events
+                        </button>
+                    </div>
+                )}
 
                 {error && (
                     <div className="alert-pad">
