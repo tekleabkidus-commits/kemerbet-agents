@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CreateAgentRequest;
 use App\Http\Requests\Admin\ListAgentsRequest;
 use App\Http\Requests\Admin\UpdateAgentRequest;
 use App\Models\Agent;
@@ -195,9 +196,41 @@ class AgentController extends Controller
         return $this->respondWithDetail($agent->fresh());
     }
 
-    public function store(): never
+    public function store(CreateAgentRequest $request): JsonResponse
     {
-        throw new \BadMethodCallException('AgentController@store not implemented yet.');
+        $validated = $request->validated();
+
+        $agent = DB::transaction(function () use ($request, $validated) {
+            $nextNumber = (Agent::withTrashed()->max('display_number') ?? 0) + 1;
+
+            $agent = Agent::create([
+                'display_number' => $nextNumber,
+                'telegram_username' => $validated['telegram_username'],
+                'notes' => $validated['notes'] ?? null,
+                'status' => Agent::STATUS_ACTIVE,
+                'live_until' => null,
+                'last_status_change_at' => now(),
+            ]);
+
+            $agent->paymentMethods()->sync($validated['payment_method_ids']);
+
+            $agent->tokens()->create([
+                'token' => bin2hex(random_bytes(32)),
+                'created_at' => now(),
+            ]);
+
+            $agent->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => 'created_by_admin',
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
+
+            return $agent;
+        });
+
+        return $this->respondWithDetail($agent->fresh())
+            ->setStatusCode(201);
     }
 
     public function destroy(Request $request, Agent $agent): JsonResponse
