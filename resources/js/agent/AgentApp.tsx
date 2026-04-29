@@ -12,6 +12,8 @@ import InfoStrip from './components/InfoStrip';
 import Activity from './components/Activity';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
+import NotificationBanner from './components/NotificationBanner';
+import BottomSheetModal from './components/BottomSheetModal';
 
 export default function AgentApp({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
@@ -23,6 +25,11 @@ export default function AgentApp({ token }: { token: string }) {
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [offlineModalOpen, setOfflineModalOpen] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+    return Notification.permission;
+  });
 
   // --- Derived page state (single source of truth) ---
   const pageState = useMemo<PageState>(() => {
@@ -122,7 +129,7 @@ export default function AgentApp({ token }: { token: string }) {
   // --- Render ---
   return (
     <div className="wrap">
-      <TopBar />
+      <TopBar showBellAlert={permission === 'default'} />
       {pageState === 'loading' && <LoadingSpinner />}
       {pageState === 'invalid' && <InvalidCard />}
       {pageState === 'disabled' && disabledAgent && (
@@ -134,9 +141,12 @@ export default function AgentApp({ token }: { token: string }) {
       {(pageState === 'live' || pageState === 'offline') && serverState && (
         <>
           <Greeting displayNumber={serverState.agent.display_number} />
+          {pageState === 'live' && (
+            <NotificationBanner permission={permission} onPermissionChange={setPermission} />
+          )}
           <StatusCard
             state={serverState}
-            onGoOffline={handleGoOffline}
+            onGoOffline={() => setOfflineModalOpen(true)}
             onTimerExpired={handleTimerExpired}
             isProcessing={isProcessing}
           />
@@ -152,6 +162,18 @@ export default function AgentApp({ token }: { token: string }) {
           <Footer tokenSuffix={serverState.token_suffix} />
         </>
       )}
+      <BottomSheetModal
+        open={offlineModalOpen}
+        onClose={() => setOfflineModalOpen(false)}
+        onConfirm={() => {
+          setOfflineModalOpen(false);
+          handleGoOffline();
+        }}
+        title="Go offline now?"
+        description="Players will stop seeing you in the live list. You can come back online any time."
+        cancelLabel="Stay live"
+        confirmLabel="Yes, go offline"
+      />
       {toast && <Toast {...toast} />}
     </div>
   );
