@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { fetchState, goOnline, extend, goOffline } from './api';
 import type { AgentState, PageState, ToastState } from './types';
 import TopBar from './components/TopBar';
@@ -14,6 +14,8 @@ import Footer from './components/Footer';
 import Toast from './components/Toast';
 import NotificationBanner from './components/NotificationBanner';
 import BottomSheetModal from './components/BottomSheetModal';
+
+const isIE = typeof window !== 'undefined' && /MSIE|Trident\//.test(navigator.userAgent);
 
 export default function AgentApp({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,33 @@ export default function AgentApp({ token }: { token: string }) {
         setLoading(false);
       });
   }, [token]);
+
+  // --- Multi-browser sync: periodic re-fetch + focus re-fetch ---
+  const isProcessingRef = useRef(false);
+  useEffect(() => {
+    isProcessingRef.current = isProcessing;
+  }, [isProcessing]);
+
+  useEffect(() => {
+    if (pageState !== 'live' && pageState !== 'offline') return;
+
+    const refresh = () => {
+      if (isProcessingRef.current) return;
+      fetchState(token)
+        .then((data) => {
+          if ('status' in data) setServerState(data);
+        })
+        .catch(() => {});
+    };
+
+    const interval = setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [pageState, token]);
 
   // --- Action handlers ---
   const handleGoOnline = useCallback(
@@ -127,6 +156,15 @@ export default function AgentApp({ token }: { token: string }) {
   }
 
   // --- Render ---
+  if (isIE) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'system-ui' }}>
+        <h2>Browser not supported</h2>
+        <p>Please use Chrome, Edge, Firefox, or Safari.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="wrap">
       <TopBar showBellAlert={permission === 'default'} />
