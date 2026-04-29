@@ -13,7 +13,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["resources/js/admin/*"]
+      "@/*": ["resources/js/admin/*"],
+      "@agent/*": ["resources/js/agent/*"]
     }
   },
   "include": ["resources/js/**/*.ts", "resources/js/**/*.tsx"],
