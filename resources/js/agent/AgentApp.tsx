@@ -1,12 +1,26 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { fetchState, goOnline, extend, goOffline } from './api';
 import type { AgentState, PageState, ToastState } from './types';
+import TopBar from './components/TopBar';
+import LoadingSpinner from './components/LoadingSpinner';
+import InvalidCard from './components/InvalidCard';
+import DisabledCard from './components/DisabledCard';
+import Greeting from './components/Greeting';
+import StatusCard from './components/StatusCard';
+import GoLiveSection from './components/GoLiveSection';
+import InfoStrip from './components/InfoStrip';
+import Activity from './components/Activity';
+import Footer from './components/Footer';
+import Toast from './components/Toast';
 
 export default function AgentApp({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [invalid, setInvalid] = useState(false);
   const [serverState, setServerState] = useState<AgentState | null>(null);
-  const [disabledAgent, setDisabledAgent] = useState<{ display_number: number; telegram_username: string } | null>(null);
+  const [disabledAgent, setDisabledAgent] = useState<{
+    display_number: number;
+    telegram_username: string;
+  } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -16,7 +30,7 @@ export default function AgentApp({ token }: { token: string }) {
     if (invalid) return 'invalid';
     if (disabledAgent) return 'disabled';
     if (serverState) return serverState.status.is_live ? 'live' : 'offline';
-    return 'loading'; // defensive fallback
+    return 'loading';
   }, [loading, invalid, disabledAgent, serverState]);
 
   // --- Initial fetch ---
@@ -106,107 +120,39 @@ export default function AgentApp({ token }: { token: string }) {
   }
 
   // --- Render ---
-  switch (pageState) {
-    case 'loading':
-      return (
-        <div className="wrap">
-          <div className="topbar">
-            <div className="brand">
-              <span className="brand-dot"></span>
-              Kemerbet · Agent Portal
-            </div>
-          </div>
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <div>Loading…</div>
-          </div>
-        </div>
-      );
-
-    case 'invalid':
-      return (
-        <div className="wrap">
-          <div className="topbar">
-            <div className="brand">
-              <span className="brand-dot"></span>
-              Kemerbet · Agent Portal
-            </div>
-          </div>
-          {/* TODO 5B: styled invalid state matching mockup error card */}
-          <div className="loading-state">
-            <div style={{ fontSize: '2rem', marginBottom: 12 }}>⚠</div>
-            <div>Link not valid</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '.85rem', marginTop: 8 }}>
-              This link doesn't exist or has been revoked. Please contact admin for a new link.
-            </div>
-          </div>
-        </div>
-      );
-
-    case 'disabled':
-      return (
-        <div className="wrap">
-          <div className="topbar">
-            <div className="brand">
-              <span className="brand-dot"></span>
-              Kemerbet · Agent Portal
-            </div>
-          </div>
-          {/* TODO 5B: styled disabled state with agent identity */}
-          <div className="loading-state">
-            <div style={{ fontSize: '2rem', marginBottom: 12 }}>⊘</div>
-            <div>Account disabled</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '.85rem', marginTop: 8 }}>
-              {disabledAgent
-                ? `Agent #${String(disabledAgent.display_number).padStart(2, '0')} — your account has been disabled. Please contact admin.`
-                : 'Your account has been disabled. Please contact admin.'}
-            </div>
-          </div>
-        </div>
-      );
-
-    case 'live':
-    case 'offline':
-      if (!serverState) return null;
-      return (
-        <div className="wrap">
-          <div className="topbar">
-            <div className="brand">
-              <span className="brand-dot"></span>
-              Kemerbet · Agent Portal
-            </div>
-          </div>
-          {/* TODO 5B: full live/offline UI — greeting, status card, info strip, activity, footer */}
-          <div className="greeting">
-            <div className="hi">ሰላም 👋</div>
-            <h1>
-              Hi, you are{' '}
-              <span className="num">
-                Agent #{String(serverState.agent.display_number).padStart(2, '0')}
-              </span>
-            </h1>
-          </div>
-          <div className={`status-card ${pageState}`}>
-            <div className="status-label">
-              <span className="status-dot"></span>
-              You are {pageState}
-            </div>
-            <div className="status-headline">{pageState === 'live' ? 'Online' : 'Offline'}</div>
-            <div className="status-sub">
-              {pageState === 'live'
-                ? 'Players can see your card and message you.'
-                : 'Pick a duration below to come back.'}
-            </div>
-          </div>
-          {/* TODO 5B: countdown, progress bar, action buttons, go-live section, info strip, activity, footer */}
-          {/* Toast placeholder */}
-          {toast && (
-            <div className={`toast show ${toast.type}`}>
-              <span className="toast-icon">{toast.icon}</span>
-              <span>{toast.message}</span>
-            </div>
-          )}
-        </div>
-      );
-  }
+  return (
+    <div className="wrap">
+      <TopBar />
+      {pageState === 'loading' && <LoadingSpinner />}
+      {pageState === 'invalid' && <InvalidCard />}
+      {pageState === 'disabled' && disabledAgent && (
+        <DisabledCard
+          displayNumber={disabledAgent.display_number}
+          telegramUsername={disabledAgent.telegram_username}
+        />
+      )}
+      {(pageState === 'live' || pageState === 'offline') && serverState && (
+        <>
+          <Greeting displayNumber={serverState.agent.display_number} />
+          <StatusCard
+            state={serverState}
+            onGoOffline={handleGoOffline}
+            onTimerExpired={handleTimerExpired}
+            isProcessing={isProcessing}
+          />
+          <GoLiveSection
+            mode={serverState.status.is_live ? 'extend' : 'go-online'}
+            available={serverState.available_durations}
+            recommended={serverState.recommended_duration}
+            onSelect={serverState.status.is_live ? handleExtend : handleGoOnline}
+            isProcessing={isProcessing}
+          />
+          <InfoStrip metrics={serverState.metrics} />
+          <Activity events={serverState.recent_activity} />
+          <Footer tokenSuffix={serverState.token_suffix} />
+        </>
+      )}
+      {toast && <Toast {...toast} />}
+    </div>
+  );
 }
