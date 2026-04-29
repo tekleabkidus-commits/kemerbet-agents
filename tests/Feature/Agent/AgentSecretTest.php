@@ -2,6 +2,7 @@
 
 use App\Models\Agent;
 use App\Models\AgentToken;
+use App\Models\ClickEvent;
 use App\Models\StatusEvent;
 use Carbon\Carbon;
 use Database\Seeders\PaymentMethodSeeder;
@@ -330,4 +331,104 @@ test('correctly computes live_time_today_minutes including overnight session str
     $liveMinutes = $response->json('metrics.live_time_today_minutes');
     expect($liveMinutes)->toBeGreaterThanOrEqual(359)
         ->toBeLessThanOrEqual(361);
+});
+
+// =============================================================
+// Click metrics (Phase D)
+// =============================================================
+
+test('clicks_today returns 0 when no clicks exist', function () {
+    $response = $this->getJson(stateUrl($this->tokenValue));
+
+    $response->assertOk();
+    expect($response->json('metrics.clicks_today'))->toBe(0);
+    expect($response->json('metrics.clicks_yesterday'))->toBe(0);
+});
+
+test('clicks_today counts clicks created today', function () {
+    Carbon::setTestNow(Carbon::create(2026, 4, 29, 12, 0, 0, 'UTC'));
+
+    // 3 clicks today
+    for ($i = 0; $i < 3; $i++) {
+        ClickEvent::create([
+            'agent_id' => $this->agent->id,
+            'click_type' => 'deposit',
+            'visitor_id' => 'visitor_'.$i,
+            'ip_address' => '127.0.0.1',
+            'created_at' => now()->subMinutes($i * 10),
+        ]);
+    }
+
+    $response = $this->getJson(stateUrl($this->tokenValue));
+
+    $response->assertOk();
+    expect($response->json('metrics.clicks_today'))->toBe(3);
+});
+
+test('clicks_yesterday counts clicks from previous day only', function () {
+    // 15:00 EAT = 12:00 UTC on April 29
+    Carbon::setTestNow(Carbon::create(2026, 4, 29, 12, 0, 0, 'UTC'));
+
+    // Today start in EAT = 00:00 EAT April 29 = 21:00 UTC April 28
+    // Yesterday start in EAT = 00:00 EAT April 28 = 21:00 UTC April 27
+
+    // 2 clicks yesterday (in EAT terms)
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v1',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::create(2026, 4, 28, 22, 0, 0, 'UTC'), // 01:00 EAT April 29 — this is TODAY in EAT
+    ]);
+
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v2',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::create(2026, 4, 28, 15, 0, 0, 'UTC'), // 18:00 EAT April 28 — YESTERDAY in EAT
+    ]);
+
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v3',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::create(2026, 4, 29, 6, 0, 0, 'UTC'), // 09:00 EAT April 29 — TODAY in EAT
+    ]);
+
+    $response = $this->getJson(stateUrl($this->tokenValue));
+
+    $response->assertOk();
+    expect($response->json('metrics.clicks_today'))->toBe(2);     // v1 (01:00 EAT) + v3 (09:00 EAT)
+    expect($response->json('metrics.clicks_yesterday'))->toBe(1); // v2 (18:00 EAT April 28)
+});
+
+test('clicks counted correctly across Africa/Addis_Ababa midnight boundary', function () {
+    // Set "now" to 00:30 EAT April 29 = 21:30 UTC April 28
+    Carbon::setTestNow(Carbon::create(2026, 4, 28, 21, 30, 0, 'UTC'));
+
+    // Click at 23:50 EAT April 28 = 20:50 UTC April 28 — YESTERDAY in EAT
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'late_night',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::create(2026, 4, 28, 20, 50, 0, 'UTC'),
+    ]);
+
+    // Click at 00:10 EAT April 29 = 21:10 UTC April 28 — TODAY in EAT
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'early_morning',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::create(2026, 4, 28, 21, 10, 0, 'UTC'),
+    ]);
+
+    $response = $this->getJson(stateUrl($this->tokenValue));
+
+    $response->assertOk();
+    expect($response->json('metrics.clicks_today'))->toBe(1);     // early_morning
+    expect($response->json('metrics.clicks_yesterday'))->toBe(1); // late_night
 });

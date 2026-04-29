@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Agent;
+use App\Models\ClickEvent;
 use App\Models\StatusEvent;
 use Carbon\Carbon;
 
@@ -10,7 +11,7 @@ use Carbon\Carbon;
  * Computes per-agent metrics for the agent secret page.
  *
  * Today metrics are calculated in Africa/Addis_Ababa timezone.
- * Click metrics return null in Phase C (filled in Phase D).
+ * Click metrics query click_events table in Africa/Addis_Ababa timezone.
  */
 class AgentMetricsService
 {
@@ -38,6 +39,7 @@ class AgentMetricsService
     public function getTodayMetrics(Agent $agent): array
     {
         $todayStart = now()->setTimezone(self::TIMEZONE)->startOfDay()->utc();
+        $yesterdayStart = $todayStart->copy()->subDay();
         $now = now();
 
         $sessionsToday = StatusEvent::where('agent_id', $agent->id)
@@ -80,9 +82,19 @@ class AgentMetricsService
             );
         }
 
+        $clicksToday = ClickEvent::where('agent_id', $agent->id)
+            ->where('created_at', '>=', $todayStart)
+            ->where('created_at', '<=', $now)
+            ->count();
+
+        $clicksYesterday = ClickEvent::where('agent_id', $agent->id)
+            ->where('created_at', '>=', $yesterdayStart)
+            ->where('created_at', '<', $todayStart)
+            ->count();
+
         return [
-            'clicks_today' => null,
-            'clicks_yesterday' => null,
+            'clicks_today' => $clicksToday,
+            'clicks_yesterday' => $clicksYesterday,
             'live_time_today_minutes' => (int) $totalMinutes,
             'sessions_today' => $sessionsToday,
         ];
