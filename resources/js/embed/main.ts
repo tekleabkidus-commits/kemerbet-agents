@@ -44,7 +44,140 @@ function init(): void {
   // Apply i18n to static elements
   applyLang(lang, shadow, container);
 
-  // TODO: D4C — wire polling, click handlers, modal, language toggle
+  // --- State ---
+  let lastApiData: PublicAgentsResponse | null = null;
+  let pendingDepositUrl: string | null = null;
+  let pendingAgentId: string | null = null;
+  let pollTimer: number | null = null;
+
+  // --- Refresh indicator ---
+  function showRefreshIndicator(): void {
+    const ind = shadow.getElementById('refreshIndicator');
+    if (ind) {
+      ind.classList.add('show');
+      setTimeout(() => ind.classList.remove('show'), 1400);
+    }
+  }
+
+  // --- Click tracking (fire-and-forget) ---
+  function trackClick(agentId: string): void {
+    fetch(`${apiBase}/api/public/agents/${agentId}/click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referrer: window.location.href }),
+      keepalive: true,
+    }).catch(() => {}); // silent fail
+  }
+
+  // --- Fetch + render ---
+  async function fetchAndRender(): Promise<void> {
+    showRefreshIndicator();
+    try {
+      const res = await fetch(`${apiBase}/api/public/agents`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: PublicAgentsResponse = await res.json();
+      lastApiData = data;
+      renderPage(data, shadow);
+    } catch {
+      console.warn('[kemerbet-agents] fetch failed, retrying in 60s');
+    }
+  }
+
+  // --- Polling (chained setTimeout) ---
+  function schedulePoll(): void {
+    pollTimer = window.setTimeout(async () => {
+      if (!document.hidden) {
+        await fetchAndRender();
+      }
+      // Re-check after async work — tab may have been hidden during fetch
+      if (!document.hidden) {
+        schedulePoll();
+      } else {
+        pollTimer = null;
+      }
+    }, 60_000);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (pollTimer !== null) {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+      }
+    } else if (pollTimer === null) {
+      fetchAndRender();
+      schedulePoll();
+    }
+  });
+
+  // --- Modal ---
+  function showModal(): void {
+    shadow.getElementById('offlineWarnModal')?.classList.add('show');
+  }
+
+  function closeModal(): void {
+    shadow.getElementById('offlineWarnModal')?.classList.remove('show');
+    pendingDepositUrl = null;
+    pendingAgentId = null;
+  }
+
+  // Modal: confirm button
+  shadow.getElementById('confirmDepositBtn')?.addEventListener('click', () => {
+    if (pendingAgentId) trackClick(pendingAgentId);
+    if (pendingDepositUrl) window.open(pendingDepositUrl, '_blank', 'noopener');
+    closeModal();
+  });
+
+  // Modal: cancel button
+  shadow.getElementById('cancelWarnBtn')?.addEventListener('click', () => {
+    closeModal();
+  });
+
+  // Modal: backdrop click
+  shadow.getElementById('offlineWarnModal')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).id === 'offlineWarnModal') closeModal();
+  });
+
+  // Modal: ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = shadow.getElementById('offlineWarnModal');
+      if (modal?.classList.contains('show')) closeModal();
+    }
+  });
+
+  // --- Deposit click delegation ---
+  shadow.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('[data-agent-id]') as HTMLElement | null;
+    if (!btn) return;
+
+    const agentId = btn.dataset.agentId!;
+
+    if (btn.dataset.offline === 'true') {
+      e.preventDefault();
+      pendingDepositUrl = btn.dataset.depositUrl || null;
+      pendingAgentId = agentId;
+      showModal();
+    } else {
+      // Live link: tracking fires in parallel, <a target="_blank"> proceeds naturally
+      trackClick(agentId);
+    }
+  });
+
+  // --- Language toggle ---
+  shadow.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const newLang = (btn as HTMLElement).dataset.lang as Lang;
+      setLang(newLang);
+      applyLang(newLang, shadow, container);
+      if (lastApiData) renderPage(lastApiData, shadow);
+    });
+  });
+
+  // --- Init: fetch + poll ---
+  fetchAndRender();
+  schedulePoll();
 }
 
 function applyLang(lang: Lang, shadow: ShadowRoot, host: HTMLElement): void {
