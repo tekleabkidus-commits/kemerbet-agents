@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Agent\AgentSecretController;
+use App\Http\Controllers\Public\PublicAgentsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,6 +43,18 @@ Route::prefix('admin')->group(function () {
 |--------------------------------------------------------------------------
 | Token-in-URL authentication. No Sanctum. Rate-limited.
 */
+
+/*
+|--------------------------------------------------------------------------
+| Public API (no auth, rate-limited, CSRF-exempt)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('public')
+    ->middleware('throttle:public-api')
+    ->group(function () {
+        Route::get('agents', [PublicAgentsController::class, 'index']);
+    });
 
 Route::prefix('agent/{token}')
     ->where(['token' => '[a-f0-9]{64}'])
