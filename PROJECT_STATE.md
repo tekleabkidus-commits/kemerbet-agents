@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
-**Last updated:** 2026-04-28
-**Current phase:** Phase C — Agent secret page (next)
-**Build progress:** Phase A complete. Phase B COMPLETE (all 5 tasks shipped). Phase C next.
+**Last updated:** 2026-04-29
+**Current phase:** Phase D — Public API + HTML block (next)
+**Build progress:** Phase A complete. Phase B complete. Phase C COMPLETE (all 8 tasks shipped). Phase D next.
 
 ---
 
@@ -134,11 +134,31 @@ Full admin agent CRUD lifecycle: list, create, edit, display_number editing, dis
     - ActivityPage formatDescription updated for restored_by_admin
   - 2 commits, 92 tests passing
 
+### ✅ PHASE C COMPLETE (2026-04-29)
+
+Agent secret page fully implemented — backend endpoints, React SPA, state machine, all visual components matching locked mockup.
+
+**7 commits shipped:**
+
+1. `aa4e1a7` — Backend agent secret page endpoints (GET state, POST go-online/extend/go-offline, duration validation with Africa/Addis_Ababa timezone awareness, merged metrics+activity into single state endpoint)
+2. `4464332` — Vite multi-entry config + agent React shell (stub AgentApp, Blade view at `/a/{token}`, separate CSS entry)
+3. `a7ab9a4` — State machine + API client (fetchState/goOnline/extend/goOffline, AgentApp with pageState derivation, action handlers with isProcessing guard, showToast)
+4. `31f2346` — Visual sections + countdown hook (useCountdown with setInterval/useRef, TopBar, LoadingSpinner, InvalidCard, DisabledCard, Greeting, Footer, Toast, Activity, InfoStrip, GoLiveSection, StatusCard — 13 components total)
+5. `f5b03d7` — Notification banner + bottom-sheet modal + action wiring (NotificationBanner with 3 permission states, BottomSheetModal with ESC/backdrop/scroll-lock, TopBar bell alert dot, Set Offline routed through confirm modal)
+6. `1e10d86` — CSRF fix: excluded `api/agent/*` from validateCsrfTokens (Sanctum statefulApi applies CSRF to all API routes; agent endpoints use token-in-URL auth, not cookies)
+7. `c1456ac` — Multi-browser sync + IE fallback (30s polling + focus refetch with isProcessingRef guard, IE detection with friendly unsupported message)
+
+**Issues discovered & fixed during smoke test:**
+
+- **CSRF for non-Sanctum API routes:** `statefulApi()` applies CSRF to ALL API routes. Must explicitly exclude token-auth routes. Remember this for Phase D public endpoints.
+- **Multi-browser sync pattern:** 30s polling + window focus refetch with `isProcessingRef` guard to avoid clobbering in-flight actions. Pattern is reusable for Phase D public block if it becomes interactive.
+- **Browser support:** Chrome, Edge, Firefox, Safari. IE explicitly unsupported (friendly fallback, zero polyfills).
+
 ### Resume next session
 
-- **Phase C Task 1** starts with backend AgentSecretController planning.
-- Mockup is locked at `docs/design-mockups/agent-page.html` — visual contract, no deviations.
-- First action: plan AgentSecretController endpoints based on what the mockup needs (state, metrics, activity feed).
+- **Phase D** starts: Public API + embeddable HTML block.
+- Read `docs/SPECIFICATION.md` sections on public API and HTML block before planning.
+- Public endpoints will also need CSRF exclusion (same pattern as Phase C fix).
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
 
 ### Gate review at end of Phase A
@@ -177,8 +197,8 @@ These are unresolved and may need Kidus's input as you build:
 ```
 [✅] Phase A — Foundation                 completed 2026-04-27
 [✅] Phase B — Admin agent CRUD          completed 2026-04-28
-[ ] Phase C — Agent secret page           ← next
-[ ] Phase D — Public API + HTML block
+[✅] Phase C — Agent secret page          completed 2026-04-29
+[ ] Phase D — Public API + HTML block     ← next
 [ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
 [ ] Phase F — Analytics
 [ ] Phase G — Polish & deploy
