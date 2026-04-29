@@ -1,6 +1,7 @@
 import { STYLES } from './styles';
-import { I18N, getLang, setLang, LANG_KEY } from './i18n';
-import type { Lang } from './types';
+import { I18N, getLang, setLang } from './i18n';
+import { renderPage } from './render';
+import type { Lang, PublicAgentsResponse } from './types';
 
 function getApiBase(container: HTMLElement): string {
   const explicit = container.dataset.api;
@@ -40,8 +41,25 @@ function init(): void {
   wrapper.innerHTML = buildShellHTML(lang);
   shadow.appendChild(wrapper);
 
-  // TODO: D4B — wire render functions
+  // Apply i18n to static elements
+  applyLang(lang, shadow, container);
+
   // TODO: D4C — wire polling, click handlers, modal, language toggle
+}
+
+function applyLang(lang: Lang, shadow: ShadowRoot, host: HTMLElement): void {
+  const t = I18N[lang];
+  host.setAttribute('lang', lang);
+
+  shadow.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = (el as HTMLElement).dataset.i18n as keyof typeof t;
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+
+  shadow.querySelectorAll('.lang-btn').forEach((btn) => {
+    const btnEl = btn as HTMLElement;
+    btnEl.classList.toggle('active', btnEl.dataset.lang === lang);
+  });
 }
 
 function buildShellHTML(lang: Lang): string {
