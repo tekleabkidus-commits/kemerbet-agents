@@ -50,11 +50,13 @@ Route::prefix('admin')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('public')
-    ->middleware('throttle:public-api')
-    ->group(function () {
-        Route::get('agents', [PublicAgentsController::class, 'index']);
-    });
+Route::prefix('public')->group(function () {
+    Route::get('agents', [PublicAgentsController::class, 'index'])
+        ->middleware('throttle:public-api');
+    Route::post('agents/{agent}/click', [PublicAgentsController::class, 'click'])
+        ->where('agent', '[0-9]+')
+        ->middleware('throttle:public-clicks');
+});
 
 Route::prefix('agent/{token}')
     ->where(['token' => '[a-f0-9]{64}'])

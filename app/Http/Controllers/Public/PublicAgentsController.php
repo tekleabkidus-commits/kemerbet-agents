@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\ClickEvent;
 use App\Models\Setting;
 use App\Models\StatusEvent;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class PublicAgentsController extends Controller
@@ -82,6 +84,34 @@ class PublicAgentsController extends Controller
                 'shuffle_live_agents' => $shuffleLive,
             ],
         ];
+    }
+
+    public function click(Request $request, int $agent): JsonResponse
+    {
+        $agentModel = Agent::find($agent);
+
+        if (! $agentModel) {
+            abort(404);
+        }
+
+        if ($agentModel->status === Agent::STATUS_DISABLED) {
+            return response()->json(['message' => 'Agent not available'], 422);
+        }
+
+        $request->validate([
+            'referrer' => 'nullable|string|max:2000',
+        ]);
+
+        ClickEvent::create([
+            'agent_id' => $agentModel->id,
+            'click_type' => 'deposit',
+            'visitor_id' => hash('xxh3', config('app.key').$request->ip().$request->userAgent()),
+            'ip_address' => $request->ip(),
+            'referrer' => $request->input('referrer'),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['ok' => true]);
     }
 
     private function transformAgent(Agent $agent, string $status): array
