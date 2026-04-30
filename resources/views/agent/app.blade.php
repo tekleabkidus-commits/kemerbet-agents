@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @viteReactRefresh
+    <script>window.__VAPID_PUBLIC_KEY__ = @js(config('services.webpush.public_key'));</script>
     @vite(['resources/css/agent.css', 'resources/js/agent/main.tsx'])
 </head>
 <body>
