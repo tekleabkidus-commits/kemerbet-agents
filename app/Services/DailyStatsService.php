@@ -55,7 +55,11 @@ class DailyStatsService
         });
     }
 
-    private function computeAgentDay(int $agentId, Carbon $start, Carbon $end): array
+    /**
+     * Public for reuse by StatsService for today live computation.
+     * Caller is responsible for proper transaction context if needed.
+     */
+    public function computeAgentDay(int $agentId, Carbon $start, Carbon $end): array
     {
         return [
             'total_visits' => 0,
@@ -79,7 +83,11 @@ class DailyStatsService
         ];
     }
 
-    private function computeSiteDay(Carbon $start, Carbon $end): array
+    /**
+     * Public for reuse by StatsService for today live computation.
+     * Caller is responsible for proper transaction context if needed.
+     */
+    public function computeSiteDay(Carbon $start, Carbon $end): array
     {
         return [
             'total_visits' => VisitEvent::where('created_at', '>=', $start)
