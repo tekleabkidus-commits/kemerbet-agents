@@ -1,0 +1,342 @@
+/* ============================================================
+   DASHBOARD PAGE — dashboard-specific CSS
+   Base classes (.panel, .page-head, .btn, etc.) are in admin.css.
+   Design tokens (--bg, --green, etc.) are in admin.css :root.
+   ============================================================ */
+
+/* ── Stat Cards Grid ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--green);
+}
+
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.blue::before { background: var(--blue); }
+
+.stat-card .label {
+  font-size: .7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.stat-card .value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-card .delta {
+  font-size: .74rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.delta.up { color: var(--green); }
+.delta.down { color: var(--red); }
+.delta.neutral { color: var(--text-dim); }
+
+.stat-card .ticker-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.5s infinite;
+  margin-right: 4px;
+}
+
+/* ── Live Pill ── */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--green-bg);
+  color: var(--green);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .5px;
+  border: 1px solid rgba(0, 168, 107, 0.2);
+}
+
+.live-pill::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 1.5s infinite;
+}
+
+/* ── Live Agents Grid ── */
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.live-agent-card {
+  background: var(--bg-elev-2);
+  border: 1px solid rgba(34, 255, 154, 0.15);
+  border-radius: 10px;
+  padding: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.live-agent-card::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.5s infinite;
+}
+
+.live-agent-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.live-agent-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: .72rem;
+  color: #fff;
+}
+
+.live-agent-name {
+  font-weight: 700;
+  font-size: .82rem;
+  letter-spacing: -.1px;
+}
+
+.live-agent-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: .7rem;
+  color: var(--text-muted);
+}
+
+.live-agent-meta .clicks {
+  color: var(--green);
+  font-weight: 700;
+}
+
+.live-agent-time {
+  font-size: .65rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Two Column Layout ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 1100px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Activity Feed ── */
+.activity-list {
+  list-style: none;
+  padding: 8px 0;
+}
+
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: .83rem;
+  transition: background .12s;
+}
+
+.activity-row:last-child { border-bottom: none; }
+.activity-row:hover { background: var(--bg-hover); }
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.activity-dot.offline { background: var(--text-dim); }
+.activity-dot.click { background: var(--gold); }
+.activity-dot.extend { background: var(--blue); }
+.activity-dot.expired { background: var(--gold); }
+
+.activity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-text strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.activity-text .muted {
+  color: var(--text-muted);
+}
+
+.activity-time {
+  font-size: .72rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Top Performers ── */
+.performer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.performer-row:last-child { border-bottom: none; }
+
+.performer-rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.performer-row:nth-child(1) .performer-rank {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #1a1a2e;
+  border-color: transparent;
+}
+
+.performer-row:nth-child(2) .performer-rank {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  color: #1a1a2e;
+  border-color: transparent;
+}
+
+.performer-row:nth-child(3) .performer-rank {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff;
+  border-color: transparent;
+}
+
+.performer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.performer-name {
+  font-weight: 700;
+  font-size: .85rem;
+  letter-spacing: -.1px;
+}
+
+.performer-sub {
+  font-size: .7rem;
+  color: var(--text-dim);
+}
+
+.performer-stat {
+  font-weight: 800;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--green);
+  letter-spacing: -.3px;
+}
+
+.performer-stat-label {
+  font-size: .6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  text-align: right;
+  margin-top: 1px;
+  font-weight: 700;
+}
+
+/* ── Dashboard Loading ── */
+.dash-loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+  font-size: .9rem;
+}
+
+.dash-error {
+  background: var(--red-bg);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  font-size: .85rem;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
