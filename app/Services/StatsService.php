@@ -185,6 +185,7 @@ class StatsService
                 'display_number' => $agent?->display_number,
                 'telegram_username' => $agent?->telegram_username,
                 'last_seen_at' => $agent?->live_until?->toIso8601String(),
+                'is_live' => $agent?->live_until !== null && $agent->live_until->isFuture(),
             ];
         })->all();
     }

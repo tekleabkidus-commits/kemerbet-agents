@@ -455,3 +455,41 @@ it('overview with range=today returns only today data', function () {
         ->and($response->json('range.from'))->toBe($today)
         ->and($response->json('range.to'))->toBe($today);
 });
+
+// =====================================================================
+// leaderboard is_live
+// =====================================================================
+
+// 24. leaderboard returns is_live boolean for each agent
+it('leaderboard returns is_live boolean for each agent', function () {
+    Carbon::setTestNow('2026-04-30 12:00:00');
+
+    $liveAgent = Agent::create([
+        'display_number' => 50,
+        'telegram_username' => 'LIVE_AGENT',
+        'status' => 'active',
+        'live_until' => now()->addHour(),
+    ]);
+
+    $offlineAgent = Agent::create([
+        'display_number' => 51,
+        'telegram_username' => 'OFFLINE_AGENT',
+        'status' => 'active',
+        'live_until' => null,
+    ]);
+
+    seedStat('2026-04-28', $liveAgent->id, ['deposit_clicks' => 10, 'times_went_online' => 2]);
+    seedStat('2026-04-28', $offlineAgent->id, ['deposit_clicks' => 5, 'times_went_online' => 1]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/leaderboard?range=7d&sort=deposit_clicks');
+
+    $response->assertOk();
+    $data = collect($response->json('data'));
+
+    $live = $data->firstWhere('agent_id', $liveAgent->id);
+    $offline = $data->firstWhere('agent_id', $offlineAgent->id);
+
+    expect($live['is_live'])->toBeTrue()
+        ->and($offline['is_live'])->toBeFalse();
+});
