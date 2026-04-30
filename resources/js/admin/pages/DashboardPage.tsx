@@ -140,7 +140,7 @@ function yesterdayDateStr(): string {
 
 // --- Sub-components ---
 
-function StatCard({
+export function StatCard({
     label, value, delta, deltaType, accent, children,
 }: {
     label: string;
