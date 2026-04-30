@@ -1533,3 +1533,35 @@ body.modal-open {
 .filter-banner-clear:hover {
   text-decoration: underline;
 }
+
+/* ============= AGENT STATS GRID (edit modal) ============= */
+.agent-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.agent-stat-tile {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.agent-stat-tile .stat-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.agent-stat-tile .stat-lbl {
+  font-size: .66rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}

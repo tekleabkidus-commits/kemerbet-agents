@@ -33,6 +33,14 @@ interface AgentDetail {
     created_at: string;
 }
 
+interface AgentStatsSummary {
+    deposit_clicks: number;
+    minutes_live: number;
+    times_went_online: number;
+    click_rate: number;
+    avg_session_duration_minutes: number;
+}
+
 interface EditAgentModalProps {
     agentId: number | null;
     onClose: () => void;
@@ -85,6 +93,14 @@ function formatDate(iso: string): string {
     return `${month} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
+function formatMinutes(minutes: number): string {
+    if (!minutes || minutes <= 0) return '0h';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    return `${m}m`;
+}
+
 function errorMessage(err: unknown): string {
     if (
         typeof err === 'object' &&
@@ -108,6 +124,8 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     // Data
     const [agent, setAgent] = useState<AgentDetail | null>(null);
     const [allMethods, setAllMethods] = useState<PaymentMethod[]>([]);
+    const [agentStats, setAgentStats] = useState<AgentStatsSummary | null>(null);
+    const [statsLoading, setStatsLoading] = useState(false);
 
     // Form state
     const [displayNumber, setDisplayNumber] = useState(1);
@@ -176,6 +194,19 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
             });
 
         return () => { cancelled = true; };
+    }, [agentId]);
+
+    // Fetch agent stats (non-blocking — doesn't affect form)
+    useEffect(() => {
+        if (agentId === null) {
+            setAgentStats(null);
+            return;
+        }
+        setStatsLoading(true);
+        api.get(`/api/admin/stats/agent/${agentId}?range=30d`)
+            .then((res) => setAgentStats(res.data.data.summary))
+            .catch(() => setAgentStats(null))
+            .finally(() => setStatsLoading(false));
     }, [agentId]);
 
     // --- Handlers ---
@@ -421,6 +452,37 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                                 placeholder="Optional notes about this agent…"
                                 rows={3}
                             />
+                        </div>
+
+                        <hr className="section-divider" />
+
+                        {/* Performance stats */}
+                        <div className="form-row">
+                            <label className="form-label">Performance &mdash; last 30 days</label>
+                            {statsLoading ? (
+                                <div style={{ color: 'var(--text-dim)', fontSize: '.82rem', padding: '8px 0' }}>Loading stats...</div>
+                            ) : agentStats && (agentStats.deposit_clicks > 0 || agentStats.minutes_live > 0) ? (
+                                <div className="agent-stats-grid">
+                                    <div className="agent-stat-tile">
+                                        <div className="stat-val">{agentStats.deposit_clicks}</div>
+                                        <div className="stat-lbl">clicks</div>
+                                    </div>
+                                    <div className="agent-stat-tile">
+                                        <div className="stat-val">{formatMinutes(agentStats.minutes_live)}</div>
+                                        <div className="stat-lbl">live</div>
+                                    </div>
+                                    <div className="agent-stat-tile">
+                                        <div className="stat-val">{agentStats.times_went_online}</div>
+                                        <div className="stat-lbl">sessions</div>
+                                    </div>
+                                    <div className="agent-stat-tile">
+                                        <div className="stat-val">{(agentStats.click_rate * 60).toFixed(1)}</div>
+                                        <div className="stat-lbl">/hr</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ color: 'var(--text-dim)', fontSize: '.82rem', padding: '8px 0' }}>No activity recorded yet</div>
+                            )}
                         </div>
 
                         <hr className="section-divider" />
