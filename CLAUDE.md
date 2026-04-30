@@ -146,4 +146,14 @@ Update this table in `PROJECT_STATE.md`, not here. This file is a living agreeme
 
 ---
 
+## Shadow DOM CSS gotchas
+
+When extracting CSS for Shadow DOM components (e.g., the public agents embed block):
+
+- `:root` variables target `<html>` outside the shadow tree — they **don't penetrate** Shadow DOM. Always use `:host` for theme variables.
+- `body` styles similarly don't apply inside Shadow DOM — use `:host` with `display:block`.
+- Both rules were discovered during Phase D smoke test and applied in `resources/js/embed/styles.ts`.
+
+---
+
 End of working agreement. Stay rigorous. Ask questions. Don't surprise.

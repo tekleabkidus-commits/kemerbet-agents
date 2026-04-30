@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
-**Last updated:** 2026-04-29
-**Current phase:** Phase D — Public API + HTML block (next)
-**Build progress:** Phase A complete. Phase B complete. Phase C COMPLETE (all 8 tasks shipped). Phase D next.
+**Last updated:** 2026-04-30
+**Current phase:** Phase E — Notifications (next)
+**Build progress:** Phase A complete. Phase B complete. Phase C complete. Phase D COMPLETE (all 6 tasks shipped). Phase E next.
 
 ---
 
@@ -154,11 +154,45 @@ Agent secret page fully implemented — backend endpoints, React SPA, state mach
 - **Multi-browser sync pattern:** 30s polling + window focus refetch with `isProcessingRef` guard to avoid clobbering in-flight actions. Pattern is reusable for Phase D public block if it becomes interactive.
 - **Browser support:** Chrome, Edge, Firefox, Safari. IE explicitly unsupported (friendly fallback, zero polyfills).
 
+### ✅ PHASE D COMPLETE (2026-04-30)
+
+Public agents API + embeddable HTML block + click tracking — fully implemented and smoke tested (33 checks passed).
+
+**8 commits shipped:**
+
+1. `c2e627e` — Lock Phase D design: public agents block mockup is visual contract
+2. `93cc873` — D1: Public agents API endpoint with payment methods
+3. `da5889d` — D2: Click tracking endpoint
+4. `9acaff8` — D3: Click metrics wired into agent state endpoint
+5. `ab247a6` — D4A: Vite multi-entry config + embed shell + types + i18n + styles
+6. `89b7f4f` — D4B: Rendering layer (agent cards, animations, payment chips)
+7. `ac422ff` — D4C: Interactivity wiring (deposit clicks, offline modal, language toggle, polling)
+8. `e8af6a9` — D5: Embed test page for Shadow DOM isolation
+
+**Smoke test results (33/33 passed):**
+
+- Visual matches mockup byte-for-byte
+- Shadow DOM isolation verified (host CSS doesn't bleed in)
+- Live agents render with animations (breathing card, pulsing badge, typing dots)
+- Recently-offline agents render muted with last-seen relative time
+- Payment method chips render correctly
+- AM/EN language toggle persists in localStorage
+- Live deposit clicks open Telegram + record click_event with referrer
+- Offline deposit clicks show warning modal with all close paths (cancel, backdrop, ESC, confirm)
+- 60s polling refreshes data with refresh indicator
+- Visibility-change pauses polling when tab hidden, resumes on return
+
+**Issues discovered & fixed during smoke test:**
+
+- **Shadow DOM CSS gotcha:** `:root` CSS variables don't penetrate the shadow tree. Must define theme variables on `:host` instead. Fixed by changing `:root{` → `:host{` in styles.ts. Documented in CLAUDE.md for future reference.
+- **CSRF for public API routes:** Same pattern as Phase C — excluded `api/public/*` from CSRF middleware.
+- **Multi-browser sync pattern:** Reused from Phase C (60s polling + visibility-change pause/resume).
+
 ### Resume next session
 
-- **Phase D** starts: Public API + embeddable HTML block.
-- Read `docs/SPECIFICATION.md` sections on public API and HTML block before planning.
-- Public endpoints will also need CSRF exclusion (same pattern as Phase C fix).
+- **Phase E** starts: Notifications (browser push notifications).
+- Read `docs/notifications-spec.md` for the full notification spec (locked 2026-04-28).
+- Permission banner UI already exists in agent page (Phase C Task 5C) — Phase E wires the firing logic.
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
 
 ### Gate review at end of Phase A
@@ -198,8 +232,8 @@ These are unresolved and may need Kidus's input as you build:
 [✅] Phase A — Foundation                 completed 2026-04-27
 [✅] Phase B — Admin agent CRUD          completed 2026-04-28
 [✅] Phase C — Agent secret page          completed 2026-04-29
-[ ] Phase D — Public API + HTML block     ← next
-[ ] Phase E — Notifications              spec locked in docs/notifications-spec.md (2026-04-28)
+[✅] Phase D — Public API + HTML block    completed 2026-04-30
+[ ] Phase E — Notifications              ← next (spec locked in docs/notifications-spec.md)
 [ ] Phase F — Analytics
 [ ] Phase G — Polish & deploy
 ```

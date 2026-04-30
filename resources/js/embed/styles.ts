@@ -1,9 +1,11 @@
 // CSS extracted verbatim from docs/design-mockups/public-agents-block.html lines 8-747.
-// Only change: `body` selector replaced with `:host` for Shadow DOM compatibility.
+// Two adaptations for Shadow DOM compatibility:
+//   1. body{...} replaced with :host{...} (Shadow DOM has no body)
+//   2. :root{...} replaced with :host{...} (CSS variables on :root don't penetrate Shadow DOM)
 // Do not modify without updating the locked mockup first.
 
 export const STYLES = `
-:root{
+:host{
   --bg-dark:#0a1628;
   --bg-darker:#050d1a;
   --green-primary:#00a86b;
