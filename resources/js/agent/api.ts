@@ -52,3 +52,20 @@ export function goOffline(token: string): Promise<AgentState> {
     method: 'POST',
   });
 }
+
+export function subscribe(
+  token: string,
+  data: { endpoint: string; p256dh_key: string; auth_key: string; user_agent?: string },
+): Promise<{ ok: boolean }> {
+  return request(`${baseUrl(token)}/subscribe`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function unsubscribe(token: string, endpoint: string): Promise<{ ok: boolean }> {
+  return request(`${baseUrl(token)}/subscribe`, {
+    method: 'DELETE',
+    body: JSON.stringify({ endpoint }),
+  });
+}

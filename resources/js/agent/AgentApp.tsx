@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { fetchState, goOnline, extend, goOffline } from './api';
+import { fetchState, goOnline, extend, goOffline, subscribe } from './api';
+import { registerAndSubscribe, extractSubscriptionKeys } from './pushSubscription';
 import type { AgentState, PageState, ToastState } from './types';
 import TopBar from './components/TopBar';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -89,6 +90,33 @@ export default function AgentApp({ token }: { token: string }) {
       window.removeEventListener('focus', refresh);
     };
   }, [pageState, token]);
+
+  // --- Web Push subscription ---
+  useEffect(() => {
+    if (permission !== 'granted') return;
+
+    // Note: We don't proactively detect when permission is REVOKED
+    // (Notification.permission goes back to 'denied'). The backend's
+    // E6 NotificationDispatcher will receive 410 Gone on the next push
+    // attempt and mark the subscription inactive then. This is acceptable
+    // because the user's revocation is a one-way action they took
+    // intentionally.
+
+    const vapidKey = window.__VAPID_PUBLIC_KEY__;
+    if (!vapidKey) return;
+
+    void (async () => {
+      const subscription = await registerAndSubscribe(vapidKey);
+      if (!subscription) return;
+
+      const keys = extractSubscriptionKeys(subscription);
+      try {
+        await subscribe(token, { ...keys, user_agent: navigator.userAgent });
+      } catch (error) {
+        console.error('[push] Failed to send subscription to backend:', error);
+      }
+    })();
+  }, [permission, token]);
 
   // --- Action handlers ---
   const handleGoOnline = useCallback(
