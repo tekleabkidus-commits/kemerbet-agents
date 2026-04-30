@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\StatusEvent;
-use Carbon\Carbon;
 
 /**
  * Computes per-agent metrics for the agent secret page.
@@ -23,6 +22,10 @@ class AgentMetricsService
         StatusEvent::EVENT_SESSION_EXPIRED,
         StatusEvent::EVENT_EXTENDED,
     ];
+
+    public function __construct(
+        private readonly SessionMinutesCalculator $sessionCalculator,
+    ) {}
 
     /**
      * Get today's metrics for an agent.
@@ -49,39 +52,7 @@ class AgentMetricsService
             ->where('created_at', '<=', $now)
             ->count();
 
-        $totalMinutes = 0;
-
-        // 1. Sessions started today
-        $todayOnlineEvents = StatusEvent::where('agent_id', $agent->id)
-            ->where('event_type', StatusEvent::EVENT_WENT_ONLINE)
-            ->where('created_at', '>=', $todayStart)
-            ->orderBy('created_at')
-            ->get();
-
-        foreach ($todayOnlineEvents as $onlineEvent) {
-            $totalMinutes += $this->computeSessionMinutes(
-                $agent,
-                $onlineEvent,
-                $todayStart,
-                $now,
-            );
-        }
-
-        // 2. Overnight session: went_online before today, may extend into today
-        $lastOnlineBeforeToday = StatusEvent::where('agent_id', $agent->id)
-            ->where('event_type', StatusEvent::EVENT_WENT_ONLINE)
-            ->where('created_at', '<', $todayStart)
-            ->orderBy('created_at', 'desc')
-            ->first();
-
-        if ($lastOnlineBeforeToday) {
-            $totalMinutes += $this->computeSessionMinutes(
-                $agent,
-                $lastOnlineBeforeToday,
-                $todayStart,
-                $now,
-            );
-        }
+        $totalMinutes = $this->sessionCalculator->calculate($agent->id, $todayStart, $now);
 
         $clicksToday = ClickEvent::where('agent_id', $agent->id)
             ->where('created_at', '>=', $todayStart)
@@ -96,7 +67,7 @@ class AgentMetricsService
         return [
             'clicks_today' => $clicksToday,
             'clicks_yesterday' => $clicksYesterday,
-            'live_time_today_minutes' => (int) $totalMinutes,
+            'live_time_today_minutes' => $totalMinutes,
             'sessions_today' => $sessionsToday,
         ];
     }
@@ -118,66 +89,6 @@ class AgentMetricsService
             'description' => $this->formatActivityDescription($event),
             'created_at' => $event->created_at->toIso8601String(),
         ])->all();
-    }
-
-    /**
-     * Compute the minutes a single session contributed to today.
-     *
-     * Clamps the session start to today_start (for overnight sessions)
-     * and the session end to now (never count future time).
-     */
-    private function computeSessionMinutes(
-        Agent $agent,
-        StatusEvent $onlineEvent,
-        Carbon $todayStart,
-        Carbon $now,
-    ): float {
-        $end = $this->findSessionEnd($agent, $onlineEvent, $now);
-
-        // Session ended before today — no contribution
-        if ($end <= $todayStart) {
-            return 0;
-        }
-
-        // Clamp start to today (overnight sessions count from midnight)
-        $start = $onlineEvent->created_at->max($todayStart);
-        $end = $end->min($now);
-
-        return max(0, $start->diffInMinutes($end));
-    }
-
-    /**
-     * Find when a session ended (or estimate it).
-     *
-     * Priority:
-     * 1. Next went_offline event after the went_online → that event's timestamp
-     * 2. Agent is currently live → now (session still running)
-     * 3. No went_offline, not live → estimate: went_online + duration_minutes
-     */
-    private function findSessionEnd(
-        Agent $agent,
-        StatusEvent $onlineEvent,
-        Carbon $now,
-    ): Carbon {
-        $nextOffline = StatusEvent::where('agent_id', $agent->id)
-            ->whereIn('event_type', [StatusEvent::EVENT_WENT_OFFLINE, StatusEvent::EVENT_SESSION_EXPIRED])
-            ->where('created_at', '>', $onlineEvent->created_at)
-            ->orderBy('created_at')
-            ->first();
-
-        if ($nextOffline) {
-            return $nextOffline->created_at;
-        }
-
-        if ($agent->isLive()) {
-            return $now;
-        }
-
-        // Expired without went_offline event: estimate from duration_minutes.
-        // Undercounts if agent extended mid-session (acceptable for v1).
-        $durationMinutes = $onlineEvent->duration_minutes ?? 60;
-
-        return $onlineEvent->created_at->copy()->addMinutes($durationMinutes);
     }
 
     /**
