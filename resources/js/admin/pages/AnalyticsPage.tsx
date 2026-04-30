@@ -1,28 +1,42 @@
+import { useCallback, useEffect, useState } from 'react';
+import api from '@/api';
 import { StatCard } from './DashboardPage';
 import '../../../css/analytics.css';
 
-// --- Hardcoded sample data (replaced with API data in F5B) ---
+// --- Types ---
 
-const SAMPLE_STATS = [
-    { label: 'Total Visitors', value: '26,438', delta: '\u2191 18% vs previous 7d', deltaType: 'up' as const, accent: 'gold' as const },
-    { label: 'Unique Visitors', value: '8,247', delta: '\u2191 11%', deltaType: 'up' as const, accent: 'blue' as const },
-    { label: 'Deposit Clicks', value: '3,381', delta: '\u2191 9%', deltaType: 'up' as const },
-    { label: 'Click-Through Rate', value: '12.8%', delta: '\u2193 0.4 pts', deltaType: 'down' as const },
-];
+interface Overview {
+    total_visits: number;
+    unique_visitors: number;
+    deposit_clicks: number;
+    chat_clicks: number;
+    total_minutes_live: number;
+    total_sessions: number;
+    ctr: number;
+}
 
-const SAMPLE_DAYS = ['Apr 20', 'Apr 21', 'Apr 22', 'Apr 23', 'Apr 24', 'Apr 25', 'Apr 26'];
-const SAMPLE_VISITORS = [3120, 3580, 2940, 4120, 3650, 4380, 3847];
-const SAMPLE_CLICKS = [392, 458, 387, 524, 471, 568, 486];
+interface TimelineDay {
+    date: string;
+    total_visits: number;
+    unique_visitors: number;
+    deposit_clicks: number;
+    chat_clicks: number;
+}
 
-const SAMPLE_PAYMENT_METHODS = [
-    { name: 'TeleBirr', agents: 28, pct: 96 },
-    { name: 'CBE Birr', agents: 22, pct: 78 },
-    { name: 'M-Pesa', agents: 17, pct: 62 },
-    { name: 'Awash', agents: 12, pct: 42 },
-    { name: 'Dashen', agents: 10, pct: 35 },
-    { name: 'Bank of Abyssinia', agents: 4, pct: 14 },
-    { name: 'Cooperative', agents: 2, pct: 7 },
-];
+interface HeatmapBucket {
+    day: number;
+    hour: number;
+    count: number;
+}
+
+interface PaymentMethodBreakdown {
+    slug: string;
+    display_name: string;
+    agent_count: number;
+    click_count: number;
+}
+
+// --- Leaderboard (hardcoded — F5D wires to real API) ---
 
 const SAMPLE_LEADERBOARD = [
     { rank: 1, num: 3, name: 'Agent 3', tg: '@yehoneagent', clicks: 187, hours: '34h 12m', rate: 5.5, sessions: 21, lastSeen: 'Online now', live: true },
@@ -35,51 +49,76 @@ const SAMPLE_LEADERBOARD = [
     { rank: 8, num: 12, name: 'Agent 12', tg: '@obina_t', clicks: 38, hours: '11h 17m', rate: 3.4, sessions: 9, lastSeen: '44m ago', live: false },
 ];
 
-// --- Heatmap data generator (matches mockup's intensity function) ---
-
-function generateHeatmapData(): number[][] {
-    const grid: number[][] = [];
-    for (let day = 0; day < 7; day++) {
-        const row: number[] = [];
-        for (let hour = 0; hour < 24; hour++) {
-            let base = 0;
-            if (hour >= 7 && hour <= 22) {
-                const distFromPeak = Math.abs(hour - 20);
-                base = Math.max(0, 1 - distFromPeak * 0.15);
-            }
-            if (hour >= 0 && hour <= 2) base = Math.max(base, 0.2);
-            if (day <= 4) base *= 0.95;
-            else base *= 1.15;
-            base += Math.sin(day * 7 + hour) * 0.06;
-            row.push(Math.max(0, Math.min(1, base)));
-        }
-        grid.push(row);
-    }
-    return grid;
-}
-
-const HEATMAP_DATA = generateHeatmapData();
-const HEATMAP_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 // --- Helpers ---
+
+const HEATMAP_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function pad(n: number): string {
     return String(n).padStart(2, '0');
 }
 
+function fmt(d: Date): string {
+    return d.toISOString().slice(0, 10);
+}
+
+function formatShortDate(iso: string): string {
+    const d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getPreviousRange(rangeKey: string): { from: string; to: string } | null {
+    if (rangeKey === 'custom') return null;
+    const today = new Date();
+    const days = rangeKey === '30d' ? 30 : rangeKey === '90d' ? 90 : rangeKey === 'today' ? 1 : 7;
+    const to = new Date(today);
+    to.setDate(to.getDate() - days);
+    const from = new Date(to);
+    from.setDate(from.getDate() - days + 1);
+    return { from: fmt(from), to: fmt(to) };
+}
+
+function computeDelta(current: number, previous: number): { text: string; type: 'up' | 'down' | 'neutral' } {
+    if (previous === 0) {
+        return current > 0
+            ? { text: '\u2191 new this period', type: 'up' }
+            : { text: '\u2014 no data', type: 'neutral' };
+    }
+    const pct = Math.round(((current - previous) / previous) * 100);
+    if (pct > 0) return { text: `\u2191 ${pct}%`, type: 'up' };
+    if (pct < 0) return { text: `\u2193 ${Math.abs(pct)}%`, type: 'down' };
+    return { text: '\u2014 same as previous', type: 'neutral' };
+}
+
+function computeCtrDelta(current: number, previous: number): { text: string; type: 'up' | 'down' | 'neutral' } {
+    const diff = current - previous;
+    if (Math.abs(diff) < 0.05) return { text: '\u2014 same as previous', type: 'neutral' };
+    const sign = diff > 0 ? '\u2191' : '\u2193';
+    return { text: `${sign} ${Math.abs(diff).toFixed(1)} pts`, type: diff > 0 ? 'up' : 'down' };
+}
+
+function buildHeatmapGrid(buckets: HeatmapBucket[]): number[][] {
+    // Postgres DOW: 0=Sun, 1=Mon, ..., 6=Sat → Display: 0=Mon, ..., 6=Sun
+    const dowToDisplay: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
+    const grid: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    buckets.forEach((b) => {
+        const displayDay = dowToDisplay[b.day];
+        if (displayDay !== undefined) grid[displayDay][b.hour] = b.count;
+    });
+    const max = Math.max(1, ...grid.flat());
+    return grid.map((row) => row.map((v) => v / max));
+}
+
 // --- SVG Chart Builder ---
 
-function buildTrendsSvg(
-    days: string[],
-    visitors: number[],
-    clicks: number[],
-): string {
+function buildTrendsSvg(days: string[], visitors: number[], clicks: number[]): string {
+    if (days.length === 0) return '';
+
     const w = 960, h = 220, padL = 50, padR = 12, padT = 16, padB = 28;
     const innerW = w - padL - padR;
     const innerH = h - padT - padB;
-    const maxV = 5000;
-    const maxC = 700;
-    const xStep = innerW / (days.length - 1);
+    const maxV = Math.max(1, ...visitors) * 1.2;
+    const maxC = Math.max(1, ...clicks) * 1.2;
+    const xStep = days.length > 1 ? innerW / (days.length - 1) : innerW;
     const xs = (i: number) => padL + i * xStep;
     const yV = (v: number) => padT + innerH - (v / maxV) * innerH;
     const yC = (v: number) => padT + innerH - (v / maxC) * innerH;
@@ -92,7 +131,7 @@ function buildTrendsSvg(
         return `${top} L ${xs(data.length - 1)} ${padT + innerH} L ${xs(0)} ${padT + innerH} Z`;
     };
 
-    const gridLines = [0, 0.25, 0.5, 0.75, 1].map(p => {
+    const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => {
         const y = padT + innerH * (1 - p);
         return `<line x1="${padL}" x2="${w - padR}" y1="${y}" y2="${y}"/>
                 <text x="${padL - 8}" y="${y + 3}" text-anchor="end">${Math.round(maxV * p).toLocaleString()}</text>`;
@@ -132,7 +171,6 @@ function buildTrendsSvg(
 function HeatmapGrid({ data, days }: { data: number[][]; days: string[] }) {
     const cells: React.ReactNode[] = [];
 
-    // Header row: empty corner + 24 hour labels
     cells.push(<div key="corner" />);
     for (let h = 0; h < 24; h++) {
         cells.push(
@@ -142,20 +180,18 @@ function HeatmapGrid({ data, days }: { data: number[][]; days: string[] }) {
         );
     }
 
-    // Data rows
     days.forEach((day, dayIdx) => {
         cells.push(<div key={`d-${dayIdx}`} className="day-label">{day}</div>);
         for (let h = 0; h < 24; h++) {
-            const v = data[dayIdx][h];
+            const v = data[dayIdx]?.[h] ?? 0;
             const opacity = v < 0.05 ? 0.04 : 0.05 + v * 0.95;
-            const clickCount = Math.round(v * 80);
             const hourLabel = String(h).padStart(2, '0') + ':00';
             cells.push(
                 <div
                     key={`c-${dayIdx}-${h}`}
                     className="heat-cell"
                     style={{ background: `rgba(0,168,107,${opacity})` }}
-                    title={`${day} ${hourLabel} \u00b7 ${clickCount} clicks`}
+                    title={`${day} ${hourLabel}`}
                 />,
             );
         }
@@ -164,7 +200,7 @@ function HeatmapGrid({ data, days }: { data: number[][]; days: string[] }) {
     return <div className="heatmap">{cells}</div>;
 }
 
-function PaymentBar({ name, agents, pct }: { name: string; agents: number; pct: number }) {
+function PaymentBar({ name, value, pct }: { name: string; value: string; pct: number }) {
     return (
         <div className="bar-row">
             <div className="bar-label">{name}</div>
@@ -174,7 +210,7 @@ function PaymentBar({ name, agents, pct }: { name: string; agents: number; pct: 
                     style={{ width: `${pct}%`, background: 'linear-gradient(90deg, var(--green-dark), var(--green))' }}
                 />
             </div>
-            <div className="bar-value">{agents} agents</div>
+            <div className="bar-value">{value}</div>
         </div>
     );
 }
@@ -219,10 +255,102 @@ function LeaderboardRow({ rank, num, name, tg, clicks, hours, rate, sessions, la
 // --- Main Component ---
 
 export default function AnalyticsPage() {
-    const chartSvg = buildTrendsSvg(SAMPLE_DAYS, SAMPLE_VISITORS, SAMPLE_CLICKS);
+    const [range, setRange] = useState('7d');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [overview, setOverview] = useState<Overview | null>(null);
+    const [prevOverview, setPrevOverview] = useState<Overview | null>(null);
+    const [timeline, setTimeline] = useState<TimelineDay[]>([]);
+    const [heatmapBuckets, setHeatmapBuckets] = useState<HeatmapBucket[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<PaymentMethodBreakdown[]>([]);
+
+    const fetchAnalytics = useCallback(async (rangeKey: string) => {
+        const prev = getPreviousRange(rangeKey);
+        const calls: Promise<unknown>[] = [
+            api.get(`/api/admin/stats/overview?range=${rangeKey}`),
+            api.get(`/api/admin/stats/timeline?range=${rangeKey}`),
+            api.get(`/api/admin/stats/heatmap?range=${rangeKey}`),
+            api.get(`/api/admin/stats/payment-methods?range=${rangeKey}`),
+        ];
+
+        if (prev) {
+            calls.push(api.get(`/api/admin/stats/overview?range=custom&from=${prev.from}&to=${prev.to}`));
+        }
+
+        const results = await Promise.all(calls) as { data: { data: unknown } }[];
+
+        setOverview(results[0].data.data as Overview);
+        setTimeline(results[1].data.data as TimelineDay[]);
+        setHeatmapBuckets(results[2].data.data as HeatmapBucket[]);
+        setPaymentMethods(results[3].data.data as PaymentMethodBreakdown[]);
+        setPrevOverview(results[4] ? results[4].data.data as Overview : null);
+    }, []);
+
+    useEffect(() => {
+        setLoading(true);
+        setError(null);
+        fetchAnalytics(range)
+            .catch(() => setError('Failed to load analytics'))
+            .finally(() => setLoading(false));
+    }, [range, fetchAnalytics]);
+
+    function handleRangeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+        const val = e.target.value;
+        if (val === 'custom') {
+            alert('Custom date range coming soon');
+            return;
+        }
+        setRange(val);
+    }
+
+    function handleRetry() {
+        setError(null);
+        setLoading(true);
+        fetchAnalytics(range)
+            .catch(() => setError('Failed to load analytics'))
+            .finally(() => setLoading(false));
+    }
+
+    // --- Derived state ---
+    const visitorsDelta = overview && prevOverview
+        ? computeDelta(overview.total_visits, prevOverview.total_visits)
+        : { text: '\u2014', type: 'neutral' as const };
+
+    const uniqueDelta = overview && prevOverview
+        ? computeDelta(overview.unique_visitors, prevOverview.unique_visitors)
+        : { text: '\u2014', type: 'neutral' as const };
+
+    const clicksDelta = overview && prevOverview
+        ? computeDelta(overview.deposit_clicks, prevOverview.deposit_clicks)
+        : { text: '\u2014', type: 'neutral' as const };
+
+    const ctrDelta = overview && prevOverview
+        ? computeCtrDelta(overview.ctr, prevOverview.ctr)
+        : { text: '\u2014', type: 'neutral' as const };
+
+    const chartDays = timeline.map((d) => formatShortDate(d.date));
+    const chartVisitors = timeline.map((d) => d.total_visits);
+    const chartClicks = timeline.map((d) => d.deposit_clicks);
+    const chartSvg = buildTrendsSvg(chartDays, chartVisitors, chartClicks);
+
+    const intensityGrid = buildHeatmapGrid(heatmapBuckets);
+
+    const maxAgentCount = Math.max(1, ...paymentMethods.map((m) => m.agent_count));
+
+    // --- Render ---
+    if (loading) {
+        return <div className="dash-loading">Loading analytics...</div>;
+    }
 
     return (
         <>
+            {error && (
+                <div className="dash-error">
+                    <span>{error}</span>
+                    <button className="btn btn-sm btn-danger" onClick={handleRetry}>Retry</button>
+                </div>
+            )}
+
             {/* Page Header */}
             <div className="page-head">
                 <div>
@@ -230,7 +358,7 @@ export default function AnalyticsPage() {
                     <div className="subtitle">Performance metrics, trends, and agent insights</div>
                 </div>
                 <div className="page-actions">
-                    <select className="filter-select" defaultValue="7d">
+                    <select className="filter-select" value={range} onChange={handleRangeChange}>
                         <option value="today">Today</option>
                         <option value="7d">Last 7 days</option>
                         <option value="30d">Last 30 days</option>
@@ -245,9 +373,32 @@ export default function AnalyticsPage() {
 
             {/* Stat Cards */}
             <div className="stats-grid" style={{ marginBottom: 20 }}>
-                {SAMPLE_STATS.map((s) => (
-                    <StatCard key={s.label} {...s} />
-                ))}
+                <StatCard
+                    label="Total Visitors"
+                    value={(overview?.total_visits ?? 0).toLocaleString()}
+                    delta={visitorsDelta.text}
+                    deltaType={visitorsDelta.type}
+                    accent="gold"
+                />
+                <StatCard
+                    label="Unique Visitors"
+                    value={(overview?.unique_visitors ?? 0).toLocaleString()}
+                    delta={uniqueDelta.text}
+                    deltaType={uniqueDelta.type}
+                    accent="blue"
+                />
+                <StatCard
+                    label="Deposit Clicks"
+                    value={(overview?.deposit_clicks ?? 0).toLocaleString()}
+                    delta={clicksDelta.text}
+                    deltaType={clicksDelta.type}
+                />
+                <StatCard
+                    label="Click-Through Rate"
+                    value={`${(overview?.ctr ?? 0).toFixed(1)}%`}
+                    delta={ctrDelta.text}
+                    deltaType={ctrDelta.type}
+                />
             </div>
 
             {/* Trends Chart */}
@@ -268,23 +419,30 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
                 <div className="panel-body">
-                    <div className="trends-chart-wrap" dangerouslySetInnerHTML={{ __html: chartSvg }} />
-                    <div className="trends-labels">
-                        {SAMPLE_DAYS.map((d) => <span key={d}>{d}</span>)}
-                    </div>
+                    {chartSvg ? (
+                        <>
+                            <div className="trends-chart-wrap" dangerouslySetInnerHTML={{ __html: chartSvg }} />
+                            <div className="trends-labels">
+                                {chartDays.map((d, i) => <span key={i}>{d}</span>)}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="empty-state">
+                            <h3>No data for selected range</h3>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Two-Column: Heatmap + Payment Methods */}
             <div className="two-col">
-                {/* Heatmap */}
                 <div className="panel">
                     <div className="panel-head">
                         <div className="panel-title">When players deposit</div>
                         <div style={{ fontSize: '.74rem', color: 'var(--text-dim)' }}>Day &times; Hour heatmap</div>
                     </div>
                     <div className="panel-body">
-                        <HeatmapGrid data={HEATMAP_DATA} days={HEATMAP_DAYS} />
+                        <HeatmapGrid data={intensityGrid} days={HEATMAP_DAYS} />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, fontSize: '.72rem', color: 'var(--text-muted)' }}>
                             <span>Less</span>
                             <div style={{ display: 'flex', gap: 3 }}>
@@ -304,23 +462,31 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
 
-                {/* Payment Methods */}
                 <div className="panel">
                     <div className="panel-head">
                         <div className="panel-title">Payment Methods</div>
-                        <div style={{ fontSize: '.74rem', color: 'var(--text-dim)' }}>By agent click rate</div>
+                        <div style={{ fontSize: '.74rem', color: 'var(--text-dim)' }}>By agent coverage</div>
                     </div>
                     <div className="panel-body">
                         <div className="bar-list">
-                            {SAMPLE_PAYMENT_METHODS.map((m) => (
-                                <PaymentBar key={m.name} name={m.name} agents={m.agents} pct={m.pct} />
-                            ))}
+                            {paymentMethods.length === 0 ? (
+                                <div className="empty-state"><h3>No payment methods</h3></div>
+                            ) : (
+                                paymentMethods.map((m) => (
+                                    <PaymentBar
+                                        key={m.slug}
+                                        name={m.display_name}
+                                        value={`${m.agent_count} agents`}
+                                        pct={(m.agent_count / maxAgentCount) * 100}
+                                    />
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Leaderboard */}
+            {/* Leaderboard (hardcoded — F5D wires) */}
             <div className="panel">
                 <div className="panel-head">
                     <div className="panel-title">Agent Leaderboard</div>
