@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
 **Last updated:** 2026-04-30
-**Current phase:** Phase E — Notifications (next)
-**Build progress:** Phase A complete. Phase B complete. Phase C complete. Phase D COMPLETE (all 6 tasks shipped). Phase E next.
+**Current phase:** Phase F — Analytics (next)
+**Build progress:** Phase A–E complete. Phase F next.
 
 ---
 
@@ -188,12 +188,53 @@ Public agents API + embeddable HTML block + click tracking — fully implemented
 - **CSRF for public API routes:** Same pattern as Phase C — excluded `api/public/*` from CSRF middleware.
 - **Multi-browser sync pattern:** Reused from Phase C (60s polling + visibility-change pause/resume).
 
+### ✅ PHASE E COMPLETE (2026-04-30)
+
+Web Push notification system — fully implemented with 210 tests covering all 5 spec rules. Real-device smoke test deferred to staging deployment (HTTPS required for Web Push on non-localhost).
+
+**Architecture decisions (locked 2026-04-30):**
+- Web Push via Service Worker + VAPID (closed-browser delivery required per revised spec)
+- Many subscriptions per agent (phone + laptop + tablet), soft-delete on 410 Gone
+- Notification log dedupes per (agent_id, notification_type, reference_timestamp)
+- Polling cron every minute (not queued jobs) — rule engine is stateless and idempotent
+- Africa/Addis_Ababa timezone for all scheduling (app.timezone = EAT, not UTC)
+- iOS Safari limitation acknowledged (PWA install required for push)
+
+**11 commits shipped:**
+1. `7ec3852` E0: Split session_expired from went_offline in status_events
+2. `29e0269` E1: push_subscriptions + notification_log schema (2 migrations)
+3. `b472893` E2: VAPID setup (minishlink/web-push, .env keys, config/services.php webpush block, window.__VAPID_PUBLIC_KEY__ injection)
+4. `9cbe7dc` E3: Push subscription endpoints (POST/DELETE /api/agent/{token}/subscribe, upsert semantics, soft-delete on unsubscribe)
+5. `8d18e15` E4: Service worker (public/sw.js — push handler, notificationclick with focus-or-open)
+6. `a87c573` E5: Frontend integration (pushSubscription.ts utilities, api.ts subscribe/unsubscribe, AgentApp useEffect on permission grant)
+7. `2532d2f` E6: NotificationDispatcher service (batch WebPush send, 410/404 → mark inactive, last_used_at on success, dispatchAndLog with dedup guard)
+8. `78ec57a` E7A: Rule engine skeleton + detectExpiredSessions (lazy session expiration backfill)
+9. E7B: Pre-expiration warnings (Rule 2 — 15/10/5 min daytime, sleep_warning_5 nighttime)
+10. `e46bc28` E7C: Post-offline reminders (Rule 3 — full 5-step daytime chain, nighttime silence rules, 7 AM chain reset anchor)
+11. `215721a` E8: Cron commands (agents:check-reminders every minute, agents:wakeup daily 7 AM EAT)
+
+**5 spec rules implemented:**
+- Rule 1 (1hr session cap during sleep): enforced in goOnline/extend (Phase C AllowedDuration)
+- Rule 2 (pre-expiration warnings): ±45s tolerance window, daytime 15/10/5, nighttime 5 only
+- Rule 3 (post-offline reminders): went_offline vs session_expired distinction drives nighttime behavior
+- Rule 4 (7am wakeup): standalone command, broadcasts to all offline agents
+- Rule 5 (7am chain reset): getOfflineAnchor returns max(offlineEvent, today 7am EAT)
+
+**Issues discovered & fixed:**
+- App timezone is Africa/Addis_Ababa (not UTC) — Carbon::parse() interprets strings as EAT. All time-sensitive tests must use EAT timestamps.
+- Spec contradiction caught & resolved: original spec said closed-browser = no notifications. Revised mid-Phase to require Web Push for closed-browser delivery. Architecture changed from window-only Notification API to Service Worker + VAPID.
+- status_events needed split: went_offline (self-click) vs session_expired (timer auto-expire). Rule 3 nighttime behavior depends on this distinction (silence vs single reminder).
+- Test helper name collisions across Pest namespaces — renamed validPayload→subscribePayload to avoid collision with AgentCreateTest.
+- Mockery flush() returns Generator not ArrayIterator — needed generator wrapper helper.
+- Pest expect()->toBe() does strict identity on arrays — use toEqual() for array comparisons.
+
 ### Resume next session
 
-- **Phase E** starts: Notifications (browser push notifications).
-- Read `docs/notifications-spec.md` for the full notification spec (locked 2026-04-28).
-- Permission banner UI already exists in agent page (Phase C Task 5C) — Phase E wires the firing logic.
+- **Phase F** starts: Analytics (rollups, charts, leaderboard).
+- Read `docs/SPECIFICATION.md` Section 7 for analytics spec.
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
+- **Cron:** `php artisan schedule:work` to run the scheduler locally (or `schedule:run` once)
+- **Real-device smoke test:** deferred to staging deployment. See `docs/staging-deployment-checklist.md` for the E9 validation plan.
 
 ### Gate review at end of Phase A
 
@@ -233,8 +274,8 @@ These are unresolved and may need Kidus's input as you build:
 [✅] Phase B — Admin agent CRUD          completed 2026-04-28
 [✅] Phase C — Agent secret page          completed 2026-04-29
 [✅] Phase D — Public API + HTML block    completed 2026-04-30
-[ ] Phase E — Notifications              ← next (spec locked in docs/notifications-spec.md)
-[ ] Phase F — Analytics
+[✅] Phase E — Notifications             completed 2026-04-30 (real-device E9 deferred to staging)
+[ ] Phase F — Analytics                  ← next
 [ ] Phase G — Polish & deploy
 ```
 
