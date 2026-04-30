@@ -63,15 +63,18 @@ class SessionMinutesCalculator
         Carbon $rangeStart,
         Carbon $rangeEnd,
     ): float {
-        $end = $this->findSessionEnd($agent, $onlineEvent, $rangeEnd);
+        $end = $this->findSessionEnd($agent, $onlineEvent, $rangeEnd)->utc();
+        $rStart = $rangeStart->copy()->utc();
+        $rEnd = $rangeEnd->copy()->utc();
+        $eventStart = $onlineEvent->created_at->copy()->utc();
 
         // Session ended before range — no contribution
-        if ($end <= $rangeStart) {
+        if ($end <= $rStart) {
             return 0;
         }
 
-        $start = $onlineEvent->created_at->max($rangeStart);
-        $end = $end->min($rangeEnd);
+        $start = $eventStart->max($rStart);
+        $end = $end->min($rEnd);
 
         return max(0, $start->diffInMinutes($end));
     }

@@ -156,4 +156,27 @@ When extracting CSS for Shadow DOM components (e.g., the public agents embed blo
 
 ---
 
+## Timezone handling in queries
+
+App timezone is `Africa/Addis_Ababa` (EAT). Postgres `timestamp` columns are `WITHOUT TIME ZONE` — they store raw datetime strings, not normalized to any TZ.
+
+What timezone gets stored depends on the Carbon instance at write time:
+
+- Production code uses `now()` → returns `Carbon::now('Africa/Addis_Ababa')` → stored as EAT string
+- Tests in `tests/Feature/Agent/AgentSecretTest.php` create events with `Carbon::create(year, month, day, hour, min, sec, 'UTC')` → stored as UTC string in DB
+- Tests in `tests/Feature/Analytics/DailyStatsRollupTest.php` create events with `Carbon::parse('YYYY-MM-DD HH:MM:SS')` (no explicit TZ) → stored as EAT string (because `app.timezone=EAT` applies to `Carbon::parse` defaults)
+
+When writing query boundaries:
+- `AgentMetricsService::getTodayMetrics` uses `->utc()` because Phase C tests use explicit-UTC Carbons
+- `DailyStatsService::rollupDay` does NOT use `->utc()` because Phase F tests use parse-without-TZ Carbons
+
+In production, both approaches converge to the same correct result because all writes use `now()`. The difference only matters for test data conventions.
+
+**NEW CODE GUIDANCE:**
+- Always write timestamps via `now()` in production paths (never explicit `Carbon::create` with non-EAT timezones)
+- For new test files, prefer parse-without-TZ pattern (matches production data shape)
+- When importing external data with explicit timezones, normalize to EAT at import boundary
+
+---
+
 End of working agreement. Stay rigorous. Ask questions. Don't surprise.
