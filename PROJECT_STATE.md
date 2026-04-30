@@ -279,19 +279,35 @@ Source: `docs/mockups/` (committed since Phase A, Apr 27). Copied to `docs/desig
 - ActivityPage: MAJOR — mockup uses vertical timeline layout, React uses table. Defer to Phase G.
 - PaymentMethodsPage: MAJOR — stub only. Phase G or separate task.
 - SettingsPage: MAJOR — stub only. Phase G or separate task.
-- DashboardPage: MAJOR — stub. F4-REACT replaces it.
-- AnalyticsPage: MAJOR — stub. F5-REACT replaces it.
+- DashboardPage: DONE — F4 complete (F4A visual + F4B data wiring + F4C tests)
+- AnalyticsPage: IN PROGRESS — F5A visual port complete, F5B-E data wiring remaining
 
-F4-MOCKUP gate now obsolete (architect provided the mockup). F4-REACT is a direct port. Same for F5.
+### F4 Dashboard complete (2026-04-30 evening)
+
+**6 commits shipped in evening session:**
+1. `c31714a` — F4A: Visual port of dashboard mockup to React (CSS + hardcoded data)
+2. `bf50a89` — F4B: Real data wiring with 30s polling + visibility-change pause
+3. `4b80dfe` — F4C: Frontend test infrastructure (vitest + RTL) + 5 dashboard tests
+4. `fa6777d` — F5-PRE-1: Heatmap endpoint (DOW × hour click distribution)
+5. `8fe87a0` — F5-PRE-2: Payment methods breakdown endpoint (jsonb unnest + agent counts)
+6. `f92b321` — F5A: Analytics page visual port (CSS + hardcoded data, StatCard shared with dashboard)
+
+**Test count progression:** 258 → 273 (268 backend + 5 frontend).
+
+**Frontend test infra established:** vitest + @testing-library/react + jsdom. `npm run test` runs frontend tests. `npm run test:watch` for dev mode.
+
+**Backend gaps for F5 closed:** heatmap (EXTRACT DOW/HOUR on click_events) and payment methods breakdown (jsonb_array_elements_text cross-join) both shipped with 5 tests each.
 
 ### Resume next session
 
-- **Phase F frontend** continues: F4-REACT, F5-REACT, F6, F7
-- Read `docs/design-mockups/admin-dashboard.html` in browser as the visual contract
-- F4-REACT: replace `resources/js/admin/pages/DashboardPage.tsx` stub with real dashboard
-- F5-REACT: port `docs/design-mockups/admin-analytics.html` to AnalyticsPage.tsx with Recharts
+- **Phase F frontend** continues: F5B, F5C, F5D, F5E, then F6, F7
+- Read `docs/design-mockups/admin-analytics.html` in browser as the visual contract
+- F5B: Wire analytics to real API data with date range state
+- F5C: Replace static SVG trends chart with Recharts AreaChart
+- F5D: Leaderboard with sortable columns
+- F5E: Analytics page tests
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Seed rollup data:** `php artisan agents:rollup-daily --days=7` to populate daily_stats for dashboard testing
+- **Seed rollup data:** `php artisan agents:rollup-daily --days=7` to populate daily_stats for analytics testing
 - **Real-device smoke test (Phase E):** deferred to staging deployment. See `docs/staging-deployment-checklist.md`.
 
 ### Gate review at end of Phase A
