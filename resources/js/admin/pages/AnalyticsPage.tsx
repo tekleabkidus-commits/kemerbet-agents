@@ -36,18 +36,17 @@ interface PaymentMethodBreakdown {
     click_count: number;
 }
 
-// --- Leaderboard (hardcoded — F5D wires to real API) ---
-
-const SAMPLE_LEADERBOARD = [
-    { rank: 1, num: 3, name: 'Agent 3', tg: '@yehoneagent', clicks: 187, hours: '34h 12m', rate: 5.5, sessions: 21, lastSeen: 'Online now', live: true },
-    { rank: 2, num: 7, name: 'Agent 7', tg: '@DOITFAST21', clicks: 142, hours: '28h 47m', rate: 4.9, sessions: 18, lastSeen: 'Online now', live: true },
-    { rank: 3, num: 14, name: 'Agent 14', tg: '@tewodros_ab', clicks: 98, hours: '21h 5m', rate: 4.6, sessions: 14, lastSeen: 'Online now', live: true },
-    { rank: 4, num: 4, name: 'Agent 4', tg: '@kemeragent_4', clicks: 76, hours: '18h 33m', rate: 4.1, sessions: 12, lastSeen: '12m ago', live: false },
-    { rank: 5, num: 22, name: 'Agent 22', tg: '@obina_t', clicks: 68, hours: '15h 18m', rate: 4.4, sessions: 9, lastSeen: 'Online now', live: true },
-    { rank: 6, num: 11, name: 'Agent 11', tg: '@balem18', clicks: 52, hours: '12h 4m', rate: 4.3, sessions: 8, lastSeen: 'Online now', live: true },
-    { rank: 7, num: 19, name: 'Agent 19', tg: '@kemerdepositagent', clicks: 41, hours: '9h 42m', rate: 4.2, sessions: 6, lastSeen: 'Online now', live: true },
-    { rank: 8, num: 12, name: 'Agent 12', tg: '@obina_t', clicks: 38, hours: '11h 17m', rate: 3.4, sessions: 9, lastSeen: '44m ago', live: false },
-];
+interface LeaderboardAgent {
+    agent_id: number;
+    display_number: number | null;
+    telegram_username: string | null;
+    deposit_clicks: number;
+    minutes_live: number;
+    times_went_online: number;
+    click_rate: number;
+    last_seen_at: string | null;
+    is_live: boolean;
+}
 
 // --- Helpers ---
 
@@ -64,6 +63,31 @@ function fmt(d: Date): string {
 function formatShortDate(iso: string): string {
     const d = new Date(iso + 'T12:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatRelativeTime(iso: string): string {
+    const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+}
+
+function formatHoursMinutes(minutes: number): string {
+    if (!minutes || minutes <= 0) return '0h';
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    return `${m}m`;
+}
+
+function formatLastSeen(iso: string | null, isLive: boolean): string {
+    if (isLive) return 'Online now';
+    if (!iso) return '\u2014';
+    return formatRelativeTime(iso);
 }
 
 function getPreviousRange(rangeKey: string): { from: string; to: string } | null {
@@ -97,7 +121,6 @@ function computeCtrDelta(current: number, previous: number): { text: string; typ
 }
 
 function buildHeatmapGrid(buckets: HeatmapBucket[]): number[][] {
-    // Postgres DOW: 0=Sun, 1=Mon, ..., 6=Sat → Display: 0=Mon, ..., 6=Sun
     const dowToDisplay: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 };
     const grid: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
     buckets.forEach((b) => {
@@ -256,6 +279,7 @@ function LeaderboardRow({ rank, num, name, tg, clicks, hours, rate, sessions, la
 
 export default function AnalyticsPage() {
     const [range, setRange] = useState('7d');
+    const [sortKey, setSortKey] = useState('deposit_clicks');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [overview, setOverview] = useState<Overview | null>(null);
@@ -263,14 +287,16 @@ export default function AnalyticsPage() {
     const [timeline, setTimeline] = useState<TimelineDay[]>([]);
     const [heatmapBuckets, setHeatmapBuckets] = useState<HeatmapBucket[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethodBreakdown[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardAgent[]>([]);
 
-    const fetchAnalytics = useCallback(async (rangeKey: string) => {
+    const fetchAnalytics = useCallback(async (rangeKey: string, sort: string) => {
         const prev = getPreviousRange(rangeKey);
         const calls: Promise<unknown>[] = [
             api.get(`/api/admin/stats/overview?range=${rangeKey}`),
             api.get(`/api/admin/stats/timeline?range=${rangeKey}`),
             api.get(`/api/admin/stats/heatmap?range=${rangeKey}`),
             api.get(`/api/admin/stats/payment-methods?range=${rangeKey}`),
+            api.get(`/api/admin/stats/leaderboard?range=${rangeKey}&sort=${sort}&limit=50`),
         ];
 
         if (prev) {
@@ -283,16 +309,17 @@ export default function AnalyticsPage() {
         setTimeline(results[1].data.data as TimelineDay[]);
         setHeatmapBuckets(results[2].data.data as HeatmapBucket[]);
         setPaymentMethods(results[3].data.data as PaymentMethodBreakdown[]);
-        setPrevOverview(results[4] ? results[4].data.data as Overview : null);
+        setLeaderboard(results[4].data.data as LeaderboardAgent[]);
+        setPrevOverview(results[5] ? results[5].data.data as Overview : null);
     }, []);
 
     useEffect(() => {
         setLoading(true);
         setError(null);
-        fetchAnalytics(range)
+        fetchAnalytics(range, sortKey)
             .catch(() => setError('Failed to load analytics'))
             .finally(() => setLoading(false));
-    }, [range, fetchAnalytics]);
+    }, [range, sortKey, fetchAnalytics]);
 
     function handleRangeChange(e: React.ChangeEvent<HTMLSelectElement>) {
         const val = e.target.value;
@@ -306,7 +333,7 @@ export default function AnalyticsPage() {
     function handleRetry() {
         setError(null);
         setLoading(true);
-        fetchAnalytics(range)
+        fetchAnalytics(range, sortKey)
             .catch(() => setError('Failed to load analytics'))
             .finally(() => setLoading(false));
     }
@@ -486,39 +513,67 @@ export default function AnalyticsPage() {
                 </div>
             </div>
 
-            {/* Leaderboard (hardcoded — F5D wires) */}
+            {/* Leaderboard */}
             <div className="panel">
                 <div className="panel-head">
                     <div className="panel-title">Agent Leaderboard</div>
                     <div className="panel-actions">
-                        <select className="filter-select" defaultValue="clicks">
-                            <option value="clicks">Sort by: Click Count</option>
-                            <option value="hours">Sort by: Live Hours</option>
-                            <option value="rate">Sort by: Click Rate (per minute live)</option>
-                            <option value="conversion">Sort by: Conversion Rate</option>
+                        <select
+                            className="filter-select"
+                            value={sortKey}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'conversion') return;
+                                setSortKey(val);
+                            }}
+                        >
+                            <option value="deposit_clicks">Sort by: Click Count</option>
+                            <option value="minutes_live">Sort by: Live Hours</option>
+                            <option value="click_rate">Sort by: Click Rate (per minute live)</option>
+                            <option value="conversion" disabled>Sort by: Conversion Rate (coming soon)</option>
                         </select>
                     </div>
                 </div>
-                <div className="table-wrap">
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: 50 }}>Rank</th>
-                                <th>Agent</th>
-                                <th>Clicks (7d)</th>
-                                <th>Live Hours</th>
-                                <th>Click Rate</th>
-                                <th>Sessions</th>
-                                <th>Last Seen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {SAMPLE_LEADERBOARD.map((a) => (
-                                <LeaderboardRow key={a.rank} {...a} />
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                {leaderboard.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="icon">&#9675;</div>
+                        <h3>No agent data for selected range</h3>
+                        <p>Agent activity will appear here once data is collected.</p>
+                    </div>
+                ) : (
+                    <div className="table-wrap">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: 50 }}>Rank</th>
+                                    <th>Agent</th>
+                                    <th>Clicks ({range === 'today' ? 'today' : range})</th>
+                                    <th>Live Hours</th>
+                                    <th>Click Rate</th>
+                                    <th>Sessions</th>
+                                    <th>Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {leaderboard.map((a, i) => (
+                                    <LeaderboardRow
+                                        key={a.agent_id}
+                                        rank={i + 1}
+                                        num={a.display_number ?? 0}
+                                        name={`Agent ${a.display_number ?? '?'}`}
+                                        tg={`@${a.telegram_username ?? '?'}`}
+                                        clicks={a.deposit_clicks}
+                                        hours={formatHoursMinutes(a.minutes_live)}
+                                        rate={a.click_rate * 60}
+                                        sessions={a.times_went_online}
+                                        lastSeen={formatLastSeen(a.last_seen_at, a.is_live)}
+                                        live={a.is_live}
+                                    />
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </>
     );
