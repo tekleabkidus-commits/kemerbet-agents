@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\StatsController;
 use App\Http\Controllers\Agent\AgentSecretController;
 use App\Http\Controllers\Public\PublicAgentsController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +35,11 @@ Route::prefix('admin')->group(function () {
         Route::post('agents/{agent}/regenerate-token', [AgentController::class, 'regenerateToken']);
         Route::delete('agents/{agent}', [AgentController::class, 'destroy']);
         Route::post('agents/{agent}/restore', [AgentController::class, 'restore'])->withTrashed();
+
+        Route::get('stats/overview', [StatsController::class, 'overview']);
+        Route::get('stats/timeline', [StatsController::class, 'timeline']);
+        Route::get('stats/leaderboard', [StatsController::class, 'leaderboard']);
+        Route::get('stats/agent/{agent}', [StatsController::class, 'agentDetail']);
     });
 });
 
