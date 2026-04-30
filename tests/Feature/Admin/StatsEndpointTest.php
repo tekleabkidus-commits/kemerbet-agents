@@ -5,6 +5,7 @@ use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\DailyStat;
 use App\Models\PaymentMethod;
+use App\Models\VisitEvent;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -411,4 +412,46 @@ it('payment-methods sorted by click_count descending', function () {
 it('payment-methods requires authentication', function () {
     $this->getJson('/api/admin/stats/payment-methods?range=7d')
         ->assertUnauthorized();
+});
+
+// =====================================================================
+// range=today regression
+// =====================================================================
+
+// 23. overview with range=today returns only today's data (not 7-day aggregate)
+it('overview with range=today returns only today data', function () {
+    Carbon::setTestNow('2026-04-30 12:00:00');
+
+    $today = Carbon::parse('2026-04-30')->toDateString();
+
+    // Seed yesterday in daily_stats (would be included if range mistakenly returned 7d)
+    seedStat('2026-04-29', null, ['total_visits' => 200, 'deposit_clicks' => 30]);
+    seedStat('2026-04-24', null, ['total_visits' => 500, 'deposit_clicks' => 50]);
+
+    // Seed today's raw visit + click events (today is computed live, not from daily_stats)
+    VisitEvent::create([
+        'visitor_id' => 'v_today',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::parse('2026-04-30 09:00:00'),
+    ]);
+
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v_today',
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::parse('2026-04-30 10:00:00'),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/overview?range=today');
+
+    $response->assertOk();
+
+    // Should include only today's live-computed data (1 visit, 1 click)
+    // NOT the 700+ visits from yesterday + 6 days ago
+    expect($response->json('data.total_visits'))->toBe(1)
+        ->and($response->json('data.deposit_clicks'))->toBe(1)
+        ->and($response->json('range.from'))->toBe($today)
+        ->and($response->json('range.to'))->toBe($today);
 });

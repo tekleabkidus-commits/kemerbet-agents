@@ -107,6 +107,12 @@ class StatsController extends Controller
             ];
         }
 
+        if ($range === 'today') {
+            $to = now()->setTimezone('Africa/Addis_Ababa')->startOfDay();
+
+            return [$to->copy(), $to];
+        }
+
         $days = match ($range) {
             '30d' => 30,
             '90d' => 90,
