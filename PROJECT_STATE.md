@@ -1,8 +1,8 @@
 # Project State — Kemerbet Agents
 
 **Last updated:** 2026-04-30
-**Current phase:** Phase F — Analytics (next)
-**Build progress:** Phase A–E complete. Phase F next.
+**Current phase:** Phase F — Analytics (frontend remaining)
+**Build progress:** Phase A–E complete. Phase F backend complete + mockup locked. Frontend remaining.
 
 ---
 
@@ -228,13 +228,46 @@ Web Push notification system — fully implemented with 210 tests covering all 5
 - Mockery flush() returns Generator not ArrayIterator — needed generator wrapper helper.
 - Pest expect()->toBe() does strict identity on arrays — use toEqual() for array comparisons.
 
+### PHASE F BACKEND COMPLETE (2026-04-30)
+
+Analytics data layer, query services, API endpoints, and dashboard mockup — all shipped. Frontend React work remaining.
+
+**Architecture decisions (locked 2026-04-30):**
+- Visit tracking added as F0 — visit_events table existed since Phase A but had no producer. Without visits, CTR/total_visits/unique_visitors had no data source.
+- Per-payment-method analytics: option C — capture payment_methods_shown at click time via jsonb column on click_events. No embed UX change.
+- Per-agent total_visits=0 explicitly. Visits are page-level, not per-card impressions. Per-agent CTR NOT computed (would be 0/0). Per-agent metrics: clicks, minutes_live, sessions, click_rate. Site-wide CTR computed at query time.
+- Site-wide minutes_live stored as 0 in daily_stats site-wide row; computed at query time as SUM of per-agent rows (avoids redundancy/drift).
+- SessionMinutesCalculator extracted from AgentMetricsService for reuse across Phase C agent page metrics + Phase F daily rollup.
+- Daily rollup at 02:00 EAT via agents:rollup-daily command. Idempotent (DELETE+INSERT in transaction). --date and --days flags for backfill.
+- Stats query layer (StatsService) caches results 5 min. Rollup-time cache inconsistency window acknowledged (analytics doesn't need real-time).
+- Range parsing convention: 7d means 'today + 6 prior days inclusive' (not 'previous 7 complete days'). Custom range requires from/to params.
+- F4 mockup approach: HTML mockup-first, then React port — same as Phase B/C/D pattern.
+- Timezone handling documented in CLAUDE.md: DailyStatsService uses EAT boundaries directly (no ->utc()) because app.timezone=EAT and tests use parse-without-TZ pattern.
+
+**9 commits shipped (including refactor):**
+1. `fc58bc7` — F0: Visit tracking endpoint + embed sessionStorage-gated ping
+2. `b26c3fe` — F0.5: payment_methods_shown captured at click time (jsonb on click_events)
+3. `35720df` — Refactor: SessionMinutesCalculator extracted from AgentMetricsService
+4. `ed6ede8` — F1A: DailyStatsService + rollupDay (12 tests)
+5. `b841d72` — F1B: agents:rollup-daily command + scheduler at 02:00 EAT (3 tests)
+6. `2253643` — F2: StatsService with overview/timeline/leaderboard/agentDetail (11 tests, 5min cache)
+7. `ad745d6` — F3: Admin stats API endpoints with Sanctum auth + range parsing (12 tests)
+8. `6e67bbd` — F4-MOCKUP: HTML mockup locked at docs/design-mockups/admin-dashboard.html (1012 lines)
+
+**Test count progression:** 210 (Phase E end) → 258 (Phase F backend end). 48 new tests across 6 test files.
+
+**Issues discovered & fixed:**
+- Mixed-timezone Carbon min()/max() bug: Carbon::min() compares absolute time, not string value. An EAT Carbon and UTC Carbon with the same datetime string represent different moments. Fixed by normalizing to UTC in SessionMinutesCalculator before comparisons.
+- Test data timezone convention: Phase C tests use explicit UTC Carbons, Phase F tests use parse-without-TZ (EAT). Both correct in production (all writes use now()). Documented in CLAUDE.md.
+
 ### Resume next session
 
-- **Phase F** starts: Analytics (rollups, charts, leaderboard).
-- Read `docs/SPECIFICATION.md` Section 7 for analytics spec.
+- **Phase F frontend** continues: F4-REACT, F5, F6, F7
+- Read `docs/design-mockups/admin-dashboard.html` for locked visual contract
+- F4-REACT implementation begins: replace `resources/js/admin/pages/DashboardPage.tsx` stub
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
-- **Cron:** `php artisan schedule:work` to run the scheduler locally (or `schedule:run` once)
-- **Real-device smoke test:** deferred to staging deployment. See `docs/staging-deployment-checklist.md` for the E9 validation plan.
+- **Seed rollup data:** `php artisan agents:rollup-daily --days=7` to populate daily_stats for dashboard testing
+- **Real-device smoke test (Phase E):** deferred to staging deployment. See `docs/staging-deployment-checklist.md`.
 
 ### Gate review at end of Phase A
 
@@ -275,7 +308,7 @@ These are unresolved and may need Kidus's input as you build:
 [✅] Phase C — Agent secret page          completed 2026-04-29
 [✅] Phase D — Public API + HTML block    completed 2026-04-30
 [✅] Phase E — Notifications             completed 2026-04-30 (real-device E9 deferred to staging)
-[ ] Phase F — Analytics                  ← next
+[🔧] Phase F — Analytics                in progress 2026-04-30 (backend complete, frontend remaining)
 [ ] Phase G — Polish & deploy
 ```
 
