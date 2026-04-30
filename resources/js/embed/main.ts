@@ -58,6 +58,7 @@ function init(): void {
   let lastApiData: PublicAgentsResponse | null = null;
   let pendingDepositUrl: string | null = null;
   let pendingAgentId: string | null = null;
+  let pendingPaymentMethods: string[] | null = null;
   let pollTimer: number | null = null;
 
   // --- Refresh indicator ---
@@ -70,13 +71,16 @@ function init(): void {
   }
 
   // --- Click tracking (fire-and-forget) ---
-  function trackClick(agentId: string): void {
+  function trackClick(agentId: string, paymentMethods?: string[]): void {
     fetch(`${apiBase}/api/public/agents/${agentId}/click`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referrer: window.location.href }),
+      body: JSON.stringify({
+        referrer: window.location.href,
+        payment_methods: paymentMethods && paymentMethods.length > 0 ? paymentMethods : null,
+      }),
       keepalive: true,
-    }).catch(() => {}); // silent fail
+    }).catch(() => {});
   }
 
   // --- Fetch + render ---
@@ -129,11 +133,12 @@ function init(): void {
     shadow.getElementById('offlineWarnModal')?.classList.remove('show');
     pendingDepositUrl = null;
     pendingAgentId = null;
+    pendingPaymentMethods = null;
   }
 
   // Modal: confirm button
   shadow.getElementById('confirmDepositBtn')?.addEventListener('click', () => {
-    if (pendingAgentId) trackClick(pendingAgentId);
+    if (pendingAgentId) trackClick(pendingAgentId, pendingPaymentMethods ?? undefined);
     if (pendingDepositUrl) window.open(pendingDepositUrl, '_blank', 'noopener');
     closeModal();
   });
@@ -163,15 +168,17 @@ function init(): void {
     if (!btn) return;
 
     const agentId = btn.dataset.agentId!;
+    const methods: string[] = JSON.parse(btn.dataset.paymentMethods || '[]');
 
     if (btn.dataset.offline === 'true') {
       e.preventDefault();
       pendingDepositUrl = btn.dataset.depositUrl || null;
       pendingAgentId = agentId;
+      pendingPaymentMethods = methods;
       showModal();
     } else {
       // Live link: tracking fires in parallel, <a target="_blank"> proceeds naturally
-      trackClick(agentId);
+      trackClick(agentId, methods);
     }
   });
 

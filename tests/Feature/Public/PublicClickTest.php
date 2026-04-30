@@ -147,3 +147,40 @@ it('visitor_id is salted hash of ip + user_agent', function () {
     $click = ClickEvent::first();
     expect($click->visitor_id)->toBe($expected);
 });
+
+// --- Test 11: payment_methods captured when provided ---
+
+it('captures payment_methods array when provided', function () {
+    $agent = createAgent();
+
+    $this->postJson(clickUrl($agent->id), [
+        'payment_methods' => ['cbe', 'boa'],
+    ]);
+
+    $click = ClickEvent::first();
+    expect($click->payment_methods)->toBe(['cbe', 'boa']);
+});
+
+// --- Test 12: payment_methods null when not provided ---
+
+it('payment_methods is null when not provided', function () {
+    $agent = createAgent();
+
+    $this->postJson(clickUrl($agent->id));
+
+    $click = ClickEvent::first();
+    expect($click->payment_methods)->toBeNull();
+});
+
+// --- Test 13: payment_methods >10 items returns 422 ---
+
+it('returns 422 when payment_methods exceeds 10 items', function () {
+    $agent = createAgent();
+
+    $response = $this->postJson(clickUrl($agent->id), [
+        'payment_methods' => array_fill(0, 11, 'bank'),
+    ]);
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['payment_methods']);
+});

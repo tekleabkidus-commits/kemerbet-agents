@@ -15,6 +15,7 @@ class ClickEvent extends Model
         'visitor_id',
         'ip_address',
         'referrer',
+        'payment_methods',
         'created_at',
     ];
 
@@ -22,6 +23,7 @@ class ClickEvent extends Model
     {
         return [
             'created_at' => 'datetime',
+            'payment_methods' => 'array',
         ];
     }
 

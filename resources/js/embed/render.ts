@@ -57,6 +57,9 @@ export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): 
   const depositUrl = `https://t.me/${username}?text=${encodedMsg}`;
   const num = String(agent.display_number).padStart(2, '0');
 
+  const methodSlugs = (agent.payment_methods || []).map((m) => m.slug);
+  const methodsAttr = esc(JSON.stringify(methodSlugs));
+
   const banks = (agent.payment_methods || [])
     .map((m) => `<span class="bank">${esc(m.display_name)}</span>`)
     .join('');
@@ -73,11 +76,11 @@ export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): 
     : `<div class="badge offline">${t.offline_label}</div>`;
 
   const depositLink = isLive
-    ? `<a href="${depositUrl}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${agent.id}">
+    ? `<a href="${depositUrl}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${agent.id}" data-payment-methods="${methodsAttr}">
          <span>${t.deposit}</span>
          <span class="arrow">\u2192</span>
        </a>`
-    : `<button class="deposit-btn" data-agent-id="${agent.id}" data-deposit-url="${esc(depositUrl)}" data-offline="true">
+    : `<button class="deposit-btn" data-agent-id="${agent.id}" data-deposit-url="${esc(depositUrl)}" data-offline="true" data-payment-methods="${methodsAttr}">
          <span>${t.deposit}</span>
          <span class="arrow">\u2192</span>
        </button>`;

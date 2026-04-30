@@ -101,6 +101,8 @@ class PublicAgentsController extends Controller
 
         $request->validate([
             'referrer' => 'nullable|string|max:2000',
+            'payment_methods' => 'nullable|array|max:10',
+            'payment_methods.*' => 'string|max:50',
         ]);
 
         ClickEvent::create([
@@ -109,6 +111,7 @@ class PublicAgentsController extends Controller
             'visitor_id' => hash('xxh3', config('app.key').$request->ip().$request->userAgent()),
             'ip_address' => $request->ip(),
             'referrer' => $request->input('referrer'),
+            'payment_methods' => $request->input('payment_methods'),
             'created_at' => now(),
         ]);
 
