@@ -14,12 +14,13 @@ Drive agent engagement and presence on the public block by delivering timely bro
 
 ## Delivery channel
 
-**Browser push notifications only.** Agents must grant notification permission on first visit to their secret link page (Phase C surface).
+**Browser push notifications via Service Worker + Web Push (VAPID).** Agents grant notification permission on first visit to their secret link page (Phase C surface). The browser registers a push subscription with our backend, and from that point onward we deliver notifications to their device regardless of tab/browser state — even when the browser is fully closed.
 
-Accepted limitations:
-- Notifications only deliver when the agent has the secret link page open in a browser tab (foreground or background).
-- Agents who close their browser will miss reminders for the duration the browser is closed. They will not see them later when reopening.
-- No Telegram bot, no SMS fallback in v1. May be revisited post-launch.
+An agent may have multiple active subscriptions (phone + laptop + tablet). Notification deduplication is per-agent, not per-subscription — all devices receive each notification.
+
+**iOS Safari limitation:** iPhone users must install the page as a Home Screen PWA (iOS 16.4+) to receive notifications when Safari is closed. Without PWA install, notifications only fire while Safari is open. We surface a one-time "Add to Home Screen" hint to iOS users. Android Chrome, Desktop Chrome/Firefox/Edge, and macOS Safari all work fully without PWA install.
+
+No Telegram bot, no SMS fallback in v1. May be revisited post-launch.
 
 ---
 
@@ -112,19 +113,31 @@ These don't change the rules but will need answers during implementation:
 
 ---
 
-## Implementation surface (when Phase E begins)
+## Architecture (locked 2026-04-30)
 
-This spec will require:
-- A scheduling system (Laravel scheduler / cron / queue worker) — does not exist yet
-- A notification dispatch service capable of browser push — does not exist yet
-- Agent secret link page (Phase C) — must exist first; this is where push permission is granted
-- A notifications_log table to track sent notifications for deduplication and audit
-- Agent self-click vs system-expired offline event distinction in status_events — already supported via event_type
+1. **Web Push (Service Worker + VAPID)** — not window-only `new Notification()`
+2. **Many subscriptions per agent** (phone, laptop, tablet) — soft-delete on 410 Gone
+3. **Notification log dedupes by `(agent_id, notification_type, reference_timestamp)`**, not per subscription
+4. **Polling cron every minute** for reminder dispatching, not queued scheduled jobs
+5. **`Africa/Addis_Ababa` timezone** for all scheduling (`->timezone('Africa/Addis_Ababa')` in Laravel scheduler)
+6. **iOS Safari limitation acknowledged** — documented above, no workaround attempted
+7. **No Telegram bot fallback** in Phase E
 
-Recommended first task in Phase E: implement the scheduler, then Rule 4 (7 AM wakeup) as the simplest end-to-end test of the dispatch system.
+## Implementation surface
+
+This spec requires:
+- `minishlink/web-push` composer package for VAPID-based push delivery
+- VAPID keypair in `.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
+- `push_subscriptions` table (agent_id, endpoint, keys, user_agent, soft deletes)
+- `notification_log` table for deduplication and audit
+- Service Worker at `public/sw.js` handling `push` and `notificationclick` events
+- Agent secret link page (Phase C) — exists; push permission UI needs wiring to SW + subscription endpoint
+- Scheduled artisan commands: `agents:check-reminders` (every minute), `agents:wakeup` (daily 7 AM EAT)
+- Agent self-click vs system-expired offline event distinction in `status_events` — **needs migration** (currently only `went_offline`, must split into `went_offline` + `session_expired`)
 
 ---
 
 ## Update history
 
 - 2026-04-28: Initial spec captured. Locked by Kidus before returning to Phase B Task 3.
+- 2026-04-30: Architecture revised — Web Push (Service Worker + VAPID) replaces window-only notifications. Closed-browser delivery now required. iOS Safari limitation documented.
