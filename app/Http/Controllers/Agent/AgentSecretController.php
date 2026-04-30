@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Agent;
 use App\Http\Controllers\Agent\Concerns\ResolvesAgentToken;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\PushSubscription;
 use App\Models\StatusEvent;
 use App\Rules\AllowedDuration;
 use App\Services\AgentMetricsService;
@@ -172,6 +173,71 @@ class AgentSecretController extends Controller
 
     // -------------------------------------------------------------------------
     // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Register or update a Web Push subscription for this agent's browser.
+     */
+    public function subscribe(Request $request, string $token): JsonResponse
+    {
+        $agent = $this->resolveAgentFromToken($token);
+
+        if (! $agent) {
+            abort(404);
+        }
+
+        if ($agent->status === Agent::STATUS_DISABLED) {
+            return response()->json(['message' => 'Your account has been disabled.'], 422);
+        }
+
+        $validated = $request->validate([
+            'endpoint' => 'required|url|max:2048',
+            'p256dh_key' => 'required|string|max:200',
+            'auth_key' => 'required|string|max:50',
+            'user_agent' => 'nullable|string|max:255',
+        ]);
+
+        PushSubscription::updateOrCreate(
+            ['agent_id' => $agent->id, 'endpoint' => $validated['endpoint']],
+            [
+                'p256dh_key' => $validated['p256dh_key'],
+                'auth_key' => $validated['auth_key'],
+                'user_agent' => $validated['user_agent'] ?? null,
+                'is_active' => true,
+                'last_used_at' => now(),
+                'failed_at' => null,
+            ]
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Deactivate a Web Push subscription for this agent's browser.
+     */
+    public function unsubscribe(Request $request, string $token): JsonResponse
+    {
+        $agent = $this->resolveAgentFromToken($token);
+
+        if (! $agent) {
+            abort(404);
+        }
+
+        if ($agent->status === Agent::STATUS_DISABLED) {
+            return response()->json(['message' => 'Your account has been disabled.'], 422);
+        }
+
+        $validated = $request->validate([
+            'endpoint' => 'required|url|max:2048',
+        ]);
+
+        PushSubscription::where('agent_id', $agent->id)
+            ->where('endpoint', $validated['endpoint'])
+            ->update(['is_active' => false]);
+
+        return response()->json(['ok' => true]);
+    }
+
     // -------------------------------------------------------------------------
 
     /**
