@@ -55,6 +55,16 @@ class StatsController extends Controller
         ]);
     }
 
+    public function paymentMethods(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->parseRange($request);
+
+        return response()->json([
+            'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'data' => $this->stats->paymentMethodsBreakdown($from, $to),
+        ]);
+    }
+
     public function heatmap(Request $request): JsonResponse
     {
         [$from, $to] = $this->parseRange($request);

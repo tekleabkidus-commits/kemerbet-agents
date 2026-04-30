@@ -4,6 +4,7 @@ use App\Models\Admin;
 use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\DailyStat;
+use App\Models\PaymentMethod;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -289,5 +290,125 @@ it('heatmap excludes events outside range', function () {
 // 17. Heatmap requires authentication
 it('heatmap requires authentication', function () {
     $this->getJson('/api/admin/stats/heatmap?range=7d')
+        ->assertUnauthorized();
+});
+
+// =====================================================================
+// payment-methods breakdown
+// =====================================================================
+
+// 18. Returns all methods with 0 clicks
+it('payment-methods returns all methods with click_count 0 when no clicks', function () {
+    $pmA = PaymentMethod::create(['slug' => 'telebirr', 'display_name' => 'TeleBirr', 'display_order' => 1, 'is_active' => true]);
+    $pmB = PaymentMethod::create(['slug' => 'cbe_birr', 'display_name' => 'CBE Birr', 'display_order' => 2, 'is_active' => true]);
+
+    // Assign pmA to the test agent
+    $this->agent->paymentMethods()->attach($pmA->id);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/payment-methods?range=7d');
+
+    $response->assertOk();
+    $data = collect($response->json('data'));
+
+    expect($data)->toHaveCount(2);
+
+    $telebirr = $data->firstWhere('slug', 'telebirr');
+    expect($telebirr['click_count'])->toBe(0)
+        ->and($telebirr['agent_count'])->toBe(1);
+
+    $cbe = $data->firstWhere('slug', 'cbe_birr');
+    expect($cbe['click_count'])->toBe(0)
+        ->and($cbe['agent_count'])->toBe(0);
+});
+
+// 19. Counts clicks per method from jsonb array
+it('payment-methods counts clicks per method from jsonb', function () {
+    PaymentMethod::create(['slug' => 'telebirr', 'display_name' => 'TeleBirr', 'display_order' => 1, 'is_active' => true]);
+    PaymentMethod::create(['slug' => 'cbe_birr', 'display_name' => 'CBE Birr', 'display_order' => 2, 'is_active' => true]);
+
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v1',
+        'ip_address' => '127.0.0.1',
+        'payment_methods' => ['telebirr', 'cbe_birr'],
+        'created_at' => Carbon::parse('2026-04-28 10:00:00'),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/payment-methods?range=custom&from=2026-04-28&to=2026-04-28');
+
+    $data = collect($response->json('data'));
+
+    expect($data->firstWhere('slug', 'telebirr')['click_count'])->toBe(1)
+        ->and($data->firstWhere('slug', 'cbe_birr')['click_count'])->toBe(1);
+});
+
+// 20. One click with multiple methods counts in each (cross-join verification)
+it('payment-methods one click counts in each method present', function () {
+    PaymentMethod::create(['slug' => 'telebirr', 'display_name' => 'TeleBirr', 'display_order' => 1, 'is_active' => true]);
+    PaymentMethod::create(['slug' => 'mpesa', 'display_name' => 'M-Pesa', 'display_order' => 2, 'is_active' => true]);
+    PaymentMethod::create(['slug' => 'dashen', 'display_name' => 'Dashen', 'display_order' => 3, 'is_active' => true]);
+
+    // Single click with 3 methods
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v1',
+        'ip_address' => '127.0.0.1',
+        'payment_methods' => ['telebirr', 'mpesa', 'dashen'],
+        'created_at' => Carbon::parse('2026-04-28 10:00:00'),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/payment-methods?range=custom&from=2026-04-28&to=2026-04-28');
+
+    $data = collect($response->json('data'));
+
+    // All 3 methods get click_count=1 from the single click
+    expect($data->firstWhere('slug', 'telebirr')['click_count'])->toBe(1)
+        ->and($data->firstWhere('slug', 'mpesa')['click_count'])->toBe(1)
+        ->and($data->firstWhere('slug', 'dashen')['click_count'])->toBe(1);
+});
+
+// 21. Sorted by click_count descending
+it('payment-methods sorted by click_count descending', function () {
+    PaymentMethod::create(['slug' => 'telebirr', 'display_name' => 'TeleBirr', 'display_order' => 1, 'is_active' => true]);
+    PaymentMethod::create(['slug' => 'cbe_birr', 'display_name' => 'CBE Birr', 'display_order' => 2, 'is_active' => true]);
+
+    // 3 clicks for cbe_birr, 1 for telebirr
+    for ($i = 0; $i < 3; $i++) {
+        ClickEvent::create([
+            'agent_id' => $this->agent->id,
+            'click_type' => 'deposit',
+            'visitor_id' => 'v'.$i,
+            'ip_address' => '127.0.0.1',
+            'payment_methods' => ['cbe_birr'],
+            'created_at' => Carbon::parse('2026-04-28 10:00:00'),
+        ]);
+    }
+    ClickEvent::create([
+        'agent_id' => $this->agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v99',
+        'ip_address' => '127.0.0.1',
+        'payment_methods' => ['telebirr'],
+        'created_at' => Carbon::parse('2026-04-28 11:00:00'),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/payment-methods?range=custom&from=2026-04-28&to=2026-04-28');
+
+    $data = $response->json('data');
+    expect($data[0]['slug'])->toBe('cbe_birr')
+        ->and($data[0]['click_count'])->toBe(3)
+        ->and($data[1]['slug'])->toBe('telebirr')
+        ->and($data[1]['click_count'])->toBe(1);
+});
+
+// 22. Payment methods requires authentication
+it('payment-methods requires authentication', function () {
+    $this->getJson('/api/admin/stats/payment-methods?range=7d')
         ->assertUnauthorized();
 });

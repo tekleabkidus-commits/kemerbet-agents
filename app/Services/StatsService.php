@@ -5,10 +5,12 @@ namespace App\Services;
 use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\DailyStat;
+use App\Models\PaymentMethod;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Query service for analytics data from daily_stats + live today fallback.
@@ -85,6 +87,18 @@ class StatsService
             "stats:heatmap:{$from->toDateString()}:{$to->toDateString()}",
             self::CACHE_TTL,
             fn () => $this->computeHeatmap($from, $to),
+        );
+    }
+
+    /**
+     * Payment method breakdown: agent coverage + click counts per method.
+     */
+    public function paymentMethodsBreakdown(Carbon $from, Carbon $to): array
+    {
+        return Cache::remember(
+            "stats:payment-methods:{$from->toDateString()}:{$to->toDateString()}",
+            self::CACHE_TTL,
+            fn () => $this->computePaymentMethodsBreakdown($from, $to),
         );
     }
 
@@ -237,6 +251,41 @@ class StatsService
                 'hour' => (int) $row->hour,
                 'count' => (int) $row->count,
             ])
+            ->all();
+    }
+
+    private function computePaymentMethodsBreakdown(Carbon $from, Carbon $to): array
+    {
+        $methods = PaymentMethod::all();
+
+        $agentCounts = DB::table('agent_payment_methods')
+            ->join('agents', function ($j) {
+                $j->on('agents.id', 'agent_payment_methods.agent_id')
+                    ->where('agents.status', 'active')
+                    ->whereNull('agents.deleted_at');
+            })
+            ->selectRaw('agent_payment_methods.payment_method_id, COUNT(DISTINCT agent_payment_methods.agent_id) as count')
+            ->groupBy('agent_payment_methods.payment_method_id')
+            ->pluck('count', 'payment_method_id');
+
+        $end = $to->copy()->addDay();
+        $clickCounts = collect(DB::select(
+            'SELECT element AS slug, COUNT(*) AS count
+             FROM click_events
+             CROSS JOIN LATERAL jsonb_array_elements_text(payment_methods) AS element
+             WHERE click_type = ? AND created_at >= ? AND created_at < ? AND payment_methods IS NOT NULL
+             GROUP BY element',
+            ['deposit', $from, $end],
+        ))->pluck('count', 'slug');
+
+        return $methods->map(fn (PaymentMethod $pm) => [
+            'slug' => $pm->slug,
+            'display_name' => $pm->display_name,
+            'agent_count' => (int) ($agentCounts->get($pm->id) ?? 0),
+            'click_count' => (int) ($clickCounts->get($pm->slug) ?? 0),
+        ])
+            ->sortByDesc('click_count')
+            ->values()
             ->all();
     }
 
