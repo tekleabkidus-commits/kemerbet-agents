@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Kemerbet Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   Design Tokens (match admin.css)
+   ================================================================ */
+:root {
+  --bg: #0a1628;
+  --bg-elev-1: #0f1d36;
+  --bg-elev-2: #162542;
+  --bg-card: #11192a;
+  --bg-hover: rgba(255,255,255,0.04);
+  --text: #ffffff;
+  --text-muted: #9ba8bd;
+  --text-dim: #6b7a8f;
+  --green: #1dd88c;
+  --green-dark: #078343;
+  --green-bg: rgba(0,168,107,0.12);
+  --gold: #f5c518;
+  --gold-bg: rgba(245,197,24,0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.12);
+  --blue: #3b82f6;
+  --blue-bg: rgba(59,130,246,0.12);
+  --purple: #a855f7;
+  --purple-bg: rgba(168,85,247,0.12);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --sidebar-w: 240px;
+  --z-sidebar: 10;
+}
+
+/* ================================================================
+   Reset
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Inter, -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ================================================================
+   App Shell — Sidebar + Main
+   ================================================================ */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-elev-1);
+  border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: var(--z-sidebar);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold), #ffa726);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: #1a1a1a;
+  flex-shrink: 0;
+}
+.brand-text { line-height: 1.2; }
+.brand-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+.brand-sub {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.nav-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  padding: 14px 10px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: all 0.12s;
+  cursor: pointer;
+}
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.nav-item.active {
+  background: var(--green-bg);
+  color: var(--green);
+}
+.nav-icon {
+  font-size: 1rem;
+  opacity: 0.85;
+  width: 18px;
+  text-align: center;
+}
+.nav-badge {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--green-bg);
+  color: var(--green);
+  letter-spacing: 0.3px;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.user-pill:hover { background: var(--bg-hover); }
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.user-role {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+}
+
+/* ── Main Content ── */
+.main {
+  padding: 24px 28px 60px;
+  overflow-x: hidden;
+}
+
+/* ================================================================
+   Page Header
+   ================================================================ */
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.page-head h1 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.page-head .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--green-dark), #0d9460);
+  color: white;
+  border-color: var(--green-dark);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0d9460, var(--green));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,168,107,0.3);
+}
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  border-radius: 6px;
+}
+
+/* ================================================================
+   Stat Cards
+   ================================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--green);
+}
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.blue::before { background: var(--blue); }
+.stat-card.purple::before { background: var(--purple); }
+.stat-card-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.stat-card-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-card-value.green { color: var(--green); }
+.stat-card-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+/* ================================================================
+   Panels
+   ================================================================ */
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.panel-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: -0.1px;
+}
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panel-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--green);
+  text-decoration: none;
+  cursor: pointer;
+}
+.panel-link:hover { text-decoration: underline; }
+
+/* ── Live Pill (panel header badge) ── */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid rgba(0,168,107,0.25);
+}
+.live-pill .pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 1.5s infinite;
+}
+.live-pill.muted {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+.live-pill.muted .pulse-dot {
+  background: var(--text-dim);
+  box-shadow: none;
+  animation: none;
+}
+
+/* ================================================================
+   Currently Live — Agent Cards Grid
+   ================================================================ */
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px 18px;
+}
+.live-agent-card {
+  background: var(--bg-elev-2);
+  border: 1px solid rgba(34,255,154,0.15);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+.live-agent-card:hover {
+  border-color: rgba(34,255,154,0.3);
+  background: rgba(22,37,66,0.8);
+}
+.live-agent-card .pulse-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.5s infinite;
+}
+.live-agent-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.live-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.live-agent-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.live-agent-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.live-agent-tg {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-family: 'SF Mono', ui-monospace, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.live-agent-clicks {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+.live-agent-time {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.live-agent-time strong {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* ================================================================
+   Two-Column Layout (Activity + Performers)
+   ================================================================ */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+/* ================================================================
+   Recent Activity Feed
+   ================================================================ */
+.activity-list { padding: 0; }
+.activity-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.activity-row:last-child { border-bottom: none; }
+.activity-row:hover { background: var(--bg-hover); }
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.activity-dot.online {
+  background: var(--green);
+  box-shadow: 0 0 4px var(--green);
+}
+.activity-dot.extend { background: var(--blue); }
+.activity-dot.offline { background: var(--text-dim); }
+.activity-dot.expired { background: var(--gold); }
+.activity-content { flex: 1; min-width: 0; }
+.activity-text {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+.activity-text strong { font-weight: 700; }
+.activity-time {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ================================================================
+   Top Performers
+   ================================================================ */
+.performer-list { padding: 0; }
+.performer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.performer-row:last-child { border-bottom: none; }
+.performer-row:hover { background: var(--bg-hover); }
+.performer-rank {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.performer-rank.gold {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: none;
+  color: #1a1a1a;
+}
+.performer-rank.silver {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  border: none;
+  color: #1a1a1a;
+}
+.performer-rank.bronze {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  border: none;
+  color: #1a1a1a;
+}
+.performer-info { flex: 1; min-width: 0; }
+.performer-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+.performer-tg {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  font-family: 'SF Mono', ui-monospace, monospace;
+}
+.performer-sub {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+.performer-stat {
+  text-align: right;
+  flex-shrink: 0;
+}
+.performer-clicks {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+.performer-clicks-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ================================================================
+   Empty State
+   ================================================================ */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+}
+.empty-state .icon {
+  font-size: 2.5rem;
+  margin-bottom: 14px;
+  opacity: 0.4;
+}
+.empty-state h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.empty-state p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* ================================================================
+   Responsive
+   ================================================================ */
+@media (max-width: 1100px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 880px) {
+  :root { --sidebar-w: 64px; }
+  .brand-text, .nav-label, .nav-item span, .nav-badge,
+  .user-name, .user-role { display: none; }
+  .brand { justify-content: center; padding: 8px 0 16px; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .nav-icon { width: auto; }
+  .user-pill { justify-content: center; }
+  .main { padding: 20px 16px 40px; }
+}
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card-value { font-size: 1.4rem; }
+  .live-grid { grid-template-columns: 1fr; }
+  .page-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* ================================================================
+   Animations
+   ================================================================ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============================================================
+       Sidebar
+       ============================================================ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">K</div>
+      <div class="brand-text">
+        <div class="brand-name">Kemerbet</div>
+        <div class="brand-sub">Admin</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Main</div>
+    <a class="nav-item active">
+      <span class="nav-icon">&#9632;</span>
+      <span>Dashboard</span>
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#9679;</span>
+      <span>Agents</span>
+      <span class="nav-badge">28</span>
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#9650;</span>
+      <span>Analytics</span>
+    </a>
+
+    <div class="nav-label">Setup</div>
+    <a class="nav-item">
+      <span class="nav-icon">&#9830;</span>
+      <span>Payment Methods</span>
+    </a>
+    <a class="nav-item">
+      <span class="nav-icon">&#9881;</span>
+      <span>Settings</span>
+    </a>
+
+    <div class="nav-label">Audit</div>
+    <a class="nav-item">
+      <span class="nav-icon">&#9998;</span>
+      <span>Activity Log</span>
+    </a>
+
+    <div class="sidebar-bottom">
+      <div class="user-pill">
+        <div class="user-avatar">K</div>
+        <div>
+          <div class="user-name">Kidus T.</div>
+          <div class="user-role">Owner</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       Main Content
+       ============================================================ -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="subtitle">Overview of agent activity and performance &middot; Wednesday, April 30, 2026</div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary btn-sm">+ New Agent</button>
+      </div>
+    </div>
+
+    <!-- ── Stat Cards ── -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-label">Total Agents</div>
+        <div class="stat-card-value">24</div>
+        <div class="stat-card-sub">Active operators</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Live Now</div>
+        <div class="stat-card-value green">7</div>
+        <div class="stat-card-sub">As of now</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-card-label">Visitors Today</div>
+        <div class="stat-card-value">342</div>
+        <div class="stat-card-sub">Today</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-card-label">Clicks Today</div>
+        <div class="stat-card-value">48</div>
+        <div class="stat-card-sub">Today</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-card-label">CTR Today</div>
+        <div class="stat-card-value">14.0<span style="font-size:0.9rem;color:var(--text-muted)">%</span></div>
+        <div class="stat-card-sub">Deposits / visits</div>
+      </div>
+    </div>
+
+    <!-- ── Currently Live Panel ── -->
+    <div class="panel">
+      <div class="panel-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="panel-title">Currently Live</div>
+          <div class="live-pill"><span class="pulse-dot"></span> 7 live</div>
+        </div>
+        <div class="panel-actions">
+          <a class="panel-link">View all &rarr;</a>
+        </div>
+      </div>
+      <div class="live-grid">
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">03</div>
+            <div class="live-agent-name">Agent #03</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@DEPOSIT_KING</div>
+            <div class="live-agent-clicks">12 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>1h 48m</strong> &middot; ends 12m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">07</div>
+            <div class="live-agent-name">Agent #07</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@DOITFAST21</div>
+            <div class="live-agent-clicks">9 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>26m</strong> &middot; ends 34m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">12</div>
+            <div class="live-agent-name">Agent #12</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@FASTCASH_ET</div>
+            <div class="live-agent-clicks">14 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>12m</strong> &middot; ends 1h 48m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">15</div>
+            <div class="live-agent-name">Agent #15</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@BIRR_MASTER</div>
+            <div class="live-agent-clicks">6 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>45m</strong> &middot; ends 15m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">19</div>
+            <div class="live-agent-name">Agent #19</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@QUICK_DEPOSIT</div>
+            <div class="live-agent-clicks">3 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>8m</strong> &middot; ends 22m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">22</div>
+            <div class="live-agent-name">Agent #22</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@ETH_PAY</div>
+            <div class="live-agent-clicks">2 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>5m</strong> &middot; ends 55m</div>
+        </div>
+        <div class="live-agent-card">
+          <div class="pulse-indicator"></div>
+          <div class="live-agent-top">
+            <div class="live-avatar">24</div>
+            <div class="live-agent-name">Agent #24</div>
+          </div>
+          <div class="live-agent-meta">
+            <div class="live-agent-tg">@FAST_BIRR</div>
+            <div class="live-agent-clicks">2 clicks</div>
+          </div>
+          <div class="live-agent-time">Live <strong>3m</strong> &middot; ends 1h 57m</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Two-Column: Activity + Performers ── -->
+    <div class="two-col">
+
+      <!-- Recent Activity -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Recent Activity</div>
+          <div class="panel-actions">
+            <a class="panel-link">View all &rarr;</a>
+          </div>
+        </div>
+        <div class="activity-list">
+          <div class="activity-row">
+            <div class="activity-dot online"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #19</strong> went online for 30m</div>
+              <div class="activity-time">2 minutes ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot extend"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #07</strong> extended +1h</div>
+              <div class="activity-time">18 minutes ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot offline"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #04</strong> went offline (2h session)</div>
+              <div class="activity-time">34 minutes ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot online"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #22</strong> went online for 2h</div>
+              <div class="activity-time">1 hour ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot expired"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #11</strong> session expired</div>
+              <div class="activity-time">1 hour ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot offline"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #12</strong> went offline manually</div>
+              <div class="activity-time">3 hours ago</div>
+            </div>
+          </div>
+          <div class="activity-row">
+            <div class="activity-dot online"></div>
+            <div class="activity-content">
+              <div class="activity-text"><strong>Agent #08</strong> went online for 1h</div>
+              <div class="activity-time">4 hours ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Performers Today -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Top Performers Today</div>
+        </div>
+        <div class="performer-list">
+          <div class="performer-row">
+            <div class="performer-rank gold">1</div>
+            <div class="performer-info">
+              <div class="performer-name">Agent #03</div>
+              <div class="performer-tg">@DEPOSIT_KING</div>
+              <div class="performer-sub">Live 3h 20m today</div>
+            </div>
+            <div class="performer-stat">
+              <div class="performer-clicks">18</div>
+              <div class="performer-clicks-label">Clicks</div>
+            </div>
+          </div>
+          <div class="performer-row">
+            <div class="performer-rank silver">2</div>
+            <div class="performer-info">
+              <div class="performer-name">Agent #12</div>
+              <div class="performer-tg">@FASTCASH_ET</div>
+              <div class="performer-sub">Live 2h 45m today</div>
+            </div>
+            <div class="performer-stat">
+              <div class="performer-clicks">14</div>
+              <div class="performer-clicks-label">Clicks</div>
+            </div>
+          </div>
+          <div class="performer-row">
+            <div class="performer-rank bronze">3</div>
+            <div class="performer-info">
+              <div class="performer-name">Agent #07</div>
+              <div class="performer-tg">@DOITFAST21</div>
+              <div class="performer-sub">Live 1h 50m today</div>
+            </div>
+            <div class="performer-stat">
+              <div class="performer-clicks">9</div>
+              <div class="performer-clicks-label">Clicks</div>
+            </div>
+          </div>
+          <div class="performer-row">
+            <div class="performer-rank">4</div>
+            <div class="performer-info">
+              <div class="performer-name">Agent #15</div>
+              <div class="performer-tg">@BIRR_MASTER</div>
+              <div class="performer-sub">Live 1h 10m today</div>
+            </div>
+            <div class="performer-stat">
+              <div class="performer-clicks">6</div>
+              <div class="performer-clicks-label">Clicks</div>
+            </div>
+          </div>
+          <div class="performer-row">
+            <div class="performer-rank">5</div>
+            <div class="performer-info">
+              <div class="performer-name">Agent #01</div>
+              <div class="performer-tg">@BIRHAN_DEPOSIT</div>
+              <div class="performer-sub">Live 45m today</div>
+            </div>
+            <div class="performer-stat">
+              <div class="performer-clicks">5</div>
+              <div class="performer-clicks-label">Clicks</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /two-col -->
+
+    <!-- ── Empty State Preview ── -->
+    <div style="margin-top:8px">
+      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px">Empty State Preview</div>
+      <div class="panel" style="margin-bottom:0">
+        <div class="panel-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="panel-title">Currently Live</div>
+            <div class="live-pill muted"><span class="pulse-dot"></span> 0 live</div>
+          </div>
+        </div>
+        <div class="empty-state">
+          <div class="icon">&#9675;</div>
+          <h3>No agents currently live</h3>
+          <p>When agents go online they'll appear here.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</div><!-- /app -->
+
+</body>
+</html>
