@@ -55,6 +55,16 @@ class StatsController extends Controller
         ]);
     }
 
+    public function heatmap(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->parseRange($request);
+
+        return response()->json([
+            'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'data' => $this->stats->heatmap($from, $to),
+        ]);
+    }
+
     public function agentDetail(Request $request, int $agent): JsonResponse
     {
         $agentModel = Agent::find($agent);

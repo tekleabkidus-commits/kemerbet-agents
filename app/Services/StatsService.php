@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Agent;
+use App\Models\ClickEvent;
 use App\Models\DailyStat;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -71,6 +72,19 @@ class StatsService
             "stats:agent:{$agent->id}:{$from->toDateString()}:{$to->toDateString()}",
             self::CACHE_TTL,
             fn () => $this->computeAgentDetail($agent, $from, $to),
+        );
+    }
+
+    /**
+     * Click heatmap: day-of-week × hour-of-day deposit click counts.
+     * Returns sparse array of { day, hour, count } — frontend fills zero buckets.
+     */
+    public function heatmap(Carbon $from, Carbon $to): array
+    {
+        return Cache::remember(
+            "stats:heatmap:{$from->toDateString()}:{$to->toDateString()}",
+            self::CACHE_TTL,
+            fn () => $this->computeHeatmap($from, $to),
         );
     }
 
@@ -208,6 +222,22 @@ class StatsService
                 'times_went_online' => (int) ($allTime->times_went_online ?? 0),
             ],
         ];
+    }
+
+    private function computeHeatmap(Carbon $from, Carbon $to): array
+    {
+        return ClickEvent::where('click_type', 'deposit')
+            ->where('created_at', '>=', $from)
+            ->where('created_at', '<', $to->copy()->addDay())
+            ->selectRaw('EXTRACT(DOW FROM created_at) as day, EXTRACT(HOUR FROM created_at) as hour, COUNT(*) as count')
+            ->groupByRaw('EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)')
+            ->get()
+            ->map(fn ($row) => [
+                'day' => (int) $row->day,
+                'hour' => (int) $row->hour,
+                'count' => (int) $row->count,
+            ])
+            ->all();
     }
 
     // -----------------------------------------------------------------

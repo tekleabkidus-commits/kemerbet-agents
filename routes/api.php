@@ -39,6 +39,7 @@ Route::prefix('admin')->group(function () {
         Route::get('stats/overview', [StatsController::class, 'overview']);
         Route::get('stats/timeline', [StatsController::class, 'timeline']);
         Route::get('stats/leaderboard', [StatsController::class, 'leaderboard']);
+        Route::get('stats/heatmap', [StatsController::class, 'heatmap']);
         Route::get('stats/agent/{agent}', [StatsController::class, 'agentDetail']);
     });
 });

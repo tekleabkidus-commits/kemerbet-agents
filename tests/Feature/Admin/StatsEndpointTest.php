@@ -2,6 +2,7 @@
 
 use App\Models\Admin;
 use App\Models\Agent;
+use App\Models\ClickEvent;
 use App\Models\DailyStat;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -209,5 +210,84 @@ it('agentDetail returns 404 for nonexistent agent', function () {
 // 12. requires authentication
 it('agentDetail requires authentication', function () {
     $this->getJson("/api/admin/stats/agent/{$this->agent->id}")
+        ->assertUnauthorized();
+});
+
+// =====================================================================
+// heatmap
+// =====================================================================
+
+function seedHeatmapClick(Agent $agent, string $eatTime): void
+{
+    ClickEvent::create([
+        'agent_id' => $agent->id,
+        'click_type' => 'deposit',
+        'visitor_id' => 'v_'.uniqid(),
+        'ip_address' => '127.0.0.1',
+        'created_at' => Carbon::parse($eatTime),
+    ]);
+}
+
+// 13. Empty range returns empty data
+it('heatmap returns empty data for empty range', function () {
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/heatmap?range=7d');
+
+    $response->assertOk();
+    expect($response->json('data'))->toBe([]);
+});
+
+// 14. Counts clicks by day and hour
+it('heatmap counts clicks by day and hour', function () {
+    // 3 clicks on same day+hour
+    seedHeatmapClick($this->agent, '2026-04-28 14:10:00');
+    seedHeatmapClick($this->agent, '2026-04-28 14:30:00');
+    seedHeatmapClick($this->agent, '2026-04-28 14:55:00');
+    // 1 click at different hour
+    seedHeatmapClick($this->agent, '2026-04-28 09:00:00');
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/heatmap?range=custom&from=2026-04-28&to=2026-04-28');
+
+    $response->assertOk();
+    $data = collect($response->json('data'));
+
+    $hour14 = $data->firstWhere('hour', 14);
+    $hour9 = $data->firstWhere('hour', 9);
+
+    expect($hour14['count'])->toBe(3)
+        ->and($hour9['count'])->toBe(1);
+});
+
+// 15. Correct day_of_week mapping (Apr 30 2026 = Thursday = DOW 4)
+it('heatmap maps day_of_week correctly', function () {
+    seedHeatmapClick($this->agent, '2026-04-30 10:00:00');
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/heatmap?range=custom&from=2026-04-30&to=2026-04-30');
+
+    $data = collect($response->json('data'));
+    expect($data)->toHaveCount(1)
+        ->and($data[0]['day'])->toBe(4)  // Thursday
+        ->and($data[0]['hour'])->toBe(10);
+});
+
+// 16. Excludes events outside range
+it('heatmap excludes events outside range', function () {
+    seedHeatmapClick($this->agent, '2026-04-28 10:00:00'); // inside
+    seedHeatmapClick($this->agent, '2026-04-27 10:00:00'); // outside (before)
+    seedHeatmapClick($this->agent, '2026-04-29 10:00:00'); // outside (after)
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/stats/heatmap?range=custom&from=2026-04-28&to=2026-04-28');
+
+    $data = $response->json('data');
+    expect($data)->toHaveCount(1)
+        ->and($data[0]['count'])->toBe(1);
+});
+
+// 17. Heatmap requires authentication
+it('heatmap requires authentication', function () {
+    $this->getJson('/api/admin/stats/heatmap?range=7d')
         ->assertUnauthorized();
 });
