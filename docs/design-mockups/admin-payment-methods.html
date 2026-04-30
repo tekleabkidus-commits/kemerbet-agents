@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kemerbet · Dashboard</title>
+<title>Kemerbet · Payment Methods</title>
 <style>
 /* ============================================================
    KEMERBET ADMIN · Shared Base CSS
@@ -488,196 +488,38 @@ body{
   .user-pill{justify-content:center;padding:8px 0}
   .main{padding:18px 14px 50px}
 }
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:14px;
-  margin-bottom:20px;
-}
-
-.stat-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:18px;
-  position:relative;
-  overflow:hidden;
-}
-
-.stat-card::before{
-  content:"";position:absolute;top:0;left:0;
-  width:3px;height:100%;background:var(--green);
-}
-
-.stat-card.gold::before{background:var(--gold)}
-.stat-card.blue::before{background:var(--blue)}
-
-.stat-card .label{
-  font-size:.7rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;
-}
-
-.stat-card .value{
-  font-size:1.8rem;font-weight:800;letter-spacing:-1px;
-  color:var(--text);font-variant-numeric:tabular-nums;
-  line-height:1;margin-bottom:6px;
-}
-
-.stat-card .delta{font-size:.74rem;display:flex;align-items:center;gap:4px;font-weight:600}
-.delta.up{color:var(--green)}
-.delta.down{color:var(--red)}
-.delta.neutral{color:var(--text-dim)}
-
-.stat-card .ticker-dot{
-  display:inline-block;width:6px;height:6px;
-  background:var(--green);border-radius:50%;
-  box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-  margin-right:4px;
-}
-
-/* LIVE PILL */
-.live-pill{
-  display:inline-flex;align-items:center;gap:5px;
-  background:var(--green-bg);color:var(--green);
-  padding:3px 9px;border-radius:999px;
-  font-size:.65rem;font-weight:800;letter-spacing:.5px;
-  border:1px solid rgba(0,168,107,0.2);
-}
-
-.live-pill::before{
-  content:"";width:5px;height:5px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 6px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-/* LIVE GRID */
-.live-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:10px;
-  padding:14px;
-}
-
-.live-agent-card{
+.method-icon{
+  width:36px;height:36px;
   background:var(--bg-elev-2);
-  border:1px solid rgba(34,255,154,0.15);
-  border-radius:10px;
-  padding:12px;
-  position:relative;
-  overflow:hidden;
-}
-
-.live-agent-card::after{
-  content:"";position:absolute;top:8px;right:8px;
-  width:7px;height:7px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-.live-agent-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-
-.live-agent-avatar{
-  width:30px;height:30px;border-radius:8px;
-  background:linear-gradient(135deg,var(--green-dark),var(--green));
+  border:1px solid var(--border);
+  border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.72rem;color:#fff;
+  font-size:1.05rem;flex-shrink:0;
 }
 
-.live-agent-name{font-weight:700;font-size:.82rem;letter-spacing:-.1px}
-
-.live-agent-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
-.live-agent-meta .clicks{color:var(--green);font-weight:700}
-
-.live-agent-time{
-  font-size:.65rem;color:var(--text-dim);
-  margin-top:6px;font-variant-numeric:tabular-nums;
+.slug-code{
+  font-family:'SF Mono',ui-monospace,monospace;
+  font-size:.74rem;
+  background:var(--bg-elev-2);
+  padding:3px 8px;
+  border-radius:5px;
+  color:var(--text-muted);
+  border:1px solid var(--border);
 }
 
-/* TWO COL */
-.two-col{
-  display:grid;
-  grid-template-columns:1.4fr 1fr;
-  gap:18px;
-  margin-bottom:20px;
+.order-handle{
+  display:inline-flex;
+  flex-direction:column;
+  font-size:.6rem;
+  color:var(--text-dim);
+  cursor:grab;
+  letter-spacing:0;
+  line-height:.6;
+  user-select:none;
 }
 
-@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
-
-/* ACTIVITY */
-.activity-list{list-style:none;padding:8px 0}
-
-.activity-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-  font-size:.83rem;
-  transition:background .12s;
-}
-
-.activity-row:last-child{border-bottom:none}
-.activity-row:hover{background:var(--bg-hover)}
-
-.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.activity-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
-.activity-dot.offline{background:var(--text-dim)}
-.activity-dot.click{background:var(--gold)}
-.activity-dot.extend{background:var(--blue)}
-
-.activity-text{flex:1;min-width:0}
-.activity-text strong{color:var(--text);font-weight:700}
-.activity-text .muted{color:var(--text-muted)}
-
-.activity-time{
-  font-size:.72rem;color:var(--text-dim);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-
-/* PERFORMERS */
-.performer-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-}
-
-.performer-row:last-child{border-bottom:none}
-
-.performer-rank{
-  width:22px;height:22px;border-radius:50%;
-  background:var(--bg-elev-2);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.7rem;color:var(--text-muted);
-  font-variant-numeric:tabular-nums;
-}
-
-.performer-row:nth-child(1) .performer-rank{
-  background:linear-gradient(135deg,#fbbf24,#f59e0b);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(2) .performer-rank{
-  background:linear-gradient(135deg,#cbd5e1,#94a3b8);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(3) .performer-rank{
-  background:linear-gradient(135deg,#d97706,#b45309);
-  color:#fff;border-color:transparent;
-}
-
-.performer-info{flex:1;min-width:0}
-.performer-name{font-weight:700;font-size:.85rem;letter-spacing:-.1px}
-.performer-sub{font-size:.7rem;color:var(--text-dim)}
-
-.performer-stat{
-  font-weight:800;font-size:1rem;
-  font-variant-numeric:tabular-nums;
-  color:var(--green);letter-spacing:-.3px;
-}
-
-.performer-stat-label{
-  font-size:.6rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:.8px;
-  text-align:right;margin-top:1px;font-weight:700;
-}
+.order-handle:hover{color:var(--text)}
+.order-handle:active{cursor:grabbing}
 </style>
 </head>
 <body>
@@ -692,7 +534,7 @@ body{
     </div>
 
     <div class="nav-label">Main</div>
-    <a href="admin-dashboard.html" class="nav-item active">
+    <a href="admin-dashboard.html" class="nav-item">
       <span class="icon">▦</span>
       <span>Dashboard</span>
     </a>
@@ -707,7 +549,7 @@ body{
     </a>
 
     <div class="nav-label">Setup</div>
-    <a href="admin-payment-methods.html" class="nav-item">
+    <a href="admin-payment-methods.html" class="nav-item active">
       <span class="icon">◫</span>
       <span>Payment Methods</span>
     </a>
@@ -733,232 +575,327 @@ body{
     </div>
   </aside>
 <main class="main">
-<div data-page-title="Dashboard"></div>
-<!-- PAGE HEAD -->
+<div data-page-title="Payment Methods"></div>
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <div class="subtitle">Overview of agent activity and performance · <span id="todayDate">Sunday, April 26</span></div>
+    <h1>Payment Methods</h1>
+    <div class="subtitle">Manage the master list of payment methods that agents can support</div>
   </div>
   <div class="page-actions">
-    <button class="btn btn-secondary btn-sm">Export CSV</button>
-    <a href="admin-agents.html" class="btn btn-primary">+ New Agent</a>
+    <button class="btn btn-primary" onclick="openNew()">+ Add Method</button>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="label">Live Agents</div>
-    <div class="value">11<span style="font-size:1rem;color:var(--text-dim);font-weight:600"> / 28</span></div>
-    <div class="delta up"><span class="ticker-dot"></span>3 going live in last hour</div>
-  </div>
-  <div class="stat-card gold">
-    <div class="label">Visitors Today</div>
-    <div class="value">3,847</div>
-    <div class="delta up">↑ 12% vs yesterday</div>
-  </div>
-  <div class="stat-card blue">
-    <div class="label">Deposit Clicks</div>
-    <div class="value">486</div>
-    <div class="delta up">↑ 8% vs yesterday</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Click-Through Rate</div>
-    <div class="value">12.6%</div>
-    <div class="delta neutral">— same as yesterday</div>
-  </div>
-</div>
-
-<!-- LIVE AGENTS -->
 <div class="panel">
   <div class="panel-head">
-    <div class="panel-title">
-      Currently Live
-      <span class="live-pill">11 active</span>
-    </div>
+    <div class="panel-title">All Methods <span style="color:var(--text-muted);font-weight:600;font-size:.82rem">· 8 total · 7 active</span></div>
     <div class="panel-actions">
-      <a href="admin-agents.html" class="btn btn-ghost btn-sm">View all →</a>
+      <div class="search-bar"><input type="text" placeholder="Search methods…"></div>
     </div>
   </div>
-  <div class="live-grid">
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">07</div>
-        <div class="live-agent-name">Agent 7</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:50px">Order</th>
+          <th>Method</th>
+          <th>Slug</th>
+          <th>Status</th>
+          <th>Used by</th>
+          <th>Total clicks</th>
+          <th style="text-align:right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">💳</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">TeleBirr</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Mobile money · Ethio Telecom</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">telebirr</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>28 agents</strong></td>
+          <td><strong style="color:var(--green)">2,847</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit" onclick="openEdit('telebirr')">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">💳</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">M-Pesa</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Mobile money · Safaricom Ethiopia</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">mpesa</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>17 agents</strong></td>
+          <td><strong style="color:var(--green)">1,423</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">CBE Birr</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Commercial Bank of Ethiopia</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">cbe_birr</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>22 agents</strong></td>
+          <td><strong style="color:var(--green)">1,892</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">Dashen Bank</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Bank transfer</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">dashen</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>10 agents</strong></td>
+          <td><strong style="color:var(--green)">412</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">Awash Bank</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Bank transfer</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">awash</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>12 agents</strong></td>
+          <td><strong style="color:var(--green)">567</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">Bank of Abyssinia</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Bank transfer</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">boa</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>4 agents</strong></td>
+          <td><strong style="color:var(--green)">128</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">Cooperative Bank</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Bank transfer</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">coop</code></td>
+          <td><span class="status-pill success">Active</span></td>
+          <td><strong>2 agents</strong></td>
+          <td><strong style="color:var(--green)">47</strong></td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Edit">✎</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+        <tr style="opacity:.6">
+          <td><div class="order-handle">⋮⋮</div></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="method-icon">🏦</div>
+              <div>
+                <div style="font-weight:700;font-size:.9rem">Wegagen Bank</div>
+                <div style="font-size:.72rem;color:var(--text-dim)">Bank transfer</div>
+              </div>
+            </div>
+          </td>
+          <td><code class="slug-code">wegagen</code></td>
+          <td><span class="status-pill warning">Disabled</span></td>
+          <td><strong>0 agents</strong></td>
+          <td>—</td>
+          <td>
+            <div class="cell-actions">
+              <button class="icon-btn" title="Re-enable" style="color:var(--green)">▶</button>
+              <button class="icon-btn danger" title="Delete">×</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="padding:14px 18px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text-dim);background:var(--bg-elev-1)">
+    💡 Drag the ⋮⋮ handles to reorder. Order controls how methods appear on agent cards.
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-backdrop" id="methodModal" onclick="if(event.target===this)closeMethodModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="methodModalTitle">Add Payment Method</div>
+        <div style="font-size:.74rem;color:var(--text-dim);margin-top:2px">Available to all agents to select</div>
       </div>
-      <div class="live-agent-meta"><span>@DOITFAST21</span><span class="clicks">23</span></div>
-      <div class="live-agent-time">Live 1h 23m · ends 37m</div>
+      <button class="modal-close" onclick="closeMethodModal()">×</button>
     </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">14</div>
-        <div class="live-agent-name">Agent 14</div>
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <div class="form-row">
+          <label class="form-label">Display Name<span class="req">*</span></label>
+          <input type="text" class="form-input" id="m_name" placeholder="e.g., Hibret Bank">
+          <div class="form-help">Shown on agent cards and in admin forms</div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Slug<span class="req">*</span> <span class="hint">used internally — cannot change later</span></label>
+          <input type="text" class="form-input" id="m_slug" placeholder="hibret_bank" style="font-family:'SF Mono',monospace">
+          <div class="form-help">lowercase, underscores only</div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">Type</label>
+          <select class="form-select" id="m_type">
+            <option value="bank">Bank Transfer</option>
+            <option value="mobile">Mobile Money</option>
+            <option value="cash">Cash</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Active</div>
+              <div class="toggle-desc">Available for agents to select</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+
       </div>
-      <div class="live-agent-meta"><span>@tewodros_ab</span><span class="clicks">18</span></div>
-      <div class="live-agent-time">Live 47m · ends 1h 13m</div>
     </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">03</div>
-        <div class="live-agent-name">Agent 3</div>
-      </div>
-      <div class="live-agent-meta"><span>@yehoneagent</span><span class="clicks">31</span></div>
-      <div class="live-agent-time">Live 2h 4m · ends 56m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">19</div>
-        <div class="live-agent-name">Agent 19</div>
-      </div>
-      <div class="live-agent-meta"><span>@kemerdepositagent</span><span class="clicks">9</span></div>
-      <div class="live-agent-time">Live 12m · ends 18m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">22</div>
-        <div class="live-agent-name">Agent 22</div>
-      </div>
-      <div class="live-agent-meta"><span>@obina_t</span><span class="clicks">14</span></div>
-      <div class="live-agent-time">Live 38m · ends 1h 22m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">11</div>
-        <div class="live-agent-name">Agent 11</div>
-      </div>
-      <div class="live-agent-meta"><span>@balem18</span><span class="clicks">7</span></div>
-      <div class="live-agent-time">Live 23m · ends 7m</div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeMethodModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMethod()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- TWO COL -->
-<div class="two-col">
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Recent Activity</div>
-      <div class="panel-actions">
-        <a href="admin-activity.html" class="btn btn-ghost btn-sm">View all →</a>
-      </div>
-    </div>
-    <ul class="activity-list">
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 19</strong> <span class="muted">went online for 30m</span></div>
-        <span class="activity-time">2m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 3</strong></div>
-        <span class="activity-time">3m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot extend"></span>
-        <div class="activity-text"><strong>Agent 7</strong> <span class="muted">extended +1h</span></div>
-        <span class="activity-time">8m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 4</strong> <span class="muted">went offline (2h session)</span></div>
-        <span class="activity-time">12m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 22</strong> <span class="muted">went online for 2h</span></div>
-        <span class="activity-time">38m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 14</strong></div>
-        <span class="activity-time">42m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 12</strong> <span class="muted">went offline manually</span></div>
-        <span class="activity-time">44m ago</span>
-      </li>
-    </ul>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Top Performers Today</div>
-      <div class="panel-actions">
-        <a href="admin-analytics.html" class="btn btn-ghost btn-sm">Full leaderboard →</a>
-      </div>
-    </div>
-    <div>
-      <div class="performer-row">
-        <div class="performer-rank">1</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 3</div>
-          <div class="performer-sub">@yehoneagent · 4h 12m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">31</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">2</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 7</div>
-          <div class="performer-sub">@DOITFAST21 · 3h 47m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">23</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">3</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 14</div>
-          <div class="performer-sub">@tewodros_ab · 2h 18m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">18</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">4</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 22</div>
-          <div class="performer-sub">@obina_t · 38m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">14</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">5</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 4</div>
-          <div class="performer-sub">@kemeragent_4 · 2h 1m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">12</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Saved</span>
 </div>
 </main>
 </div>
 <script>
-function updateTime(){
-  const opts = { weekday:'long', month:'long', day:'numeric' };
-  const d = new Date();
-  const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  document.getElementById('todayDate').textContent =
-    `${d.toLocaleDateString('en-US', opts)} · ${time} EAT`;
+function openNew(){
+  document.getElementById('methodModalTitle').textContent = 'Add Payment Method';
+  document.getElementById('m_name').value = '';
+  document.getElementById('m_slug').value = '';
+  document.getElementById('methodModal').classList.add('show');
 }
-updateTime();
-setInterval(updateTime, 60000);
+
+function openEdit(slug){
+  document.getElementById('methodModalTitle').textContent = 'Edit Payment Method';
+  document.getElementById('methodModal').classList.add('show');
+}
+
+function closeMethodModal(){
+  document.getElementById('methodModal').classList.remove('show');
+}
+
+function saveMethod(){
+  closeMethodModal();
+  showToast('Payment method saved');
+}
+
+// Auto-generate slug from name
+document.getElementById('m_name').addEventListener('input', e => {
+  const slugInput = document.getElementById('m_slug');
+  if (!slugInput.dataset.touched){
+    slugInput.value = e.target.value.toLowerCase()
+      .replace(/[^a-z0-9 ]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 50);
+  }
+});
+document.getElementById('m_slug').addEventListener('input', e => {
+  e.target.dataset.touched = 'true';
+});
+
+function showToast(text, type = 'success'){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeMethodModal();
+});
 </script>
 </body></html>

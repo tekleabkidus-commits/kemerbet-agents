@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kemerbet · Admin Login</title>
+<style>
+:root{
+  --bg:#0a1628;
+  --bg-elev:#11192a;
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14);
+  --text:#fff;
+  --text-muted:#9ba8bd;
+  --text-dim:#6b7a8f;
+  --green:#1dd88c;
+  --green-dark:#078343;
+  --gold:#f5c518;
+  --red:#ef4444;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Inter',-apple-system,system-ui,sans-serif;
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse at top right,rgba(245,197,24,0.1) 0%,transparent 50%),
+    radial-gradient(ellipse at bottom left,rgba(0,168,107,0.1) 0%,transparent 50%);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.login-wrap{
+  width:100%;
+  max-width:420px;
+}
+
+.brand{
+  text-align:center;
+  margin-bottom:32px;
+}
+
+.brand-icon{
+  width:56px;height:56px;
+  margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--gold),#ffa726);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:1.6rem;color:var(--bg);
+  letter-spacing:-1px;
+  box-shadow:0 10px 30px rgba(245,197,24,0.25);
+}
+
+.brand-name{
+  font-size:1.4rem;font-weight:800;letter-spacing:-.5px;
+  margin-bottom:4px;
+}
+
+.brand-sub{
+  font-size:.78rem;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:1.5px;font-weight:700;
+}
+
+.login-card{
+  background:var(--bg-elev);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:28px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-card h1{
+  font-size:1.2rem;font-weight:800;
+  margin-bottom:6px;letter-spacing:-.3px;
+}
+
+.login-card .lede{
+  color:var(--text-muted);font-size:.86rem;
+  margin-bottom:24px;
+}
+
+.form-row{margin-bottom:16px}
+
+.form-label{
+  display:block;
+  font-size:.74rem;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1px;
+  margin-bottom:6px;
+}
+
+.form-input{
+  width:100%;padding:12px 14px;
+  background:var(--bg);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:inherit;font-size:.92rem;
+  outline:none;transition:all .15s;
+}
+
+.form-input:focus{
+  border-color:var(--green);
+  background:#0d1928;
+}
+
+.form-input::placeholder{color:var(--text-dim)}
+
+.input-with-icon{position:relative}
+.input-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--text-dim);font-size:.95rem;pointer-events:none;
+}
+.input-with-icon .form-input{padding-left:42px}
+
+.btn-login{
+  margin-top:24px;
+  width:100%;
+  padding:13px;
+  background:linear-gradient(135deg,var(--green-dark),#0d9460);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-family:inherit;font-weight:800;font-size:.92rem;
+  cursor:pointer;
+  transition:all .15s;
+  letter-spacing:.3px;
+  box-shadow:0 4px 12px rgba(0,168,107,0.25);
+}
+
+.btn-login:hover{
+  background:linear-gradient(135deg,#0d9460,var(--green));
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(0,168,107,0.4);
+}
+
+.btn-login:active{transform:translateY(0)}
+
+.security-note{
+  margin-top:24px;
+  text-align:center;
+  font-size:.72rem;
+  color:var(--text-dim);
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+
+.security-note .lock{color:var(--green);margin-right:5px}
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+
+  <div class="brand">
+    <div class="brand-icon">K</div>
+    <div class="brand-name">Kemerbet Admin</div>
+    <div class="brand-sub">Owner Portal</div>
+  </div>
+
+  <div class="login-card">
+    <h1>Welcome back</h1>
+    <p class="lede">Sign in to manage agents and view analytics.</p>
+
+    <form onsubmit="event.preventDefault(); window.location.href='admin-dashboard.html'">
+
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <div class="input-with-icon">
+          <span class="input-icon">✉</span>
+          <input type="email" class="form-input" placeholder="kidus@kemerbet.com" autocomplete="username" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Password</label>
+        <div class="input-with-icon">
+          <span class="input-icon">🔒</span>
+          <input type="password" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login">Sign in →</button>
+    </form>
+
+    <div class="security-note">
+      <span class="lock">🔒</span>This portal is restricted to authorized administrators. All access is logged.
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

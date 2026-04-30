@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kemerbet · Dashboard</title>
+<title>Kemerbet · Activity Log</title>
 <style>
 /* ============================================================
    KEMERBET ADMIN · Shared Base CSS
@@ -488,195 +488,73 @@ body{
   .user-pill{justify-content:center;padding:8px 0}
   .main{padding:18px 14px 50px}
 }
-.stats-grid{
+.timeline{
+  list-style:none;
+  padding:8px 0;
+}
+
+.tl-row{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  grid-template-columns:60px 24px 1fr;
   gap:14px;
-  margin-bottom:20px;
-}
-
-.stat-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:18px;
-  position:relative;
-  overflow:hidden;
-}
-
-.stat-card::before{
-  content:"";position:absolute;top:0;left:0;
-  width:3px;height:100%;background:var(--green);
-}
-
-.stat-card.gold::before{background:var(--gold)}
-.stat-card.blue::before{background:var(--blue)}
-
-.stat-card .label{
-  font-size:.7rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;
-}
-
-.stat-card .value{
-  font-size:1.8rem;font-weight:800;letter-spacing:-1px;
-  color:var(--text);font-variant-numeric:tabular-nums;
-  line-height:1;margin-bottom:6px;
-}
-
-.stat-card .delta{font-size:.74rem;display:flex;align-items:center;gap:4px;font-weight:600}
-.delta.up{color:var(--green)}
-.delta.down{color:var(--red)}
-.delta.neutral{color:var(--text-dim)}
-
-.stat-card .ticker-dot{
-  display:inline-block;width:6px;height:6px;
-  background:var(--green);border-radius:50%;
-  box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-  margin-right:4px;
-}
-
-/* LIVE PILL */
-.live-pill{
-  display:inline-flex;align-items:center;gap:5px;
-  background:var(--green-bg);color:var(--green);
-  padding:3px 9px;border-radius:999px;
-  font-size:.65rem;font-weight:800;letter-spacing:.5px;
-  border:1px solid rgba(0,168,107,0.2);
-}
-
-.live-pill::before{
-  content:"";width:5px;height:5px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 6px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-/* LIVE GRID */
-.live-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:10px;
-  padding:14px;
-}
-
-.live-agent-card{
-  background:var(--bg-elev-2);
-  border:1px solid rgba(34,255,154,0.15);
-  border-radius:10px;
-  padding:12px;
-  position:relative;
-  overflow:hidden;
-}
-
-.live-agent-card::after{
-  content:"";position:absolute;top:8px;right:8px;
-  width:7px;height:7px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-.live-agent-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-
-.live-agent-avatar{
-  width:30px;height:30px;border-radius:8px;
-  background:linear-gradient(135deg,var(--green-dark),var(--green));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.72rem;color:#fff;
-}
-
-.live-agent-name{font-weight:700;font-size:.82rem;letter-spacing:-.1px}
-
-.live-agent-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
-.live-agent-meta .clicks{color:var(--green);font-weight:700}
-
-.live-agent-time{
-  font-size:.65rem;color:var(--text-dim);
-  margin-top:6px;font-variant-numeric:tabular-nums;
-}
-
-/* TWO COL */
-.two-col{
-  display:grid;
-  grid-template-columns:1.4fr 1fr;
-  gap:18px;
-  margin-bottom:20px;
-}
-
-@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
-
-/* ACTIVITY */
-.activity-list{list-style:none;padding:8px 0}
-
-.activity-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
+  padding:11px 18px;
   border-bottom:1px solid var(--border);
-  font-size:.83rem;
+  align-items:flex-start;
   transition:background .12s;
 }
 
-.activity-row:last-child{border-bottom:none}
-.activity-row:hover{background:var(--bg-hover)}
+.tl-row:hover{background:var(--bg-hover)}
+.tl-row:last-child{border-bottom:none}
 
-.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.activity-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
-.activity-dot.offline{background:var(--text-dim)}
-.activity-dot.click{background:var(--gold)}
-.activity-dot.extend{background:var(--blue)}
-
-.activity-text{flex:1;min-width:0}
-.activity-text strong{color:var(--text);font-weight:700}
-.activity-text .muted{color:var(--text-muted)}
-
-.activity-time{
-  font-size:.72rem;color:var(--text-dim);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-
-/* PERFORMERS */
-.performer-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-}
-
-.performer-row:last-child{border-bottom:none}
-
-.performer-rank{
-  width:22px;height:22px;border-radius:50%;
-  background:var(--bg-elev-2);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.7rem;color:var(--text-muted);
+.tl-time{
+  font-size:.78rem;
+  color:var(--text-dim);
+  font-weight:700;
   font-variant-numeric:tabular-nums;
+  padding-top:1px;
 }
 
-.performer-row:nth-child(1) .performer-rank{
-  background:linear-gradient(135deg,#fbbf24,#f59e0b);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(2) .performer-rank{
-  background:linear-gradient(135deg,#cbd5e1,#94a3b8);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(3) .performer-rank{
-  background:linear-gradient(135deg,#d97706,#b45309);
-  color:#fff;border-color:transparent;
+.tl-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  margin-top:5px;
+  flex-shrink:0;
+  position:relative;
 }
 
-.performer-info{flex:1;min-width:0}
-.performer-name{font-weight:700;font-size:.85rem;letter-spacing:-.1px}
-.performer-sub{font-size:.7rem;color:var(--text-dim)}
+.tl-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.tl-dot.offline{background:var(--text-dim)}
+.tl-dot.click{background:var(--gold)}
+.tl-dot.extend{background:var(--blue)}
+.tl-dot.admin{background:var(--purple);box-shadow:0 0 6px var(--purple)}
 
-.performer-stat{
-  font-weight:800;font-size:1rem;
-  font-variant-numeric:tabular-nums;
-  color:var(--green);letter-spacing:-.3px;
+.tl-body{
+  min-width:0;
+  flex:1;
 }
 
-.performer-stat-label{
-  font-size:.6rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:.8px;
-  text-align:right;margin-top:1px;font-weight:700;
+.tl-text{
+  font-size:.86rem;
+  line-height:1.5;
+}
+
+.tl-text strong{
+  color:var(--text);
+  font-weight:700;
+}
+
+.tl-meta{
+  color:var(--text-muted);
+  font-weight:500;
+  font-size:.82rem;
+}
+
+.tl-detail{
+  font-size:.72rem;
+  color:var(--text-dim);
+  margin-top:2px;
+  font-family:'SF Mono',ui-monospace,monospace;
 }
 </style>
 </head>
@@ -692,7 +570,7 @@ body{
     </div>
 
     <div class="nav-label">Main</div>
-    <a href="admin-dashboard.html" class="nav-item active">
+    <a href="admin-dashboard.html" class="nav-item">
       <span class="icon">▦</span>
       <span>Dashboard</span>
     </a>
@@ -717,7 +595,7 @@ body{
     </a>
 
     <div class="nav-label">Audit</div>
-    <a href="admin-activity.html" class="nav-item">
+    <a href="admin-activity.html" class="nav-item active">
       <span class="icon">≡</span>
       <span>Activity Log</span>
     </a>
@@ -733,232 +611,230 @@ body{
     </div>
   </aside>
 <main class="main">
-<div data-page-title="Dashboard"></div>
-<!-- PAGE HEAD -->
+<div data-page-title="Activity Log"></div>
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <div class="subtitle">Overview of agent activity and performance · <span id="todayDate">Sunday, April 26</span></div>
+    <h1>Activity Log</h1>
+    <div class="subtitle">Complete history of agent status changes, clicks, and admin actions</div>
   </div>
   <div class="page-actions">
     <button class="btn btn-secondary btn-sm">Export CSV</button>
-    <a href="admin-agents.html" class="btn btn-primary">+ New Agent</a>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="label">Live Agents</div>
-    <div class="value">11<span style="font-size:1rem;color:var(--text-dim);font-weight:600"> / 28</span></div>
-    <div class="delta up"><span class="ticker-dot"></span>3 going live in last hour</div>
-  </div>
-  <div class="stat-card gold">
-    <div class="label">Visitors Today</div>
-    <div class="value">3,847</div>
-    <div class="delta up">↑ 12% vs yesterday</div>
-  </div>
-  <div class="stat-card blue">
-    <div class="label">Deposit Clicks</div>
-    <div class="value">486</div>
-    <div class="delta up">↑ 8% vs yesterday</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Click-Through Rate</div>
-    <div class="value">12.6%</div>
-    <div class="delta neutral">— same as yesterday</div>
+<!-- FILTERS -->
+<div class="panel" style="margin-bottom:14px">
+  <div class="panel-head" style="border-bottom:none">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="search-bar"><input type="text" placeholder="Search agent or action…"></div>
+      <select class="filter-select">
+        <option>All event types</option>
+        <option>Status changes only</option>
+        <option>Clicks only</option>
+        <option>Admin actions</option>
+      </select>
+      <select class="filter-select">
+        <option>All agents</option>
+        <option>Agent 7</option>
+        <option>Agent 14</option>
+        <option>Agent 3</option>
+      </select>
+      <select class="filter-select">
+        <option>Today</option>
+        <option selected>Last 7 days</option>
+        <option>Last 30 days</option>
+        <option>Custom range…</option>
+      </select>
+    </div>
+    <div style="font-size:.78rem;color:var(--text-muted)">
+      Showing 247 events
+    </div>
   </div>
 </div>
 
-<!-- LIVE AGENTS -->
+<!-- TIMELINE -->
 <div class="panel">
   <div class="panel-head">
-    <div class="panel-title">
-      Currently Live
-      <span class="live-pill">11 active</span>
-    </div>
-    <div class="panel-actions">
-      <a href="admin-agents.html" class="btn btn-ghost btn-sm">View all →</a>
-    </div>
+    <div class="panel-title">Today · Sunday, April 26</div>
   </div>
-  <div class="live-grid">
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">07</div>
-        <div class="live-agent-name">Agent 7</div>
+  <ul class="timeline">
+
+    <li class="tl-row">
+      <div class="tl-time">14:47</div>
+      <div class="tl-dot online"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 19</strong> went online <span class="tl-meta">for 30 minutes · @kemerdepositagent</span></div>
+        <div class="tl-detail">From IP 196.188.x.x · Mobile Safari</div>
       </div>
-      <div class="live-agent-meta"><span>@DOITFAST21</span><span class="clicks">23</span></div>
-      <div class="live-agent-time">Live 1h 23m · ends 37m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">14</div>
-        <div class="live-agent-name">Agent 14</div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:46</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 3</strong> <span class="tl-meta">visitor 8a3f...c91d · Telegram opened</span></div>
       </div>
-      <div class="live-agent-meta"><span>@tewodros_ab</span><span class="clicks">18</span></div>
-      <div class="live-agent-time">Live 47m · ends 1h 13m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">03</div>
-        <div class="live-agent-name">Agent 3</div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:45</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 7</strong> <span class="tl-meta">visitor d4e9...7b2a</span></div>
       </div>
-      <div class="live-agent-meta"><span>@yehoneagent</span><span class="clicks">31</span></div>
-      <div class="live-agent-time">Live 2h 4m · ends 56m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">19</div>
-        <div class="live-agent-name">Agent 19</div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:39</div>
+      <div class="tl-dot extend"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 7</strong> extended live time <span class="tl-meta">+1 hour · now ends 15:38</span></div>
       </div>
-      <div class="live-agent-meta"><span>@kemerdepositagent</span><span class="clicks">9</span></div>
-      <div class="live-agent-time">Live 12m · ends 18m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">22</div>
-        <div class="live-agent-name">Agent 22</div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:35</div>
+      <div class="tl-dot offline"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 4</strong> went offline <span class="tl-meta">2h session ended naturally</span></div>
       </div>
-      <div class="live-agent-meta"><span>@obina_t</span><span class="clicks">14</span></div>
-      <div class="live-agent-time">Live 38m · ends 1h 22m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">11</div>
-        <div class="live-agent-name">Agent 11</div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:09</div>
+      <div class="tl-dot online"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 22</strong> went online <span class="tl-meta">for 2 hours · @obina_t</span></div>
       </div>
-      <div class="live-agent-meta"><span>@balem18</span><span class="clicks">7</span></div>
-      <div class="live-agent-time">Live 23m · ends 7m</div>
-    </div>
-  </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">14:03</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 14</strong> <span class="tl-meta">visitor 2c8d...4e7f</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:58</div>
+      <div class="tl-dot offline"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 12</strong> went offline manually <span class="tl-meta">via secret page</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:42</div>
+      <div class="tl-dot admin"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Kidus T.</strong> (admin) edited <strong>Agent 19</strong> <span class="tl-meta">added Awash Bank to payment methods</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:35</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 22</strong> <span class="tl-meta">visitor 9b4e...c8a3</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:30</div>
+      <div class="tl-dot online"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 26</strong> went online <span class="tl-meta">for 2 hours · @leo021902</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:24</div>
+      <div class="tl-dot admin"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Kidus T.</strong> regenerated token for <strong>Agent 8</strong> <span class="tl-meta">old token revoked · new link generated</span></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:18</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 3</strong></div>
+      </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">13:00</div>
+      <div class="tl-dot online"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 11</strong> went online <span class="tl-meta">for 30 minutes · @balem18</span></div>
+      </div>
+    </li>
+
+  </ul>
 </div>
 
-<!-- TWO COL -->
-<div class="two-col">
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Recent Activity</div>
-      <div class="panel-actions">
-        <a href="admin-activity.html" class="btn btn-ghost btn-sm">View all →</a>
-      </div>
-    </div>
-    <ul class="activity-list">
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 19</strong> <span class="muted">went online for 30m</span></div>
-        <span class="activity-time">2m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 3</strong></div>
-        <span class="activity-time">3m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot extend"></span>
-        <div class="activity-text"><strong>Agent 7</strong> <span class="muted">extended +1h</span></div>
-        <span class="activity-time">8m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 4</strong> <span class="muted">went offline (2h session)</span></div>
-        <span class="activity-time">12m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 22</strong> <span class="muted">went online for 2h</span></div>
-        <span class="activity-time">38m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 14</strong></div>
-        <span class="activity-time">42m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 12</strong> <span class="muted">went offline manually</span></div>
-        <span class="activity-time">44m ago</span>
-      </li>
-    </ul>
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Yesterday · Saturday, April 25</div>
   </div>
+  <ul class="timeline">
 
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Top Performers Today</div>
-      <div class="panel-actions">
-        <a href="admin-analytics.html" class="btn btn-ghost btn-sm">Full leaderboard →</a>
+    <li class="tl-row">
+      <div class="tl-time">22:14</div>
+      <div class="tl-dot offline"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 7</strong> went offline <span class="tl-meta">end of 2h session</span></div>
       </div>
-    </div>
-    <div>
-      <div class="performer-row">
-        <div class="performer-rank">1</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 3</div>
-          <div class="performer-sub">@yehoneagent · 4h 12m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">31</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">21:47</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 7</strong></div>
       </div>
-      <div class="performer-row">
-        <div class="performer-rank">2</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 7</div>
-          <div class="performer-sub">@DOITFAST21 · 3h 47m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">23</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">21:32</div>
+      <div class="tl-dot click"></div>
+      <div class="tl-body">
+        <div class="tl-text">Deposit click on <strong>Agent 14</strong></div>
       </div>
-      <div class="performer-row">
-        <div class="performer-rank">3</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 14</div>
-          <div class="performer-sub">@tewodros_ab · 2h 18m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">18</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">21:15</div>
+      <div class="tl-dot extend"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 3</strong> extended live time <span class="tl-meta">+30 minutes</span></div>
       </div>
-      <div class="performer-row">
-        <div class="performer-rank">4</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 22</div>
-          <div class="performer-sub">@obina_t · 38m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">14</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">20:43</div>
+      <div class="tl-dot admin"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Kidus T.</strong> created new agent <strong>Agent 28</strong> <span class="tl-meta">@biruk2910 · 2 payment methods</span></div>
       </div>
-      <div class="performer-row">
-        <div class="performer-rank">5</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 4</div>
-          <div class="performer-sub">@kemeragent_4 · 2h 1m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">12</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
+    </li>
+
+    <li class="tl-row">
+      <div class="tl-time">20:00</div>
+      <div class="tl-dot online"></div>
+      <div class="tl-body">
+        <div class="tl-text"><strong>Agent 7</strong> went online <span class="tl-meta">for 2 hours</span></div>
       </div>
-    </div>
+    </li>
+
+  </ul>
+
+  <div style="padding:14px 18px;border-top:1px solid var(--border);text-align:center">
+    <button class="btn btn-secondary">Load older events</button>
   </div>
 </div>
 </main>
 </div>
-<script>
-function updateTime(){
-  const opts = { weekday:'long', month:'long', day:'numeric' };
-  const d = new Date();
-  const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  document.getElementById('todayDate').textContent =
-    `${d.toLocaleDateString('en-US', opts)} · ${time} EAT`;
-}
-updateTime();
-setInterval(updateTime, 60000);
-</script>
 </body></html>

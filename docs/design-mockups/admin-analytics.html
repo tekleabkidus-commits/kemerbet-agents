@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kemerbet · Dashboard</title>
+<title>Kemerbet · Analytics</title>
 <style>
 /* ============================================================
    KEMERBET ADMIN · Shared Base CSS
@@ -492,7 +492,6 @@ body{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:14px;
-  margin-bottom:20px;
 }
 
 .stat-card{
@@ -528,156 +527,106 @@ body{
 .delta.down{color:var(--red)}
 .delta.neutral{color:var(--text-dim)}
 
-.stat-card .ticker-dot{
-  display:inline-block;width:6px;height:6px;
-  background:var(--green);border-radius:50%;
-  box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-  margin-right:4px;
-}
-
-/* LIVE PILL */
-.live-pill{
-  display:inline-flex;align-items:center;gap:5px;
-  background:var(--green-bg);color:var(--green);
-  padding:3px 9px;border-radius:999px;
-  font-size:.65rem;font-weight:800;letter-spacing:.5px;
-  border:1px solid rgba(0,168,107,0.2);
-}
-
-.live-pill::before{
-  content:"";width:5px;height:5px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 6px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-/* LIVE GRID */
-.live-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:10px;
-  padding:14px;
-}
-
-.live-agent-card{
-  background:var(--bg-elev-2);
-  border:1px solid rgba(34,255,154,0.15);
-  border-radius:10px;
-  padding:12px;
-  position:relative;
-  overflow:hidden;
-}
-
-.live-agent-card::after{
-  content:"";position:absolute;top:8px;right:8px;
-  width:7px;height:7px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-.live-agent-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-
-.live-agent-avatar{
-  width:30px;height:30px;border-radius:8px;
-  background:linear-gradient(135deg,var(--green-dark),var(--green));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.72rem;color:#fff;
-}
-
-.live-agent-name{font-weight:700;font-size:.82rem;letter-spacing:-.1px}
-
-.live-agent-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
-.live-agent-meta .clicks{color:var(--green);font-weight:700}
-
-.live-agent-time{
-  font-size:.65rem;color:var(--text-dim);
-  margin-top:6px;font-variant-numeric:tabular-nums;
-}
-
-/* TWO COL */
 .two-col{
   display:grid;
-  grid-template-columns:1.4fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:18px;
   margin-bottom:20px;
 }
 
 @media(max-width:1100px){.two-col{grid-template-columns:1fr}}
 
-/* ACTIVITY */
-.activity-list{list-style:none;padding:8px 0}
-
-.activity-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-  font-size:.83rem;
-  transition:background .12s;
+/* HEATMAP */
+.heatmap{
+  display:grid;
+  grid-template-columns:auto repeat(24, 1fr);
+  gap:2px;
+  margin-bottom:8px;
 }
 
-.activity-row:last-child{border-bottom:none}
-.activity-row:hover{background:var(--bg-hover)}
-
-.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.activity-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
-.activity-dot.offline{background:var(--text-dim)}
-.activity-dot.click{background:var(--gold)}
-.activity-dot.extend{background:var(--blue)}
-
-.activity-text{flex:1;min-width:0}
-.activity-text strong{color:var(--text);font-weight:700}
-.activity-text .muted{color:var(--text-muted)}
-
-.activity-time{
-  font-size:.72rem;color:var(--text-dim);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
+.heatmap .day-label{
+  font-size:.66rem;color:var(--text-muted);
+  font-weight:700;padding-right:6px;
+  display:flex;align-items:center;
+  text-transform:uppercase;letter-spacing:.5px;
 }
 
-/* PERFORMERS */
-.performer-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
+.heatmap .hour-label{
+  font-size:.6rem;color:var(--text-dim);
+  text-align:center;font-weight:600;
+  font-variant-numeric:tabular-nums;
 }
 
-.performer-row:last-child{border-bottom:none}
+.heat-cell{
+  aspect-ratio:1;
+  border-radius:3px;
+  cursor:pointer;
+  transition:transform .12s;
+}
 
-.performer-rank{
-  width:22px;height:22px;border-radius:50%;
+.heat-cell:hover{transform:scale(1.3);outline:2px solid var(--text);outline-offset:2px;z-index:1}
+
+.heat-legend{
+  width:14px;height:14px;border-radius:3px;
+}
+
+/* BAR CHARTS */
+.bar-list{display:flex;flex-direction:column;gap:10px}
+
+.bar-row{
+  display:grid;
+  grid-template-columns:130px 1fr 80px;
+  align-items:center;
+  gap:12px;
+}
+
+.bar-label{font-size:.82rem;font-weight:600;color:var(--text)}
+
+.bar-track{
+  height:8px;
+  background:var(--bg-elev-2);
+  border-radius:4px;
+  overflow:hidden;
+}
+
+.bar-fill{
+  height:100%;border-radius:4px;
+  transition:width .6s cubic-bezier(.4,0,.2,1);
+}
+
+.bar-value{
+  text-align:right;
+  font-size:.78rem;
+  color:var(--text-muted);
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+
+/* LEADERBOARD RANKS */
+.lb-rank{
+  width:24px;height:24px;border-radius:50%;
   background:var(--bg-elev-2);border:1px solid var(--border);
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.7rem;color:var(--text-muted);
+  font-weight:800;font-size:.74rem;color:var(--text-muted);
   font-variant-numeric:tabular-nums;
 }
 
-.performer-row:nth-child(1) .performer-rank{
-  background:linear-gradient(135deg,#fbbf24,#f59e0b);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(2) .performer-rank{
-  background:linear-gradient(135deg,#cbd5e1,#94a3b8);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(3) .performer-rank{
-  background:linear-gradient(135deg,#d97706,#b45309);
-  color:#fff;border-color:transparent;
-}
+.lb-rank.lb-1{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a2e;border-color:transparent}
+.lb-rank.lb-2{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#1a1a2e;border-color:transparent}
+.lb-rank.lb-3{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border-color:transparent}
 
-.performer-info{flex:1;min-width:0}
-.performer-name{font-weight:700;font-size:.85rem;letter-spacing:-.1px}
-.performer-sub{font-size:.7rem;color:var(--text-dim)}
+/* TRENDS CHART (SVG) */
+#trendsChart svg{width:100%;height:100%}
 
-.performer-stat{
-  font-weight:800;font-size:1rem;
-  font-variant-numeric:tabular-nums;
-  color:var(--green);letter-spacing:-.3px;
-}
+.chart-grid line{stroke:var(--border);stroke-width:1;stroke-dasharray:2,4}
+.chart-axis text{fill:var(--text-dim);font-size:10px}
 
-.performer-stat-label{
-  font-size:.6rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:.8px;
-  text-align:right;margin-top:1px;font-weight:700;
-}
+.chart-area-visitors{fill:url(#gradGold);opacity:.15}
+.chart-area-clicks{fill:url(#gradGreen);opacity:.2}
+.chart-line-visitors{fill:none;stroke:var(--gold);stroke-width:2}
+.chart-line-clicks{fill:none;stroke:var(--green);stroke-width:2}
+.chart-dot{cursor:pointer}
+.chart-dot:hover{r:5}
 </style>
 </head>
 <body>
@@ -692,7 +641,7 @@ body{
     </div>
 
     <div class="nav-label">Main</div>
-    <a href="admin-dashboard.html" class="nav-item active">
+    <a href="admin-dashboard.html" class="nav-item">
       <span class="icon">▦</span>
       <span>Dashboard</span>
     </a>
@@ -701,7 +650,7 @@ body{
       <span>Agents</span>
       <span class="badge">28</span>
     </a>
-    <a href="admin-analytics.html" class="nav-item">
+    <a href="admin-analytics.html" class="nav-item active">
       <span class="icon">◈</span>
       <span>Analytics</span>
     </a>
@@ -733,232 +682,396 @@ body{
     </div>
   </aside>
 <main class="main">
-<div data-page-title="Dashboard"></div>
+<div data-page-title="Analytics"></div>
 <!-- PAGE HEAD -->
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <div class="subtitle">Overview of agent activity and performance · <span id="todayDate">Sunday, April 26</span></div>
+    <h1>Analytics</h1>
+    <div class="subtitle">Performance metrics, trends, and agent insights</div>
   </div>
   <div class="page-actions">
+    <select class="filter-select" id="rangeSelect">
+      <option value="today">Today</option>
+      <option value="7d" selected>Last 7 days</option>
+      <option value="30d">Last 30 days</option>
+      <option value="90d">Last 90 days</option>
+      <option value="custom">Custom range…</option>
+    </select>
     <button class="btn btn-secondary btn-sm">Export CSV</button>
-    <a href="admin-agents.html" class="btn btn-primary">+ New Agent</a>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="label">Live Agents</div>
-    <div class="value">11<span style="font-size:1rem;color:var(--text-dim);font-weight:600"> / 28</span></div>
-    <div class="delta up"><span class="ticker-dot"></span>3 going live in last hour</div>
-  </div>
+<!-- BIG STATS -->
+<div class="stats-grid" style="margin-bottom:20px">
   <div class="stat-card gold">
-    <div class="label">Visitors Today</div>
-    <div class="value">3,847</div>
-    <div class="delta up">↑ 12% vs yesterday</div>
+    <div class="label">Total Visitors</div>
+    <div class="value">26,438</div>
+    <div class="delta up">↑ 18% vs previous 7d</div>
   </div>
   <div class="stat-card blue">
+    <div class="label">Unique Visitors</div>
+    <div class="value">8,247</div>
+    <div class="delta up">↑ 11%</div>
+  </div>
+  <div class="stat-card">
     <div class="label">Deposit Clicks</div>
-    <div class="value">486</div>
-    <div class="delta up">↑ 8% vs yesterday</div>
+    <div class="value">3,381</div>
+    <div class="delta up">↑ 9%</div>
   </div>
   <div class="stat-card">
     <div class="label">Click-Through Rate</div>
-    <div class="value">12.6%</div>
-    <div class="delta neutral">— same as yesterday</div>
+    <div class="value">12.8%</div>
+    <div class="delta down">↓ 0.4 pts</div>
   </div>
 </div>
 
-<!-- LIVE AGENTS -->
+<!-- TRENDS CHART -->
 <div class="panel">
   <div class="panel-head">
-    <div class="panel-title">
-      Currently Live
-      <span class="live-pill">11 active</span>
-    </div>
-    <div class="panel-actions">
-      <a href="admin-agents.html" class="btn btn-ghost btn-sm">View all →</a>
+    <div class="panel-title">Traffic & Clicks Over Time</div>
+    <div class="panel-actions" style="gap:14px">
+      <div style="display:flex;gap:14px;font-size:.78rem;color:var(--text-muted)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:var(--gold);border-radius:2px"></span>Visitors</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px"></span>Clicks</span>
+      </div>
     </div>
   </div>
-  <div class="live-grid">
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">07</div>
-        <div class="live-agent-name">Agent 7</div>
-      </div>
-      <div class="live-agent-meta"><span>@DOITFAST21</span><span class="clicks">23</span></div>
-      <div class="live-agent-time">Live 1h 23m · ends 37m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">14</div>
-        <div class="live-agent-name">Agent 14</div>
-      </div>
-      <div class="live-agent-meta"><span>@tewodros_ab</span><span class="clicks">18</span></div>
-      <div class="live-agent-time">Live 47m · ends 1h 13m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">03</div>
-        <div class="live-agent-name">Agent 3</div>
-      </div>
-      <div class="live-agent-meta"><span>@yehoneagent</span><span class="clicks">31</span></div>
-      <div class="live-agent-time">Live 2h 4m · ends 56m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">19</div>
-        <div class="live-agent-name">Agent 19</div>
-      </div>
-      <div class="live-agent-meta"><span>@kemerdepositagent</span><span class="clicks">9</span></div>
-      <div class="live-agent-time">Live 12m · ends 18m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">22</div>
-        <div class="live-agent-name">Agent 22</div>
-      </div>
-      <div class="live-agent-meta"><span>@obina_t</span><span class="clicks">14</span></div>
-      <div class="live-agent-time">Live 38m · ends 1h 22m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">11</div>
-        <div class="live-agent-name">Agent 11</div>
-      </div>
-      <div class="live-agent-meta"><span>@balem18</span><span class="clicks">7</span></div>
-      <div class="live-agent-time">Live 23m · ends 7m</div>
-    </div>
+  <div class="panel-body">
+    <div id="trendsChart" style="position:relative;height:220px;margin-bottom:8px"></div>
+    <div id="trendsLabels" style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-dim);padding:0 4px;font-variant-numeric:tabular-nums"></div>
   </div>
 </div>
 
-<!-- TWO COL -->
+<!-- TWO COLS -->
 <div class="two-col">
 
+  <!-- HEATMAP -->
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">Recent Activity</div>
-      <div class="panel-actions">
-        <a href="admin-activity.html" class="btn btn-ghost btn-sm">View all →</a>
+      <div class="panel-title">When players deposit</div>
+      <div style="font-size:.74rem;color:var(--text-dim)">Day × Hour heatmap</div>
+    </div>
+    <div class="panel-body">
+      <div id="heatmap" class="heatmap"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:.72rem;color:var(--text-muted)">
+        <span>Less</span>
+        <div style="display:flex;gap:3px">
+          <span class="heat-legend" style="background:rgba(0,168,107,0.08)"></span>
+          <span class="heat-legend" style="background:rgba(0,168,107,0.25)"></span>
+          <span class="heat-legend" style="background:rgba(0,168,107,0.5)"></span>
+          <span class="heat-legend" style="background:rgba(0,168,107,0.75)"></span>
+          <span class="heat-legend" style="background:rgba(0,168,107,1)"></span>
+        </div>
+        <span>More</span>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--bg-elev-2);border-radius:8px;font-size:.78rem;color:var(--text-muted);border-left:2px solid var(--gold)">
+        <strong style="color:var(--gold)">💡 Insight:</strong> Peak deposit traffic hits between <strong style="color:var(--text)">7–10 PM weekday evenings</strong>. Encourage agents to be live during this window.
       </div>
     </div>
-    <ul class="activity-list">
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 19</strong> <span class="muted">went online for 30m</span></div>
-        <span class="activity-time">2m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 3</strong></div>
-        <span class="activity-time">3m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot extend"></span>
-        <div class="activity-text"><strong>Agent 7</strong> <span class="muted">extended +1h</span></div>
-        <span class="activity-time">8m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 4</strong> <span class="muted">went offline (2h session)</span></div>
-        <span class="activity-time">12m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 22</strong> <span class="muted">went online for 2h</span></div>
-        <span class="activity-time">38m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 14</strong></div>
-        <span class="activity-time">42m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 12</strong> <span class="muted">went offline manually</span></div>
-        <span class="activity-time">44m ago</span>
-      </li>
-    </ul>
   </div>
 
+  <!-- PAYMENT BREAKDOWN -->
   <div class="panel">
     <div class="panel-head">
-      <div class="panel-title">Top Performers Today</div>
-      <div class="panel-actions">
-        <a href="admin-analytics.html" class="btn btn-ghost btn-sm">Full leaderboard →</a>
-      </div>
+      <div class="panel-title">Payment Methods</div>
+      <div style="font-size:.74rem;color:var(--text-dim)">By agent click rate</div>
     </div>
-    <div>
-      <div class="performer-row">
-        <div class="performer-rank">1</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 3</div>
-          <div class="performer-sub">@yehoneagent · 4h 12m live</div>
+    <div class="panel-body">
+      <div class="bar-list">
+        <div class="bar-row">
+          <div class="bar-label">TeleBirr</div>
+          <div class="bar-track"><div class="bar-fill" style="width:96%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">28 agents</div>
         </div>
-        <div>
-          <div class="performer-stat">31</div>
-          <div class="performer-stat-label">CLICKS</div>
+        <div class="bar-row">
+          <div class="bar-label">CBE Birr</div>
+          <div class="bar-track"><div class="bar-fill" style="width:78%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">22 agents</div>
         </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">2</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 7</div>
-          <div class="performer-sub">@DOITFAST21 · 3h 47m live</div>
+        <div class="bar-row">
+          <div class="bar-label">M-Pesa</div>
+          <div class="bar-track"><div class="bar-fill" style="width:62%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">17 agents</div>
         </div>
-        <div>
-          <div class="performer-stat">23</div>
-          <div class="performer-stat-label">CLICKS</div>
+        <div class="bar-row">
+          <div class="bar-label">Awash</div>
+          <div class="bar-track"><div class="bar-fill" style="width:42%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">12 agents</div>
         </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">3</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 14</div>
-          <div class="performer-sub">@tewodros_ab · 2h 18m live</div>
+        <div class="bar-row">
+          <div class="bar-label">Dashen</div>
+          <div class="bar-track"><div class="bar-fill" style="width:35%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">10 agents</div>
         </div>
-        <div>
-          <div class="performer-stat">18</div>
-          <div class="performer-stat-label">CLICKS</div>
+        <div class="bar-row">
+          <div class="bar-label">Bank of Abyssinia</div>
+          <div class="bar-track"><div class="bar-fill" style="width:14%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">4 agents</div>
         </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">4</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 22</div>
-          <div class="performer-sub">@obina_t · 38m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">14</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">5</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 4</div>
-          <div class="performer-sub">@kemeragent_4 · 2h 1m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">12</div>
-          <div class="performer-stat-label">CLICKS</div>
+        <div class="bar-row">
+          <div class="bar-label">Cooperative</div>
+          <div class="bar-track"><div class="bar-fill" style="width:7%;background:linear-gradient(90deg,var(--green-dark),var(--green))"></div></div>
+          <div class="bar-value">2 agents</div>
         </div>
       </div>
     </div>
+  </div>
+
+</div>
+
+<!-- LEADERBOARD -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Agent Leaderboard</div>
+    <div class="panel-actions">
+      <select class="filter-select">
+        <option>Sort by: Click Count</option>
+        <option>Sort by: Live Hours</option>
+        <option>Sort by: Click Rate (per minute live)</option>
+        <option>Sort by: Conversion Rate</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:50px">Rank</th>
+          <th>Agent</th>
+          <th>Clicks (7d)</th>
+          <th>Live Hours</th>
+          <th>Click Rate</th>
+          <th>Sessions</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="lb-rank lb-1">1</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">03</div>
+              <div class="info"><div class="name">Agent 3</div><div class="username">@yehoneagent</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">187</div></td>
+          <td>34h 12m</td>
+          <td><strong style="color:var(--green)">5.5</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>21</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank lb-2">2</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">07</div>
+              <div class="info"><div class="name">Agent 7</div><div class="username">@DOITFAST21</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">142</div></td>
+          <td>28h 47m</td>
+          <td><strong style="color:var(--green)">4.9</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>18</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank lb-3">3</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">14</div>
+              <div class="info"><div class="name">Agent 14</div><div class="username">@tewodros_ab</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">98</div></td>
+          <td>21h 5m</td>
+          <td><strong>4.6</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>14</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank">4</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">04</div>
+              <div class="info"><div class="name">Agent 4</div><div class="username">@kemeragent_4</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">76</div></td>
+          <td>18h 33m</td>
+          <td><strong>4.1</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>12</td>
+          <td class="cell-time">12m ago</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank">5</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">22</div>
+              <div class="info"><div class="name">Agent 22</div><div class="username">@obina_t</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">68</div></td>
+          <td>15h 18m</td>
+          <td><strong>4.4</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>9</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank">6</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">11</div>
+              <div class="info"><div class="name">Agent 11</div><div class="username">@balem18</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">52</div></td>
+          <td>12h 4m</td>
+          <td><strong>4.3</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>8</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank">7</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">19</div>
+              <div class="info"><div class="name">Agent 19</div><div class="username">@kemerdepositagent</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">41</div></td>
+          <td>9h 42m</td>
+          <td><strong>4.2</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>6</td>
+          <td class="cell-time live">Online now</td>
+        </tr>
+        <tr>
+          <td><div class="lb-rank">8</div></td>
+          <td>
+            <div class="cell-agent">
+              <div class="avatar">12</div>
+              <div class="info"><div class="name">Agent 12</div><div class="username">@obina_t</div></div>
+            </div>
+          </td>
+          <td class="cell-clicks"><div class="today">38</div></td>
+          <td>11h 17m</td>
+          <td><strong>3.4</strong> <span style="color:var(--text-dim);font-size:.72rem">/hr</span></td>
+          <td>9</td>
+          <td class="cell-time">44m ago</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 </main>
 </div>
 <script>
-function updateTime(){
-  const opts = { weekday:'long', month:'long', day:'numeric' };
-  const d = new Date();
-  const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  document.getElementById('todayDate').textContent =
-    `${d.toLocaleDateString('en-US', opts)} · ${time} EAT`;
+// ============ TRENDS CHART (SVG) ============
+function drawChart(){
+  const days = ['Apr 20','Apr 21','Apr 22','Apr 23','Apr 24','Apr 25','Apr 26'];
+  const visitors = [3120, 3580, 2940, 4120, 3650, 4380, 3847];
+  const clicks = [392, 458, 387, 524, 471, 568, 486];
+
+  const w = 960, h = 220, padL = 50, padR = 12, padT = 16, padB = 28;
+  const innerW = w - padL - padR;
+  const innerH = h - padT - padB;
+  const maxVisitors = 5000;
+  const maxClicks = 700;
+
+  const xStep = innerW / (days.length - 1);
+  const xs = i => padL + i * xStep;
+  const yV = v => padT + innerH - (v / maxVisitors) * innerH;
+  const yC = v => padT + innerH - (v / maxClicks) * innerH;
+
+  const linePath = (data, mapY) => {
+    return data.map((v,i) => `${i === 0 ? 'M' : 'L'} ${xs(i)} ${mapY(v)}`).join(' ');
+  };
+  const areaPath = (data, mapY) => {
+    const top = data.map((v,i) => `${i === 0 ? 'M' : 'L'} ${xs(i)} ${mapY(v)}`).join(' ');
+    return `${top} L ${xs(data.length-1)} ${padT + innerH} L ${xs(0)} ${padT + innerH} Z`;
+  };
+
+  const gridLines = [0, 0.25, 0.5, 0.75, 1].map(p => {
+    const y = padT + innerH * (1 - p);
+    return `<line x1="${padL}" x2="${w - padR}" y1="${y}" y2="${y}"/>
+            <text x="${padL - 8}" y="${y + 3}" text-anchor="end">${Math.round(maxVisitors * p).toLocaleString()}</text>`;
+  }).join('');
+
+  const visitorDots = visitors.map((v,i) =>
+    `<circle class="chart-dot" cx="${xs(i)}" cy="${yV(v)}" r="3.5" fill="var(--gold)"><title>${days[i]}: ${v.toLocaleString()} visitors</title></circle>`
+  ).join('');
+
+  const clickDots = clicks.map((v,i) =>
+    `<circle class="chart-dot" cx="${xs(i)}" cy="${yC(v)}" r="3.5" fill="var(--green)"><title>${days[i]}: ${v.toLocaleString()} clicks</title></circle>`
+  ).join('');
+
+  const svg = `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="gradGold" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="var(--gold)" stop-opacity=".4"/>
+          <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gradGreen" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="var(--green)" stop-opacity=".4"/>
+          <stop offset="100%" stop-color="var(--green)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <g class="chart-grid chart-axis">${gridLines}</g>
+      <path class="chart-area-visitors" d="${areaPath(visitors, yV)}"/>
+      <path class="chart-area-clicks" d="${areaPath(clicks, yC)}"/>
+      <path class="chart-line-visitors" d="${linePath(visitors, yV)}"/>
+      <path class="chart-line-clicks" d="${linePath(clicks, yC)}"/>
+      ${visitorDots}
+      ${clickDots}
+    </svg>
+  `;
+
+  document.getElementById('trendsChart').innerHTML = svg;
+  document.getElementById('trendsLabels').innerHTML = days.map(d => `<span>${d}</span>`).join('');
 }
-updateTime();
-setInterval(updateTime, 60000);
+
+// ============ HEATMAP ============
+function drawHeatmap(){
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const hm = document.getElementById('heatmap');
+
+  // mock data: 7 days × 24 hours, peak at evening
+  function intensity(day, hour){
+    let base = 0;
+    if (hour >= 7 && hour <= 22){
+      const peakHour = 20;
+      const distFromPeak = Math.abs(hour - peakHour);
+      base = Math.max(0, 1 - distFromPeak * 0.15);
+    }
+    if (hour >= 0 && hour <= 2) base = Math.max(base, 0.2);
+    if (day >= 0 && day <= 4) base *= 0.95;
+    if (day === 5 || day === 6) base *= 1.15;
+    base += (Math.sin(day * 7 + hour) * 0.06);
+    return Math.max(0, Math.min(1, base));
+  }
+
+  let html = '<div></div>';
+  for (let h = 0; h < 24; h++){
+    if (h % 3 === 0) html += `<div class="hour-label">${h}</div>`;
+    else html += '<div></div>';
+  }
+
+  days.forEach((day, dayIdx) => {
+    html += `<div class="day-label">${day}</div>`;
+    for (let h = 0; h < 24; h++){
+      const v = intensity(dayIdx, h);
+      const opacity = v < 0.05 ? 0.04 : 0.05 + v * 0.95;
+      const hourLabel = h.toString().padStart(2,'0') + ':00';
+      const clickCount = Math.round(v * 80);
+      html += `<div class="heat-cell" style="background:rgba(0,168,107,${opacity})" title="${day} ${hourLabel} · ${clickCount} clicks"></div>`;
+    }
+  });
+
+  hm.innerHTML = html;
+}
+
+drawChart();
+drawHeatmap();
+window.addEventListener('resize', drawChart);
 </script>
 </body></html>

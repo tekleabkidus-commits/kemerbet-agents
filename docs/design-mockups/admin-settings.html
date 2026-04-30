@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kemerbet · Dashboard</title>
+<title>Kemerbet · Settings</title>
 <style>
 /* ============================================================
    KEMERBET ADMIN · Shared Base CSS
@@ -488,196 +488,56 @@ body{
   .user-pill{justify-content:center;padding:8px 0}
   .main{padding:18px 14px 50px}
 }
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:14px;
-  margin-bottom:20px;
+.settings-tabs{
+  display:flex;
+  gap:4px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:24px;
+  overflow-x:auto;
 }
 
-.stat-card{
-  background:var(--bg-card);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:18px;
-  position:relative;
-  overflow:hidden;
+.settings-tab{
+  padding:10px 16px;
+  background:transparent;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text-muted);
+  font-family:inherit;
+  font-weight:700;
+  font-size:.86rem;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .15s;
 }
 
-.stat-card::before{
-  content:"";position:absolute;top:0;left:0;
-  width:3px;height:100%;background:var(--green);
+.settings-tab:hover{color:var(--text)}
+
+.settings-tab.active{
+  color:var(--green);
+  border-bottom-color:var(--green);
 }
 
-.stat-card.gold::before{background:var(--gold)}
-.stat-card.blue::before{background:var(--blue)}
-
-.stat-card .label{
-  font-size:.7rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;
+.panel-foot{
+  padding:14px 18px;
+  border-top:1px solid var(--border);
+  background:var(--bg-elev-1);
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
 }
 
-.stat-card .value{
-  font-size:1.8rem;font-weight:800;letter-spacing:-1px;
-  color:var(--text);font-variant-numeric:tabular-nums;
-  line-height:1;margin-bottom:6px;
-}
-
-.stat-card .delta{font-size:.74rem;display:flex;align-items:center;gap:4px;font-weight:600}
-.delta.up{color:var(--green)}
-.delta.down{color:var(--red)}
-.delta.neutral{color:var(--text-dim)}
-
-.stat-card .ticker-dot{
-  display:inline-block;width:6px;height:6px;
-  background:var(--green);border-radius:50%;
-  box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-  margin-right:4px;
-}
-
-/* LIVE PILL */
-.live-pill{
-  display:inline-flex;align-items:center;gap:5px;
-  background:var(--green-bg);color:var(--green);
-  padding:3px 9px;border-radius:999px;
-  font-size:.65rem;font-weight:800;letter-spacing:.5px;
-  border:1px solid rgba(0,168,107,0.2);
-}
-
-.live-pill::before{
-  content:"";width:5px;height:5px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 6px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-/* LIVE GRID */
-.live-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:10px;
-  padding:14px;
-}
-
-.live-agent-card{
+.danger-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
   background:var(--bg-elev-2);
-  border:1px solid rgba(34,255,154,0.15);
+  border:1px solid rgba(239,68,68,0.15);
   border-radius:10px;
-  padding:12px;
-  position:relative;
-  overflow:hidden;
+  gap:14px;
 }
 
-.live-agent-card::after{
-  content:"";position:absolute;top:8px;right:8px;
-  width:7px;height:7px;background:var(--green);
-  border-radius:50%;box-shadow:0 0 8px var(--green);
-  animation:pulse 1.5s infinite;
-}
-
-.live-agent-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-
-.live-agent-avatar{
-  width:30px;height:30px;border-radius:8px;
-  background:linear-gradient(135deg,var(--green-dark),var(--green));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.72rem;color:#fff;
-}
-
-.live-agent-name{font-weight:700;font-size:.82rem;letter-spacing:-.1px}
-
-.live-agent-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)}
-.live-agent-meta .clicks{color:var(--green);font-weight:700}
-
-.live-agent-time{
-  font-size:.65rem;color:var(--text-dim);
-  margin-top:6px;font-variant-numeric:tabular-nums;
-}
-
-/* TWO COL */
-.two-col{
-  display:grid;
-  grid-template-columns:1.4fr 1fr;
-  gap:18px;
-  margin-bottom:20px;
-}
-
-@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
-
-/* ACTIVITY */
-.activity-list{list-style:none;padding:8px 0}
-
-.activity-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-  font-size:.83rem;
-  transition:background .12s;
-}
-
-.activity-row:last-child{border-bottom:none}
-.activity-row:hover{background:var(--bg-hover)}
-
-.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.activity-dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
-.activity-dot.offline{background:var(--text-dim)}
-.activity-dot.click{background:var(--gold)}
-.activity-dot.extend{background:var(--blue)}
-
-.activity-text{flex:1;min-width:0}
-.activity-text strong{color:var(--text);font-weight:700}
-.activity-text .muted{color:var(--text-muted)}
-
-.activity-time{
-  font-size:.72rem;color:var(--text-dim);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-
-/* PERFORMERS */
-.performer-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 18px;
-  border-bottom:1px solid var(--border);
-}
-
-.performer-row:last-child{border-bottom:none}
-
-.performer-rank{
-  width:22px;height:22px;border-radius:50%;
-  background:var(--bg-elev-2);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:.7rem;color:var(--text-muted);
-  font-variant-numeric:tabular-nums;
-}
-
-.performer-row:nth-child(1) .performer-rank{
-  background:linear-gradient(135deg,#fbbf24,#f59e0b);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(2) .performer-rank{
-  background:linear-gradient(135deg,#cbd5e1,#94a3b8);
-  color:#1a1a2e;border-color:transparent;
-}
-.performer-row:nth-child(3) .performer-rank{
-  background:linear-gradient(135deg,#d97706,#b45309);
-  color:#fff;border-color:transparent;
-}
-
-.performer-info{flex:1;min-width:0}
-.performer-name{font-weight:700;font-size:.85rem;letter-spacing:-.1px}
-.performer-sub{font-size:.7rem;color:var(--text-dim)}
-
-.performer-stat{
-  font-weight:800;font-size:1rem;
-  font-variant-numeric:tabular-nums;
-  color:var(--green);letter-spacing:-.3px;
-}
-
-.performer-stat-label{
-  font-size:.6rem;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:.8px;
-  text-align:right;margin-top:1px;font-weight:700;
-}
+.danger-row > div:first-child{flex:1;min-width:0}
 </style>
 </head>
 <body>
@@ -692,7 +552,7 @@ body{
     </div>
 
     <div class="nav-label">Main</div>
-    <a href="admin-dashboard.html" class="nav-item active">
+    <a href="admin-dashboard.html" class="nav-item">
       <span class="icon">▦</span>
       <span>Dashboard</span>
     </a>
@@ -711,7 +571,7 @@ body{
       <span class="icon">◫</span>
       <span>Payment Methods</span>
     </a>
-    <a href="admin-settings.html" class="nav-item">
+    <a href="admin-settings.html" class="nav-item active">
       <span class="icon">⚙</span>
       <span>Settings</span>
     </a>
@@ -733,232 +593,228 @@ body{
     </div>
   </aside>
 <main class="main">
-<div data-page-title="Dashboard"></div>
-<!-- PAGE HEAD -->
+<div data-page-title="Settings"></div>
 <div class="page-head">
   <div>
-    <h1>Dashboard</h1>
-    <div class="subtitle">Overview of agent activity and performance · <span id="todayDate">Sunday, April 26</span></div>
-  </div>
-  <div class="page-actions">
-    <button class="btn btn-secondary btn-sm">Export CSV</button>
-    <a href="admin-agents.html" class="btn btn-primary">+ New Agent</a>
+    <h1>Settings</h1>
+    <div class="subtitle">Global configuration for the agent system</div>
   </div>
 </div>
 
-<!-- STATS -->
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="label">Live Agents</div>
-    <div class="value">11<span style="font-size:1rem;color:var(--text-dim);font-weight:600"> / 28</span></div>
-    <div class="delta up"><span class="ticker-dot"></span>3 going live in last hour</div>
-  </div>
-  <div class="stat-card gold">
-    <div class="label">Visitors Today</div>
-    <div class="value">3,847</div>
-    <div class="delta up">↑ 12% vs yesterday</div>
-  </div>
-  <div class="stat-card blue">
-    <div class="label">Deposit Clicks</div>
-    <div class="value">486</div>
-    <div class="delta up">↑ 8% vs yesterday</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">Click-Through Rate</div>
-    <div class="value">12.6%</div>
-    <div class="delta neutral">— same as yesterday</div>
-  </div>
+<!-- TABS -->
+<div class="settings-tabs">
+  <button class="settings-tab active">General</button>
+  <button class="settings-tab">Public Page</button>
+  <button class="settings-tab">Security</button>
+  <button class="settings-tab">Account</button>
 </div>
 
-<!-- LIVE AGENTS -->
+<!-- GENERAL SETTINGS -->
 <div class="panel">
   <div class="panel-head">
-    <div class="panel-title">
-      Currently Live
-      <span class="live-pill">11 active</span>
-    </div>
-    <div class="panel-actions">
-      <a href="admin-agents.html" class="btn btn-ghost btn-sm">View all →</a>
+    <div class="panel-title">Telegram Pre-filled Message</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+      <div class="form-row">
+        <label class="form-label">Message Sent When Player Clicks Deposit</label>
+        <textarea class="form-textarea" id="prefillMsg" rows="3" style="font-size:.9rem">Hi Kemerbet agent, I want to deposit</textarea>
+        <div class="form-help">This message auto-fills in Telegram when a player clicks "Deposit" on any agent card. Players can edit before sending. Applies to all agents.</div>
+      </div>
+      <div style="background:var(--bg-elev-2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">PREVIEW</div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:8px;padding:10px;border:1px solid var(--border)">
+          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#229ED9,#1c7fad);display:flex;align-items:center;justify-content:center;font-size:.9rem">📨</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.78rem;font-weight:700;color:var(--text)">@DOITFAST21 (Agent 7)</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-top:2px;font-style:italic" id="prefillPreview">Hi Kemerbet agent, I want to deposit</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="live-grid">
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">07</div>
-        <div class="live-agent-name">Agent 7</div>
+  <div class="panel-foot">
+    <button class="btn btn-secondary">Reset to Default</button>
+    <button class="btn btn-primary" onclick="showToast('Message updated')">Save</button>
+  </div>
+</div>
+
+<!-- AGENT BEHAVIOR -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Agent Behavior</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Show offline agents on public page</div>
+          <div class="toggle-desc">Display recently-offline agents below the live ones (faded)</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
       </div>
-      <div class="live-agent-meta"><span>@DOITFAST21</span><span class="clicks">23</span></div>
-      <div class="live-agent-time">Live 1h 23m · ends 37m</div>
+
+      <div class="form-row">
+        <label class="form-label">Hide offline agents after</label>
+        <select class="form-select" style="max-width:300px">
+          <option>6 hours</option>
+          <option selected>12 hours</option>
+          <option>24 hours</option>
+          <option>3 days</option>
+          <option>Never hide</option>
+        </select>
+        <div class="form-help">Agents not seen within this window won't show on the public page</div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label">Public page refresh interval</label>
+        <select class="form-select" style="max-width:300px">
+          <option>30 seconds</option>
+          <option selected>1 minute (recommended)</option>
+          <option>2 minutes</option>
+          <option>3 minutes</option>
+        </select>
+        <div class="form-help">How often the public page polls for live status updates</div>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Warn players before clicking offline agents</div>
+          <div class="toggle-desc">Show a confirmation dialog when player clicks an offline agent</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Shuffle live agents on each refresh</div>
+          <div class="toggle-desc">Randomize order so no agent gets unfair top position</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+      </div>
+
     </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">14</div>
-        <div class="live-agent-name">Agent 14</div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn btn-primary" onclick="showToast('Settings saved')">Save Changes</button>
+  </div>
+</div>
+
+<!-- AGENT NOTIFICATIONS -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="panel-title">Agent Notification Reminders</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Enable browser notifications globally</div>
+          <div class="toggle-desc">Master switch for all agent reminder notifications</div>
+        </div>
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
       </div>
-      <div class="live-agent-meta"><span>@tewodros_ab</span><span class="clicks">18</span></div>
-      <div class="live-agent-time">Live 47m · ends 1h 13m</div>
+
+      <div style="border:1px dashed var(--border);border-radius:10px;padding:14px;background:var(--bg-elev-2)">
+        <div style="font-size:.74rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">REMINDER SCHEDULE</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:.85rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>10 minutes before live time ends</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>5 minutes before live time ends</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>When agent goes offline</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px">
+            <span>1 hour after going offline (come back reminder)</span>
+            <button class="toggle on" onclick="this.classList.toggle('on')" style="transform:scale(.8)"></button>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">03</div>
-        <div class="live-agent-name">Agent 3</div>
+  </div>
+  <div class="panel-foot">
+    <button class="btn btn-primary" onclick="showToast('Notification settings saved')">Save</button>
+  </div>
+</div>
+
+<!-- DANGER ZONE -->
+<div class="panel" style="border-color:rgba(239,68,68,0.25)">
+  <div class="panel-head" style="border-color:rgba(239,68,68,0.15)">
+    <div class="panel-title" style="color:var(--red)">⚠ Danger Zone</div>
+  </div>
+  <div class="panel-body">
+    <div class="form-grid">
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Force all agents offline</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Sets every live agent's status to offline immediately. Use during emergencies.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('force all offline')">Force Offline All</button>
       </div>
-      <div class="live-agent-meta"><span>@yehoneagent</span><span class="clicks">31</span></div>
-      <div class="live-agent-time">Live 2h 4m · ends 56m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">19</div>
-        <div class="live-agent-name">Agent 19</div>
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Regenerate all agent tokens</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Invalidates every existing token. You'll need to send new links to all 28 agents.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('regenerate all tokens')">Regenerate All</button>
       </div>
-      <div class="live-agent-meta"><span>@kemerdepositagent</span><span class="clicks">9</span></div>
-      <div class="live-agent-time">Live 12m · ends 18m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">22</div>
-        <div class="live-agent-name">Agent 22</div>
+
+      <div class="danger-row">
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Clear all analytics data</div>
+          <div style="font-size:.78rem;color:var(--text-muted);margin-top:2px">Deletes all click and visit events. Daily rollups remain. Cannot be undone.</div>
+        </div>
+        <button class="btn btn-danger" onclick="confirmAction('clear analytics data')">Clear Data</button>
       </div>
-      <div class="live-agent-meta"><span>@obina_t</span><span class="clicks">14</span></div>
-      <div class="live-agent-time">Live 38m · ends 1h 22m</div>
-    </div>
-    <div class="live-agent-card">
-      <div class="live-agent-head">
-        <div class="live-agent-avatar">11</div>
-        <div class="live-agent-name">Agent 11</div>
-      </div>
-      <div class="live-agent-meta"><span>@balem18</span><span class="clicks">7</span></div>
-      <div class="live-agent-time">Live 23m · ends 7m</div>
+
     </div>
   </div>
 </div>
 
-<!-- TWO COL -->
-<div class="two-col">
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Recent Activity</div>
-      <div class="panel-actions">
-        <a href="admin-activity.html" class="btn btn-ghost btn-sm">View all →</a>
-      </div>
-    </div>
-    <ul class="activity-list">
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 19</strong> <span class="muted">went online for 30m</span></div>
-        <span class="activity-time">2m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 3</strong></div>
-        <span class="activity-time">3m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot extend"></span>
-        <div class="activity-text"><strong>Agent 7</strong> <span class="muted">extended +1h</span></div>
-        <span class="activity-time">8m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 4</strong> <span class="muted">went offline (2h session)</span></div>
-        <span class="activity-time">12m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot online"></span>
-        <div class="activity-text"><strong>Agent 22</strong> <span class="muted">went online for 2h</span></div>
-        <span class="activity-time">38m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot click"></span>
-        <div class="activity-text"><span class="muted">Deposit click on</span> <strong>Agent 14</strong></div>
-        <span class="activity-time">42m ago</span>
-      </li>
-      <li class="activity-row">
-        <span class="activity-dot offline"></span>
-        <div class="activity-text"><strong>Agent 12</strong> <span class="muted">went offline manually</span></div>
-        <span class="activity-time">44m ago</span>
-      </li>
-    </ul>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      <div class="panel-title">Top Performers Today</div>
-      <div class="panel-actions">
-        <a href="admin-analytics.html" class="btn btn-ghost btn-sm">Full leaderboard →</a>
-      </div>
-    </div>
-    <div>
-      <div class="performer-row">
-        <div class="performer-rank">1</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 3</div>
-          <div class="performer-sub">@yehoneagent · 4h 12m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">31</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">2</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 7</div>
-          <div class="performer-sub">@DOITFAST21 · 3h 47m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">23</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">3</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 14</div>
-          <div class="performer-sub">@tewodros_ab · 2h 18m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">18</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">4</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 22</div>
-          <div class="performer-sub">@obina_t · 38m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">14</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-      <div class="performer-row">
-        <div class="performer-rank">5</div>
-        <div class="performer-info">
-          <div class="performer-name">Agent 4</div>
-          <div class="performer-sub">@kemeragent_4 · 2h 1m live</div>
-        </div>
-        <div>
-          <div class="performer-stat">12</div>
-          <div class="performer-stat-label">CLICKS</div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastText">Saved</span>
 </div>
 </main>
 </div>
 <script>
-function updateTime(){
-  const opts = { weekday:'long', month:'long', day:'numeric' };
-  const d = new Date();
-  const time = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
-  document.getElementById('todayDate').textContent =
-    `${d.toLocaleDateString('en-US', opts)} · ${time} EAT`;
+// Live preview of pre-fill message
+const prefillInput = document.getElementById('prefillMsg');
+const prefillPreview = document.getElementById('prefillPreview');
+prefillInput.addEventListener('input', () => {
+  prefillPreview.textContent = prefillInput.value || '(empty message)';
+});
+
+// Tab switching (mock)
+document.querySelectorAll('.settings-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+function confirmAction(action){
+  if (confirm(`Are you sure you want to ${action}? This cannot be undone.`)){
+    showToast(`Action: ${action}`, 'success');
+  }
 }
-updateTime();
-setInterval(updateTime, 60000);
+
+function showToast(text, type = 'success'){
+  const toast = document.getElementById('toast');
+  document.getElementById('toastText').textContent = text;
+  toast.className = 'toast show ' + type;
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
 </script>
 </body></html>

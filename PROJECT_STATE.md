@@ -260,11 +260,36 @@ Analytics data layer, query services, API endpoints, and dashboard mockup — al
 - Mixed-timezone Carbon min()/max() bug: Carbon::min() compares absolute time, not string value. An EAT Carbon and UTC Carbon with the same datetime string represent different moments. Fixed by normalizing to UTC in SessionMinutesCalculator before comparisons.
 - Test data timezone convention: Phase C tests use explicit UTC Carbons, Phase F tests use parse-without-TZ (EAT). Both correct in production (all writes use now()). Documented in CLAUDE.md.
 
+### Locked design mockups (2026-04-30)
+
+The full Kemerbet admin design system is locked in `docs/design-mockups/`:
+- `admin-login.html` — owner portal login (199 lines)
+- `admin-dashboard.html` — F4 visual contract (964 lines)
+- `admin-agents.html` — Phase B implementation reference (1012 lines)
+- `admin-analytics.html` — F5 visual contract (1077 lines)
+- `admin-activity.html` — Phase B implementation reference (840 lines)
+- `admin-payment-methods.html` — Phase B implementation reference (901 lines)
+- `admin-settings.html` — Phase B implementation reference (820 lines)
+
+Source: `docs/mockups/` (committed since Phase A, Apr 27). Copied to `docs/design-mockups/` for consistency with Phase C/D mockup convention.
+
+**Drift inventory (mockup vs built React):**
+- LoginPage: NONE — matches mockup
+- AgentsPage: MINOR — core table structure matches, missing Export CSV button (by design)
+- ActivityPage: MAJOR — mockup uses vertical timeline layout, React uses table. Defer to Phase G.
+- PaymentMethodsPage: MAJOR — stub only. Phase G or separate task.
+- SettingsPage: MAJOR — stub only. Phase G or separate task.
+- DashboardPage: MAJOR — stub. F4-REACT replaces it.
+- AnalyticsPage: MAJOR — stub. F5-REACT replaces it.
+
+F4-MOCKUP gate now obsolete (architect provided the mockup). F4-REACT is a direct port. Same for F5.
+
 ### Resume next session
 
-- **Phase F frontend** continues: F4-REACT, F5, F6, F7
-- Read `docs/design-mockups/admin-dashboard.html` for locked visual contract
-- F4-REACT implementation begins: replace `resources/js/admin/pages/DashboardPage.tsx` stub
+- **Phase F frontend** continues: F4-REACT, F5-REACT, F6, F7
+- Read `docs/design-mockups/admin-dashboard.html` in browser as the visual contract
+- F4-REACT: replace `resources/js/admin/pages/DashboardPage.tsx` stub with real dashboard
+- F5-REACT: port `docs/design-mockups/admin-analytics.html` to AnalyticsPage.tsx with Recharts
 - **Servers:** restart with `php artisan serve --port=8001` + `npm run dev`
 - **Seed rollup data:** `php artisan agents:rollup-daily --days=7` to populate daily_stats for dashboard testing
 - **Real-device smoke test (Phase E):** deferred to staging deployment. See `docs/staging-deployment-checklist.md`.
