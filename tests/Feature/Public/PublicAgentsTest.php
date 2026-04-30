@@ -121,6 +121,29 @@ it('excludes agents whose last went_offline was over 30 minutes ago', function (
         ->assertJsonPath('agents', []);
 });
 
+// --- Test 4b: session_expired agents counted as recently_offline ---
+
+it('treats session_expired events as recently offline', function () {
+    Carbon::setTestNow('2026-04-29 12:00:00');
+
+    $agent = createActiveAgent();
+    $agent->update(['live_until' => now()->subMinutes(10)]);
+
+    StatusEvent::create([
+        'agent_id' => $agent->id,
+        'event_type' => StatusEvent::EVENT_SESSION_EXPIRED,
+        'created_at' => now()->subMinutes(10),
+    ]);
+
+    $response = $this->getJson(publicAgentsUrl());
+
+    $response->assertOk()
+        ->assertJsonPath('live_count', 0)
+        ->assertJsonPath('agents.0.status', 'recently_offline');
+
+    expect($response->json('agents.0'))->toHaveKey('last_seen_at');
+});
+
 // --- Test 5: disabled agents excluded ---
 
 it('excludes disabled agents', function () {

@@ -39,7 +39,7 @@ class PublicAgentsController extends Controller
             ->addSelect(['agents.*',
                 'last_offline_at' => StatusEvent::select('created_at')
                     ->whereColumn('agent_id', 'agents.id')
-                    ->where('event_type', StatusEvent::EVENT_WENT_OFFLINE)
+                    ->whereIn('event_type', [StatusEvent::EVENT_WENT_OFFLINE, StatusEvent::EVENT_SESSION_EXPIRED])
                     ->latest('created_at')
                     ->limit(1),
             ])

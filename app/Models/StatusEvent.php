@@ -25,9 +25,12 @@ class StatusEvent extends Model
 
     public const EVENT_RESTORED_BY_ADMIN = 'restored_by_admin';
 
+    public const EVENT_SESSION_EXPIRED = 'session_expired';
+
     public const EVENT_TYPES = [
         self::EVENT_WENT_ONLINE,
         self::EVENT_WENT_OFFLINE,
+        self::EVENT_SESSION_EXPIRED,
         self::EVENT_EXTENDED,
         self::EVENT_CREATED_BY_ADMIN,
         self::EVENT_DISABLED_BY_ADMIN,

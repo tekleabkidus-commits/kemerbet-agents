@@ -20,6 +20,7 @@ class AgentMetricsService
     private const AGENT_EVENT_TYPES = [
         StatusEvent::EVENT_WENT_ONLINE,
         StatusEvent::EVENT_WENT_OFFLINE,
+        StatusEvent::EVENT_SESSION_EXPIRED,
         StatusEvent::EVENT_EXTENDED,
     ];
 
@@ -159,7 +160,7 @@ class AgentMetricsService
         Carbon $now,
     ): Carbon {
         $nextOffline = StatusEvent::where('agent_id', $agent->id)
-            ->where('event_type', StatusEvent::EVENT_WENT_OFFLINE)
+            ->whereIn('event_type', [StatusEvent::EVENT_WENT_OFFLINE, StatusEvent::EVENT_SESSION_EXPIRED])
             ->where('created_at', '>', $onlineEvent->created_at)
             ->orderBy('created_at')
             ->first();
@@ -192,6 +193,7 @@ class AgentMetricsService
             StatusEvent::EVENT_WENT_ONLINE => $this->formatDurationLabel($event->duration_minutes).' session',
             StatusEvent::EVENT_EXTENDED => 'Extended to '.$this->formatDurationLabel($event->duration_minutes),
             StatusEvent::EVENT_WENT_OFFLINE => 'Session ended',
+            StatusEvent::EVENT_SESSION_EXPIRED => 'Session expired',
             default => $event->event_type,
         };
     }
