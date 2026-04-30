@@ -31,5 +31,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public-clicks', function (Request $request) {
             return Limit::perMinute(30)->by($request->ip());
         });
+
+        RateLimiter::for('public-visits', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
     }
 }

@@ -56,6 +56,8 @@ Route::prefix('public')->group(function () {
     Route::post('agents/{agent}/click', [PublicAgentsController::class, 'click'])
         ->where('agent', '[0-9]+')
         ->middleware('throttle:public-clicks');
+    Route::post('visit', [PublicAgentsController::class, 'visit'])
+        ->middleware('throttle:public-visits');
 });
 
 Route::prefix('agent/{token}')

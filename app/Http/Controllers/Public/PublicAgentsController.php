@@ -7,6 +7,7 @@ use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\Setting;
 use App\Models\StatusEvent;
+use App\Models\VisitEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -107,6 +108,23 @@ class PublicAgentsController extends Controller
             'click_type' => 'deposit',
             'visitor_id' => hash('xxh3', config('app.key').$request->ip().$request->userAgent()),
             'ip_address' => $request->ip(),
+            'referrer' => $request->input('referrer'),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function visit(Request $request): JsonResponse
+    {
+        $request->validate([
+            'referrer' => 'nullable|string|max:2000',
+        ]);
+
+        VisitEvent::create([
+            'visitor_id' => hash('xxh3', config('app.key').$request->ip().$request->userAgent()),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
             'referrer' => $request->input('referrer'),
             'created_at' => now(),
         ]);

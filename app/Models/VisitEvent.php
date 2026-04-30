@@ -12,6 +12,7 @@ class VisitEvent extends Model
         'visitor_id',
         'ip_address',
         'user_agent',
+        'referrer',
         'created_at',
     ];
 

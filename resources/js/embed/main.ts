@@ -44,6 +44,16 @@ function init(): void {
   // Apply i18n to static elements
   applyLang(lang, shadow, container);
 
+  // --- Visit tracking (once per browser session) ---
+  if (!sessionStorage.getItem('kemerbet_visited')) {
+    sessionStorage.setItem('kemerbet_visited', '1');
+    fetch(`${apiBase}/api/public/visit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referrer: document.referrer || null }),
+    }).catch(() => {});
+  }
+
   // --- State ---
   let lastApiData: PublicAgentsResponse | null = null;
   let pendingDepositUrl: string | null = null;
