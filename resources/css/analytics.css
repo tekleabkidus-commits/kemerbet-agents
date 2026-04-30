@@ -128,67 +128,9 @@
   border-color: transparent;
 }
 
-/* ── Trends Chart (SVG) ── */
-.trends-chart-wrap {
-  position: relative;
-  height: 220px;
-  margin-bottom: 8px;
-}
-
-.trends-chart-wrap svg {
-  width: 100%;
-  height: 100%;
-}
-
-.chart-grid line {
-  stroke: var(--border);
-  stroke-width: 1;
-  stroke-dasharray: 2, 4;
-}
-
-.chart-axis text {
-  fill: var(--text-dim);
-  font-size: 10px;
-}
-
-.chart-area-visitors {
-  fill: url(#gradGold);
-  opacity: .15;
-}
-
-.chart-area-clicks {
-  fill: url(#gradGreen);
-  opacity: .2;
-}
-
-.chart-line-visitors {
-  fill: none;
-  stroke: var(--gold);
-  stroke-width: 2;
-}
-
-.chart-line-clicks {
-  fill: none;
-  stroke: var(--green);
-  stroke-width: 2;
-}
-
-.chart-dot {
-  cursor: pointer;
-}
-
-.chart-dot:hover {
-  r: 5;
-}
-
-.trends-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: .7rem;
-  color: var(--text-dim);
-  padding: 0 4px;
-  font-variant-numeric: tabular-nums;
-}
+/* ── Trends Chart ── */
+/* Recharts handles chart rendering — no custom SVG CSS needed.
+   Recharts tooltip styled inline via ChartTooltip component. */
 
 /* ── Insight Callout ── */
 .insight-callout {

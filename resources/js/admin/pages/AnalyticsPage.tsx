@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import {
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
+    CartesianGrid, Tooltip,
+} from 'recharts';
 import api from '@/api';
 import { StatCard } from './DashboardPage';
 import '../../../css/analytics.css';
@@ -131,62 +135,24 @@ function buildHeatmapGrid(buckets: HeatmapBucket[]): number[][] {
     return grid.map((row) => row.map((v) => v / max));
 }
 
-// --- SVG Chart Builder ---
+// --- Chart Tooltip ---
 
-function buildTrendsSvg(days: string[], visitors: number[], clicks: number[]): string {
-    if (days.length === 0) return '';
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number; color: string }>; label?: string }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', fontSize: '.82rem' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
+            {payload.map((p) => (
+                <div key={p.dataKey} style={{ color: p.color }}>
+                    {p.dataKey === 'visitors' ? 'Visitors' : 'Clicks'}: {p.value.toLocaleString()}
+                </div>
+            ))}
+        </div>
+    );
+}
 
-    const w = 960, h = 220, padL = 50, padR = 12, padT = 16, padB = 28;
-    const innerW = w - padL - padR;
-    const innerH = h - padT - padB;
-    const maxV = Math.max(1, ...visitors) * 1.2;
-    const maxC = Math.max(1, ...clicks) * 1.2;
-    const xStep = days.length > 1 ? innerW / (days.length - 1) : innerW;
-    const xs = (i: number) => padL + i * xStep;
-    const yV = (v: number) => padT + innerH - (v / maxV) * innerH;
-    const yC = (v: number) => padT + innerH - (v / maxC) * innerH;
-
-    const linePath = (data: number[], mapY: (v: number) => number) =>
-        data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xs(i)} ${mapY(v)}`).join(' ');
-
-    const areaPath = (data: number[], mapY: (v: number) => number) => {
-        const top = data.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xs(i)} ${mapY(v)}`).join(' ');
-        return `${top} L ${xs(data.length - 1)} ${padT + innerH} L ${xs(0)} ${padT + innerH} Z`;
-    };
-
-    const gridLines = [0, 0.25, 0.5, 0.75, 1].map((p) => {
-        const y = padT + innerH * (1 - p);
-        return `<line x1="${padL}" x2="${w - padR}" y1="${y}" y2="${y}"/>
-                <text x="${padL - 8}" y="${y + 3}" text-anchor="end">${Math.round(maxV * p).toLocaleString()}</text>`;
-    }).join('');
-
-    const vDots = visitors.map((v, i) =>
-        `<circle class="chart-dot" cx="${xs(i)}" cy="${yV(v)}" r="3.5" fill="var(--gold)"><title>${days[i]}: ${v.toLocaleString()} visitors</title></circle>`,
-    ).join('');
-
-    const cDots = clicks.map((v, i) =>
-        `<circle class="chart-dot" cx="${xs(i)}" cy="${yC(v)}" r="3.5" fill="var(--green)"><title>${days[i]}: ${v.toLocaleString()} clicks</title></circle>`,
-    ).join('');
-
-    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="gradGold" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="var(--gold)" stop-opacity=".4"/>
-          <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="gradGreen" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="var(--green)" stop-opacity=".4"/>
-          <stop offset="100%" stop-color="var(--green)" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <g class="chart-grid chart-axis">${gridLines}</g>
-      <path class="chart-area-visitors" d="${areaPath(visitors, yV)}"/>
-      <path class="chart-area-clicks" d="${areaPath(clicks, yC)}"/>
-      <path class="chart-line-visitors" d="${linePath(visitors, yV)}"/>
-      <path class="chart-line-clicks" d="${linePath(clicks, yC)}"/>
-      ${vDots}
-      ${cDots}
-    </svg>`;
+function formatAxisTick(v: number): string {
+    return v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v);
 }
 
 // --- Sub-components ---
@@ -355,10 +321,11 @@ export default function AnalyticsPage() {
         ? computeCtrDelta(overview.ctr, prevOverview.ctr)
         : { text: '\u2014', type: 'neutral' as const };
 
-    const chartDays = timeline.map((d) => formatShortDate(d.date));
-    const chartVisitors = timeline.map((d) => d.total_visits);
-    const chartClicks = timeline.map((d) => d.deposit_clicks);
-    const chartSvg = buildTrendsSvg(chartDays, chartVisitors, chartClicks);
+    const chartData = timeline.map((d) => ({
+        date: formatShortDate(d.date),
+        visitors: d.total_visits,
+        clicks: d.deposit_clicks,
+    }));
 
     const intensityGrid = buildHeatmapGrid(heatmapBuckets);
 
@@ -446,17 +413,72 @@ export default function AnalyticsPage() {
                     </div>
                 </div>
                 <div className="panel-body">
-                    {chartSvg ? (
-                        <>
-                            <div className="trends-chart-wrap" dangerouslySetInnerHTML={{ __html: chartSvg }} />
-                            <div className="trends-labels">
-                                {chartDays.map((d, i) => <span key={i}>{d}</span>)}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="empty-state">
-                            <h3>No data for selected range</h3>
+                    {chartData.length === 0 ? (
+                        <div className="empty-state" style={{ padding: '60px 20px' }}>
+                            <div className="icon">&#9675;</div>
+                            <h3>No timeline data</h3>
+                            <p>Data will appear once visits are recorded.</p>
                         </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="gradVisitors" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#f5c518" stopOpacity={0.4} />
+                                        <stop offset="100%" stopColor="#f5c518" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="gradClicks" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#1dd88c" stopOpacity={0.4} />
+                                        <stop offset="100%" stopColor="#1dd88c" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="#6b7a8f"
+                                    tick={{ fontSize: 11 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+                                <YAxis
+                                    yAxisId="visitors"
+                                    orientation="left"
+                                    stroke="#f5c518"
+                                    tick={{ fontSize: 10 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickFormatter={formatAxisTick}
+                                />
+                                <YAxis
+                                    yAxisId="clicks"
+                                    orientation="right"
+                                    stroke="#1dd88c"
+                                    tick={{ fontSize: 10 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickFormatter={formatAxisTick}
+                                />
+                                <Tooltip content={<ChartTooltip />} />
+                                <Area
+                                    yAxisId="visitors"
+                                    type="monotone"
+                                    dataKey="visitors"
+                                    stroke="#f5c518"
+                                    strokeWidth={2}
+                                    fill="url(#gradVisitors)"
+                                    activeDot={{ r: 4 }}
+                                />
+                                <Area
+                                    yAxisId="clicks"
+                                    type="monotone"
+                                    dataKey="clicks"
+                                    stroke="#1dd88c"
+                                    strokeWidth={2}
+                                    fill="url(#gradClicks)"
+                                    activeDot={{ r: 4 }}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     )}
                 </div>
             </div>
