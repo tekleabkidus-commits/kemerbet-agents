@@ -67,6 +67,11 @@ class Agent extends Model
         return $this->hasMany(ClickEvent::class);
     }
 
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     // --- Query helpers ---
 
     public function isLive(): bool
