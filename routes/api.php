@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\PaymentMethodController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\StatsController;
 use App\Http\Controllers\Agent\AgentSecretController;
 use App\Http\Controllers\Public\PublicAgentsController;
@@ -28,6 +29,8 @@ Route::prefix('admin')->group(function () {
         Route::put('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update']);
         Route::delete('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy']);
         Route::post('payment-methods/reorder', [PaymentMethodController::class, 'reorder']);
+        Route::get('settings', [SettingController::class, 'index']);
+        Route::patch('settings', [SettingController::class, 'update']);
         Route::get('activity', [ActivityController::class, 'index']);
 
         Route::get('agents', [AgentController::class, 'index']);

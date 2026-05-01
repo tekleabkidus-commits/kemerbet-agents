@@ -1534,6 +1534,58 @@ body.modal-open {
   text-decoration: underline;
 }
 
+/* ============= SETTINGS ============= */
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.settings-tab {
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: .86rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+
+.settings-tab:hover { color: var(--text); }
+
+.settings-tab.active {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+.panel-foot {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev-1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.danger-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--bg-elev-2);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 10px;
+  gap: 14px;
+}
+
+.danger-row > div:first-child { flex: 1; min-width: 0; }
+
 /* ============= PAYMENT METHODS ============= */
 .method-icon {
   width: 36px;
