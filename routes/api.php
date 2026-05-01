@@ -23,6 +23,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('me', [AuthController::class, 'me']);
+        Route::post('auth/change-password', [AuthController::class, 'changePassword']);
 
         Route::get('payment-methods', [PaymentMethodController::class, 'index']);
         Route::post('payment-methods', [PaymentMethodController::class, 'store']);

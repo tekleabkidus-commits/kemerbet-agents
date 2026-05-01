@@ -12,6 +12,7 @@ vi.mock('@/api', () => ({
     default: {
         get: vi.fn(),
         patch: vi.fn(),
+        post: vi.fn(),
     },
 }));
 
@@ -19,6 +20,7 @@ import api from '@/api';
 
 const mockedGet = vi.mocked(api.get);
 const mockedPatch = vi.mocked(api.patch);
+const mockedPost = vi.mocked(api.post);
 
 const mockSettings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
@@ -176,7 +178,65 @@ describe('SettingsPage', () => {
         expect(screen.getByText(/localhost:8001\/embed\/embed\.js/)).toBeInTheDocument();
     });
 
-    // 7. Copy button attempts clipboard write and shows feedback
+    // 7. Security tab renders password form
+    it('security tab renders password change form', async () => {
+        setupMocks();
+
+        const user = userEvent.setup();
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Settings')).toBeInTheDocument();
+        });
+
+        const securityTab = screen.getByText('Security');
+        await user.click(securityTab);
+
+        await waitFor(() => {
+            expect(screen.getByText('Change Password')).toBeInTheDocument();
+        });
+
+        expect(screen.getByLabelText('Current Password')).toBeInTheDocument();
+        expect(screen.getByLabelText('New Password')).toBeInTheDocument();
+        expect(screen.getByLabelText('Confirm New Password')).toBeInTheDocument();
+        expect(screen.getByText('Update Password')).toBeInTheDocument();
+    });
+
+    // 8. Security tab shows server errors on 422
+    it('security tab shows error when password change fails', async () => {
+        setupMocks();
+        mockedPost.mockRejectedValue({
+            response: {
+                data: {
+                    errors: { current_password: ['Current password is incorrect.'] },
+                },
+            },
+        });
+
+        const user = userEvent.setup();
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Settings')).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByText('Security'));
+
+        await waitFor(() => {
+            expect(screen.getByText('Change Password')).toBeInTheDocument();
+        });
+
+        await user.type(screen.getByLabelText('Current Password'), 'wrong');
+        await user.type(screen.getByLabelText('New Password'), 'newpass123');
+        await user.type(screen.getByLabelText('Confirm New Password'), 'newpass123');
+        await user.click(screen.getByText('Update Password'));
+
+        await waitFor(() => {
+            expect(screen.getByText('Current password is incorrect.')).toBeInTheDocument();
+        });
+    });
+
+    // 9. Copy button attempts clipboard write and shows feedback
     it('shows copied feedback when copy button clicked', async () => {
         setupMocks();
 

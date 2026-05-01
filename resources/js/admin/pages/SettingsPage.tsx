@@ -78,6 +78,124 @@ function ToggleRow({ title, desc, value, onChange, disabled }: {
     );
 }
 
+// --- Security Tab ---
+
+function SecurityTab() {
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [success, setSuccess] = useState(false);
+
+    const canSubmit = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0 && !submitting;
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setSubmitting(true);
+        setErrors({});
+        setSuccess(false);
+
+        try {
+            await api.post('/api/admin/auth/change-password', {
+                current_password: currentPassword,
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword,
+            });
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 5000);
+        } catch (err: unknown) {
+            const resp = (err as { response?: { data?: { errors?: Record<string, string[]> } } }).response;
+            if (resp?.data?.errors) {
+                setErrors(resp.data.errors);
+            } else {
+                setErrors({ current_password: ['Something went wrong. Please try again.'] });
+            }
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <div className="panel">
+            <div className="panel-head">
+                <div className="panel-title">Change Password</div>
+            </div>
+            <form onSubmit={handleSubmit}>
+                <div className="panel-body">
+                    <div className="form-grid">
+                        <div className="form-row">
+                            <label className="form-label" htmlFor="current-password">Current Password</label>
+                            <input
+                                id="current-password"
+                                type="password"
+                                className={`form-input${errors.current_password ? ' error' : ''}`}
+                                value={currentPassword}
+                                onChange={(e) => { setCurrentPassword(e.target.value); setErrors({}); }}
+                                autoComplete="current-password"
+                            />
+                            {errors.current_password && (
+                                <div className="form-error">{errors.current_password[0]}</div>
+                            )}
+                        </div>
+                        <div className="form-row">
+                            <label className="form-label" htmlFor="new-password">New Password</label>
+                            <input
+                                id="new-password"
+                                type="password"
+                                className={`form-input${errors.new_password ? ' error' : ''}`}
+                                value={newPassword}
+                                onChange={(e) => { setNewPassword(e.target.value); setErrors({}); }}
+                                autoComplete="new-password"
+                            />
+                            {errors.new_password && (
+                                <div className="form-error">{errors.new_password[0]}</div>
+                            )}
+                            <div className="form-help">Minimum 8 characters.</div>
+                        </div>
+                        <div className="form-row">
+                            <label className="form-label" htmlFor="confirm-password">Confirm New Password</label>
+                            <input
+                                id="confirm-password"
+                                type="password"
+                                className={`form-input${errors.new_password_confirmation ? ' error' : ''}`}
+                                value={confirmPassword}
+                                onChange={(e) => { setConfirmPassword(e.target.value); setErrors({}); }}
+                                autoComplete="new-password"
+                            />
+                        </div>
+                    </div>
+                    {success && (
+                        <div style={{
+                            marginTop: 14,
+                            padding: '10px 14px',
+                            background: 'rgba(34,197,94,0.08)',
+                            border: '1px solid rgba(34,197,94,0.25)',
+                            borderRadius: 8,
+                            fontSize: '.85rem',
+                            color: 'var(--green)',
+                        }}>
+                            Password updated successfully.
+                        </div>
+                    )}
+                </div>
+                <div className="panel-foot">
+                    <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={!canSubmit}
+                    >
+                        {submitting ? <><Loader2 size={14} className="loader-spin" /> Updating&hellip;</> : 'Update Password'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
+
 // --- Main Component ---
 
 export default function SettingsPage() {
@@ -505,16 +623,17 @@ export default function SettingsPage() {
                         </div>
                     )}
                 </>
+            ) : activeTab === 'security' ? (
+                <SecurityTab />
             ) : (
                 <div className="panel">
                     <div className="empty-state">
                         <div className="icon">&#9881;</div>
                         <h3>
-                            {activeTab === 'public' ? 'Public Page' : activeTab === 'security' ? 'Security' : 'Account'} Settings
+                            {activeTab === 'public' ? 'Public Page' : 'Account'} Settings
                         </h3>
                         <p>
                             {activeTab === 'public' && 'This section will let you customize the public agent listing \u2014 header text, branding, layout, and visibility rules. Available in Phase H.'}
-                            {activeTab === 'security' && 'This section will manage admin authentication \u2014 change password, enable 2FA, review login history. Available in Phase H.'}
                             {activeTab === 'account' && 'This section will manage your admin profile \u2014 name, email, notification preferences. Available in Phase H.'}
                         </p>
                     </div>
