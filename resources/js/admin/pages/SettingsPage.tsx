@@ -6,6 +6,7 @@ import api from '@/api';
 
 interface Settings {
     prefill_message: string;
+    onboarding_video_url: string;
     agent_hide_after_hours: number;
     public_refresh_interval_seconds: number;
     show_offline_agents: boolean;
@@ -20,12 +21,15 @@ interface SettingsResponse {
 
 const DEFAULT_SETTINGS: Settings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
+    onboarding_video_url: '',
     agent_hide_after_hours: 12,
     public_refresh_interval_seconds: 60,
     show_offline_agents: true,
     warn_on_offline_click: true,
     shuffle_live_agents: true,
 };
+
+const YOUTUBE_URL_REGEX = /^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i;
 
 // --- Toggle component (inline styles — no .toggle class in admin.css) ---
 
@@ -372,6 +376,44 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="panel-foot">
+                            {isDirty && <button className="btn btn-secondary" onClick={handleDiscard} disabled={saving}>Reset</button>}
+                            <button className="btn btn-primary" onClick={handleSave} disabled={!isDirty || saving}>
+                                {saving ? <><Loader2 size={14} className="loader-spin" /> Saving&hellip;</> : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Onboarding Video */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Onboarding Video</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-grid">
+                                <div style={{ fontSize: '.86rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                                    A short tutorial video shown to new visitors at the top of the embed widget.
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label" htmlFor="onboarding-video-url">Video URL (YouTube)</label>
+                                    <input
+                                        id="onboarding-video-url"
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="https://youtu.be/..."
+                                        value={form.onboarding_video_url}
+                                        onChange={(e) => updateField('onboarding_video_url', e.target.value)}
+                                    />
+                                    {form.onboarding_video_url === '' ? (
+                                        <div className="form-help">Leave empty to disable the video.</div>
+                                    ) : YOUTUBE_URL_REGEX.test(form.onboarding_video_url) ? (
+                                        <div className="form-help" style={{ color: 'var(--green)' }}>Valid YouTube URL</div>
+                                    ) : (
+                                        <div className="form-help" style={{ color: 'var(--red)' }}>Must be a valid YouTube URL (youtube.com/watch, youtu.be, or youtube.com/embed format)</div>
+                                    )}
                                 </div>
                             </div>
                         </div>

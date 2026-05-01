@@ -24,6 +24,7 @@ const mockedPost = vi.mocked(api.post);
 
 const mockSettings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
+    onboarding_video_url: '',
     agent_hide_after_hours: 12,
     public_refresh_interval_seconds: 60,
     show_offline_agents: true,
@@ -260,6 +261,58 @@ describe('SettingsPage', () => {
         // The button should show "Copied!" feedback
         await waitFor(() => {
             expect(screen.getByText(/Copied/)).toBeInTheDocument();
+        });
+    });
+
+    // 10. Renders onboarding video URL input in General tab
+    it('renders onboarding video URL input', async () => {
+        setupMocks();
+
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Onboarding Video')).toBeInTheDocument();
+        });
+
+        expect(screen.getByLabelText('Video URL (YouTube)')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('https://youtu.be/...')).toBeInTheDocument();
+        expect(screen.getByText('Leave empty to disable the video.')).toBeInTheDocument();
+    });
+
+    // 11. Onboarding video URL change enables save and sends only changed field
+    it('saves only onboarding_video_url when changed', async () => {
+        setupMocks();
+        mockedPatch.mockResolvedValue({
+            data: {
+                data: {
+                    settings: { ...mockSettings, onboarding_video_url: 'https://youtu.be/abc123' },
+                    embed_base_url: 'http://localhost:8001',
+                },
+            },
+        });
+
+        const user = userEvent.setup();
+
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Onboarding Video')).toBeInTheDocument();
+        });
+
+        const input = screen.getByLabelText('Video URL (YouTube)');
+        await user.type(input, 'https://youtu.be/abc123');
+
+        // Should show valid feedback
+        expect(screen.getByText('Valid YouTube URL')).toBeInTheDocument();
+
+        const saveBtn = screen.getAllByText('Save')[1];
+        expect(saveBtn).not.toBeDisabled();
+        await user.click(saveBtn);
+
+        await waitFor(() => {
+            expect(mockedPatch).toHaveBeenCalledWith('/api/admin/settings', {
+                onboarding_video_url: 'https://youtu.be/abc123',
+            });
         });
     });
 });
