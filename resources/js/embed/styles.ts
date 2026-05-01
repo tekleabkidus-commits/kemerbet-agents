@@ -219,6 +219,25 @@ export const STYLES = `
   background:linear-gradient(90deg,transparent,var(--card-border),transparent);
 }
 
+/* VIDEO */
+.kb-video-wrap{
+  position:relative;
+  padding-bottom:56.25%;
+  height:0;
+  margin:0 0 16px 0;
+  border-radius:12px;
+  overflow:hidden;
+  background:#000;
+}
+.kb-video-wrap iframe{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  border:0;
+}
+
 /* GRID */
 .agent-grid{
   display:grid;

@@ -249,6 +249,8 @@ function buildShellHTML(lang: Lang): string {
         <p data-i18n="subtitle">${t.subtitle}</p>
       </div>
 
+      <div id="videoWrap"></div>
+
       <div class="section-title">
         <h2 data-i18n="live_now">${t.live_now}</h2>
         <div class="agent-count" id="liveCountInline">\u2014</div>

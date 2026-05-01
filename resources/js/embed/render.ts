@@ -49,6 +49,41 @@ export function formatLastSeen(isoTimestamp: string, lang: Lang): string {
   return `${t.last_seen} ${days}${t.day_unit} ${t.ago}`;
 }
 
+const FIRST_SEEN_KEY = 'kemerbet_first_seen_at';
+const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+function isNewVisitor(): boolean {
+  try {
+    const stored = localStorage.getItem(FIRST_SEEN_KEY);
+    if (!stored) {
+      localStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
+      return true;
+    }
+    const firstSeen = parseInt(stored, 10);
+    if (isNaN(firstSeen)) {
+      localStorage.setItem(FIRST_SEEN_KEY, String(Date.now()));
+      return true;
+    }
+    return Date.now() - firstSeen < TWENTY_FOUR_HOURS;
+  } catch {
+    return true;
+  }
+}
+
+function getYouTubeVideoId(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /youtube\.com\/watch\?v=([\w\-_]+)/i,
+    /youtube\.com\/embed\/([\w\-_]+)/i,
+    /youtu\.be\/([\w\-_]+)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): string {
   const t = I18N[lang];
   const isLive = agent.status === 'live';
@@ -106,6 +141,30 @@ export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): 
 export function renderPage(data: PublicAgentsResponse, shadow: ShadowRoot): void {
   const lang = getLang();
   const t = I18N[lang];
+
+  // --- Onboarding video ---
+  const videoWrap = shadow.getElementById('videoWrap');
+  if (videoWrap) {
+    const videoUrl = data.settings.onboarding_video_url ?? '';
+    const videoId = getYouTubeVideoId(videoUrl);
+    const shouldShow = videoId !== null && isNewVisitor();
+
+    if (shouldShow) {
+      videoWrap.innerHTML = `
+        <div class="kb-video-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/${videoId}"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            title="How to Deposit"
+          ></iframe>
+        </div>
+      `;
+    } else {
+      videoWrap.innerHTML = '';
+    }
+  }
 
   const liveAgents = data.agents.filter((a) => a.status === 'live');
   const offlineAgents = data.agents
