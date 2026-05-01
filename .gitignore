@@ -26,3 +26,4 @@ storage/app/private/*
 !storage/app/private/.gitkeep
 storage/logs/*
 !storage/logs/.gitkeep
+.env.save*
