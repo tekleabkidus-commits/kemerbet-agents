@@ -13,6 +13,7 @@ class UpdateSettingsRequest extends FormRequest
         'show_offline_agents',
         'warn_on_offline_click',
         'shuffle_live_agents',
+        'onboarding_video_url',
     ];
 
     public function authorize(): bool
@@ -29,6 +30,20 @@ class UpdateSettingsRequest extends FormRequest
             'show_offline_agents' => ['sometimes', 'boolean'],
             'warn_on_offline_click' => ['sometimes', 'boolean'],
             'shuffle_live_agents' => ['sometimes', 'boolean'],
+            'onboarding_video_url' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i',
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'onboarding_video_url.regex' => 'Must be a valid YouTube URL (youtube.com/watch, youtu.be, or youtube.com/embed format) or empty.',
         ];
     }
 

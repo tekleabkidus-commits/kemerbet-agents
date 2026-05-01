@@ -34,6 +34,7 @@ test('admin can get all settings', function () {
         'show_offline_agents',
         'warn_on_offline_click',
         'shuffle_live_agents',
+        'onboarding_video_url',
     ]);
 
     // Type checks
@@ -139,6 +140,7 @@ test('response returns full settings after update', function () {
         'show_offline_agents',
         'warn_on_offline_click',
         'shuffle_live_agents',
+        'onboarding_video_url',
     ]);
     expect($settings['prefill_message'])->toBe('Updated');
 });
@@ -171,4 +173,57 @@ test('settings response includes embed_base_url', function () {
     expect($data)->toHaveKey('embed_base_url');
     expect($data['embed_base_url'])->toBeString();
     expect($data['embed_base_url'])->not->toEndWith('/');
+});
+
+// 12. Accepts valid youtube.com/watch URL for onboarding video
+test('accepts valid youtube watch URL for onboarding video', function () {
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', [
+            'onboarding_video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        ])
+        ->assertOk();
+
+    expect(Setting::where('key', 'onboarding_video_url')->first()->value)
+        ->toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+});
+
+// 13. Accepts valid youtu.be short URL for onboarding video
+test('accepts valid youtu.be short URL for onboarding video', function () {
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', [
+            'onboarding_video_url' => 'https://youtu.be/dQw4w9WgXcQ',
+        ])
+        ->assertOk();
+
+    expect(Setting::where('key', 'onboarding_video_url')->first()->value)
+        ->toBe('https://youtu.be/dQw4w9WgXcQ');
+});
+
+// 14. Rejects non-YouTube URL for onboarding video
+test('rejects non-youtube URL for onboarding video', function () {
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', [
+            'onboarding_video_url' => 'https://vimeo.com/123456',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['onboarding_video_url']);
+});
+
+// 15. Accepts empty string for onboarding video (disables it)
+test('accepts empty string for onboarding video', function () {
+    // First set a video URL
+    Setting::updateOrCreate(
+        ['key' => 'onboarding_video_url'],
+        ['value' => 'https://youtu.be/dQw4w9WgXcQ', 'updated_at' => now()]
+    );
+
+    // Then clear it
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', [
+            'onboarding_video_url' => '',
+        ])
+        ->assertOk();
+
+    expect(Setting::where('key', 'onboarding_video_url')->first()->value)
+        ->toBe('');
 });

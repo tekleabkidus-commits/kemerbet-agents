@@ -18,6 +18,7 @@ class SettingSeeder extends Seeder
                 'show_offline_agents' => true,
                 'warn_on_offline_click' => true,
                 'shuffle_live_agents' => true,
+                'onboarding_video_url' => '',
             ];
 
             foreach ($settings as $key => $value) {

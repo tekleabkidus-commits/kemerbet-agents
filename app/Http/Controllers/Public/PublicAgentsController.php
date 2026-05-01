@@ -28,7 +28,7 @@ class PublicAgentsController extends Controller
         $now = now();
         $recentThreshold = $now->copy()->subMinutes(30);
 
-        $settings = Setting::whereIn('key', ['prefill_message', 'show_offline_agents', 'shuffle_live_agents'])
+        $settings = Setting::whereIn('key', ['prefill_message', 'show_offline_agents', 'shuffle_live_agents', 'onboarding_video_url'])
             ->pluck('value', 'key');
 
         $prefillMessage = $settings['prefill_message'] ?? 'Hi Kemerbet agent, I want to deposit';
@@ -83,6 +83,7 @@ class PublicAgentsController extends Controller
                 'chat_prefilled_message' => $prefillMessage,
                 'show_offline_agents' => $showOffline,
                 'shuffle_live_agents' => $shuffleLive,
+                'onboarding_video_url' => $settings['onboarding_video_url'] ?? '',
             ],
         ];
     }

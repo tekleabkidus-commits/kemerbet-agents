@@ -24,7 +24,7 @@ class SettingController extends Controller
             foreach ($validated as $key => $value) {
                 Setting::updateOrCreate(
                     ['key' => $key],
-                    ['value' => $value, 'updated_at' => now()],
+                    ['value' => $value ?? '', 'updated_at' => now()],
                 );
             }
         });

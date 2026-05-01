@@ -315,3 +315,26 @@ it('returns live agents sorted by display_number ascending', function () {
     expect($agents[1]['display_number'])->toBe(20);
     expect($agents[2]['display_number'])->toBe(30);
 });
+
+// --- Test 14: public agents response includes onboarding_video_url ---
+
+it('includes onboarding_video_url in settings', function () {
+    Setting::create([
+        'key' => 'onboarding_video_url',
+        'value' => 'https://youtu.be/dQw4w9WgXcQ',
+    ]);
+
+    $response = $this->getJson(publicAgentsUrl());
+
+    $response->assertOk()
+        ->assertJsonPath('settings.onboarding_video_url', 'https://youtu.be/dQw4w9WgXcQ');
+});
+
+// --- Test 15: onboarding_video_url defaults to empty string ---
+
+it('defaults onboarding_video_url to empty string when not set', function () {
+    $response = $this->getJson(publicAgentsUrl());
+
+    $response->assertOk()
+        ->assertJsonPath('settings.onboarding_video_url', '');
+});
