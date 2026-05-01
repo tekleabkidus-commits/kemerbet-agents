@@ -1534,6 +1534,75 @@ body.modal-open {
   text-decoration: underline;
 }
 
+/* ============= ACTIVITY TIMELINE ============= */
+.timeline {
+  list-style: none;
+  padding: 8px 0;
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 60px 24px 1fr;
+  gap: 14px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  transition: background .12s;
+}
+
+.tl-row:hover { background: var(--bg-hover); }
+.tl-row:last-child { border-bottom: none; }
+
+.tl-time {
+  font-size: .78rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+
+.tl-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tl-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.tl-dot.offline { background: var(--text-dim); }
+.tl-dot.extend { background: var(--blue); }
+.tl-dot.admin { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+
+.tl-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.tl-text {
+  font-size: .86rem;
+  line-height: 1.5;
+}
+
+.tl-text strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.tl-meta {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: .82rem;
+}
+
+.tl-detail {
+  font-size: .72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+  font-family: 'SF Mono', ui-monospace, monospace;
+}
+
 /* ============= SETTINGS ============= */
 .settings-tabs {
   display: flex;

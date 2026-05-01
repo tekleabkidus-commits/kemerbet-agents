@@ -44,6 +44,7 @@ const EVENT_TYPE_OPTIONS: { value: string; label: string; group: 'agent' | 'admi
     { value: 'went_online', label: 'Went online', group: 'agent' },
     { value: 'went_offline', label: 'Went offline', group: 'agent' },
     { value: 'extended', label: 'Extended session', group: 'agent' },
+    { value: 'session_expired', label: 'Session expired', group: 'agent' },
     { value: 'created_by_admin', label: 'Created', group: 'admin' },
     { value: 'enabled_by_admin', label: 'Re-enabled', group: 'admin' },
     { value: 'token_regenerated', label: 'Token regenerated', group: 'admin' },
@@ -56,6 +57,7 @@ const BADGE_LABELS: Record<string, string> = {
     went_online: 'Online',
     went_offline: 'Offline',
     extended: 'Extended',
+    session_expired: 'Expired',
     created_by_admin: 'Created',
     disabled_by_admin: 'Disabled',
     enabled_by_admin: 'Enabled',
@@ -68,12 +70,26 @@ const BADGE_CLASS: Record<string, string> = {
     went_online: 'agent',
     went_offline: 'agent',
     extended: 'agent',
+    session_expired: 'agent',
     created_by_admin: 'admin',
     enabled_by_admin: 'admin',
     token_regenerated: 'admin',
     restored_by_admin: 'admin',
     disabled_by_admin: 'destructive',
     deleted_by_admin: 'destructive',
+};
+
+const DOT_CLASS: Record<string, string> = {
+    went_online: 'online',
+    went_offline: 'offline',
+    extended: 'extend',
+    session_expired: 'offline',
+    created_by_admin: 'admin',
+    enabled_by_admin: 'admin',
+    token_regenerated: 'admin',
+    restored_by_admin: 'admin',
+    disabled_by_admin: 'admin',
+    deleted_by_admin: 'admin',
 };
 
 // --- Helpers ---
@@ -108,6 +124,9 @@ function formatDescription(event: ActivityEvent): { text: string; isDeleted: boo
         case 'went_offline':
             text = `${agent} went offline`;
             break;
+        case 'session_expired':
+            text = `${agent} session expired`;
+            break;
         case 'extended':
             text = event.duration_minutes
                 ? `${agent} extended session (+${event.duration_minutes} min)`
@@ -138,6 +157,57 @@ function formatDescription(event: ActivityEvent): { text: string; isDeleted: boo
     return { text, isDeleted };
 }
 
+function formatEventTime(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function formatDayLabel(dateStr: string): string {
+    const today = new Date();
+    const date = new Date(dateStr + 'T12:00:00');
+    const todayStr = today.toISOString().slice(0, 10);
+    const yesterdayStr = new Date(today.getTime() - 86400000).toISOString().slice(0, 10);
+
+    if (dateStr === todayStr) {
+        return `Today \u00b7 ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    }
+    if (dateStr === yesterdayStr) {
+        return `Yesterday \u00b7 ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    }
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function groupByDay(events: ActivityEvent[]): Array<{ label: string; dateKey: string; events: ActivityEvent[] }> {
+    const groups: Map<string, ActivityEvent[]> = new Map();
+    for (const event of events) {
+        const dateKey = event.created_at.slice(0, 10);
+        const group = groups.get(dateKey);
+        if (group) {
+            group.push(event);
+        } else {
+            groups.set(dateKey, [event]);
+        }
+    }
+    return Array.from(groups.entries()).map(([dateKey, evts]) => ({
+        label: formatDayLabel(dateKey),
+        dateKey,
+        events: evts,
+    }));
+}
+
+function formatMeta(event: ActivityEvent): string | null {
+    const parts: string[] = [];
+    if (event.duration_minutes) {
+        parts.push(event.duration_minutes >= 60
+            ? `${Math.floor(event.duration_minutes / 60)}h${event.duration_minutes % 60 > 0 ? ` ${event.duration_minutes % 60}m` : ''}`
+            : `${event.duration_minutes}m`);
+    }
+    if (event.agent?.telegram_username) {
+        parts.push(`@${event.agent.telegram_username}`);
+    }
+    return parts.length > 0 ? parts.join(' \u00b7 ') : null;
+}
+
 // --- Sub-components ---
 
 function FilterBar({
@@ -164,10 +234,10 @@ function FilterBar({
     const destructiveOptions = EVENT_TYPE_OPTIONS.filter((o) => o.group === 'destructive');
 
     return (
-        <div className="panel-head panel-head-clean">
-            <div className="filter-row">
+        <div className="panel-head" style={{ borderBottom: 'none' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <select className="filter-select" value={eventType} onChange={(e) => onEventType(e.target.value)}>
-                    <option value="">All events</option>
+                    <option value="">All event types</option>
                     <optgroup label="Agent actions">
                         {agentOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </optgroup>
@@ -193,31 +263,33 @@ function FilterBar({
                     placeholder="To"
                 />
             </div>
-            <div className="results-count">
-                Showing {showing} of {total}
+            <div style={{ fontSize: '.78rem', color: 'var(--text-muted)' }}>
+                Showing {showing} of {total} events
             </div>
         </div>
     );
 }
 
-function EventRow({ event }: { event: ActivityEvent }) {
-    const badgeLabel = BADGE_LABELS[event.event_type] ?? event.event_type;
-    const badgeClass = BADGE_CLASS[event.event_type] ?? 'admin';
+function TimelineEvent({ event }: { event: ActivityEvent }) {
+    const dotClass = DOT_CLASS[event.event_type] ?? 'admin';
     const { text, isDeleted } = formatDescription(event);
+    const meta = formatMeta(event);
 
     return (
-        <tr>
-            <td className="cell-time">{formatTimeAgo(event.created_at)}</td>
-            <td>
-                <span className={`event-badge ${badgeClass}`}>{badgeLabel}</span>
-                {' '}
-                <span className="event-description">
+        <li className="tl-row">
+            <div className="tl-time">{formatEventTime(event.created_at)}</div>
+            <div className={`tl-dot ${dotClass}`} />
+            <div className="tl-body">
+                <div className="tl-text">
                     {text}
-                    {isDeleted && <span className="deleted-tag"> (deleted)</span>}
-                </span>
-            </td>
-            <td className="cell-time">{event.ip_address ?? '\u2014'}</td>
-        </tr>
+                    {isDeleted && <span style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}> (deleted)</span>}
+                    {meta && <span className="tl-meta"> {meta}</span>}
+                </div>
+                {event.ip_address && (
+                    <div className="tl-detail">IP {event.ip_address}</div>
+                )}
+            </div>
+        </li>
     );
 }
 
@@ -273,26 +345,28 @@ export default function ActivityPage() {
 
     const hasFilters = eventType || agentId || dateFrom || dateTo;
 
-    // Derive agent label for filter banner from first event in response
     const filteredAgent = agentId && events.length > 0 && events[0].agent
         ? `Agent ${events[0].agent.display_number} (@${events[0].agent.telegram_username})`
         : agentId ? `Agent #${agentId}` : null;
     const clearFilters = () => setParams({});
     const goToPage = (p: number) => updateParam('page', p > 1 ? String(p) : '', false);
 
+    const dayGroups = groupByDay(events);
+
     return (
         <>
             <div className="page-head">
                 <div>
-                    <h1>Activity</h1>
+                    <h1>Activity Log</h1>
                     <div className="subtitle">
-                        Audit log of all agent actions
+                        Complete history of agent status changes and admin actions
                         {meta.total > 0 && <> &middot; {meta.total} events</>}
                     </div>
                 </div>
             </div>
 
-            <div className="panel">
+            {/* Filters */}
+            <div className="panel" style={{ marginBottom: 14 }}>
                 <FilterBar
                     eventType={eventType} dateFrom={dateFrom} dateTo={dateTo}
                     onEventType={(v) => updateParam('event_type', v)}
@@ -300,84 +374,85 @@ export default function ActivityPage() {
                     onDateTo={(v) => updateParam('date_to', v)}
                     showing={events.length} total={meta.total}
                 />
+            </div>
 
-                {filteredAgent && (
-                    <div className="filter-banner">
-                        <span>Showing activity for {filteredAgent}</span>
-                        <button
-                            type="button"
-                            className="filter-banner-clear"
-                            onClick={() => updateParam('agent_id', '')}
-                        >
-                            Show all events
-                        </button>
-                    </div>
-                )}
+            {filteredAgent && (
+                <div className="filter-banner" style={{ marginBottom: 14 }}>
+                    <span>Showing activity for {filteredAgent}</span>
+                    <button
+                        type="button"
+                        className="filter-banner-clear"
+                        onClick={() => updateParam('agent_id', '')}
+                    >
+                        Show all events
+                    </button>
+                </div>
+            )}
 
-                {error && (
-                    <div className="alert-pad">
-                        <div className="alert alert-error">{error}</div>
-                    </div>
-                )}
+            {error && (
+                <div className="dash-error" style={{ marginBottom: 14 }}>
+                    <span>{error}</span>
+                    <button className="btn btn-sm btn-danger" onClick={() => window.location.reload()}>Retry</button>
+                </div>
+            )}
 
-                {loading ? (
+            {loading ? (
+                <div className="panel">
                     <div className="empty-state">
                         <Loader2 size={28} className="loader-spin" />
                     </div>
-                ) : events.length === 0 ? (
+                </div>
+            ) : events.length === 0 ? (
+                <div className="panel">
                     <div className="empty-state">
-                        <div className="empty-icon">{hasFilters ? '\uD83D\uDD0D' : '\uD83D\uDCCB'}</div>
+                        <div className="icon">{hasFilters ? '\uD83D\uDD0D' : '\uD83D\uDCCB'}</div>
                         <h3>{hasFilters ? 'No events match your filters' : 'No activity yet'}</h3>
                         <p>{hasFilters ? 'Try adjusting your filters.' : 'Events will appear here as agents and admins take actions.'}</p>
                         {hasFilters && (
-                            <button className="btn btn-secondary btn-sm empty-clear-btn" onClick={clearFilters}>
+                            <button className="btn btn-secondary btn-sm" style={{ marginTop: 12 }} onClick={clearFilters}>
                                 Clear filters
                             </button>
                         )}
                     </div>
-                ) : (
-                    <>
-                        <div className="table-wrap">
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th className="col-time">Time</th>
-                                        <th>Event</th>
-                                        <th className="col-time">IP</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {events.map((event) => (
-                                        <EventRow key={event.id} event={event} />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {meta.last_page > 1 && (
-                            <div className="pagination-bar">
-                                <div>Page {meta.current_page} of {meta.last_page}</div>
-                                <div className="pagination-actions">
-                                    <button
-                                        className="btn btn-ghost btn-sm"
-                                        disabled={meta.current_page <= 1}
-                                        onClick={() => goToPage(meta.current_page - 1)}
-                                    >
-                                        &larr; Previous
-                                    </button>
-                                    <button
-                                        className="btn btn-secondary btn-sm"
-                                        disabled={meta.current_page >= meta.last_page}
-                                        onClick={() => goToPage(meta.current_page + 1)}
-                                    >
-                                        Next &rarr;
-                                    </button>
-                                </div>
+                </div>
+            ) : (
+                <>
+                    {dayGroups.map((group) => (
+                        <div className="panel" key={group.dateKey}>
+                            <div className="panel-head">
+                                <div className="panel-title">{group.label}</div>
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
+                            <ul className="timeline">
+                                {group.events.map((event) => (
+                                    <TimelineEvent key={event.id} event={event} />
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+
+                    {meta.last_page > 1 && (
+                        <div className="pagination-bar" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, marginTop: -6 }}>
+                            <div>Page {meta.current_page} of {meta.last_page}</div>
+                            <div className="pagination-actions">
+                                <button
+                                    className="btn btn-ghost btn-sm"
+                                    disabled={meta.current_page <= 1}
+                                    onClick={() => goToPage(meta.current_page - 1)}
+                                >
+                                    &larr; Previous
+                                </button>
+                                <button
+                                    className="btn btn-secondary btn-sm"
+                                    disabled={meta.current_page >= meta.last_page}
+                                    onClick={() => goToPage(meta.current_page + 1)}
+                                >
+                                    Next &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </>
     );
 }
