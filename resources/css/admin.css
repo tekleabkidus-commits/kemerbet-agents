@@ -1534,6 +1534,56 @@ body.modal-open {
   text-decoration: underline;
 }
 
+/* ============= PAYMENT METHODS ============= */
+.method-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.slug-code {
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: .74rem;
+  background: var(--bg-elev-2);
+  padding: 3px 8px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.order-handle-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.order-arrow {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: .6rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: color .12s;
+}
+
+.order-arrow:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.order-arrow:disabled {
+  opacity: .25;
+  cursor: not-allowed;
+}
+
 /* ============= AGENT STATS GRID (edit modal) ============= */
 .agent-stats-grid {
   display: grid;

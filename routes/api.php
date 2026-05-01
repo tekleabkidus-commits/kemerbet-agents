@@ -24,6 +24,10 @@ Route::prefix('admin')->group(function () {
         Route::get('me', [AuthController::class, 'me']);
 
         Route::get('payment-methods', [PaymentMethodController::class, 'index']);
+        Route::post('payment-methods', [PaymentMethodController::class, 'store']);
+        Route::put('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update']);
+        Route::delete('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy']);
+        Route::post('payment-methods/reorder', [PaymentMethodController::class, 'reorder']);
         Route::get('activity', [ActivityController::class, 'index']);
 
         Route::get('agents', [AgentController::class, 'index']);
