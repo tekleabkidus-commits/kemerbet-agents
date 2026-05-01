@@ -339,7 +339,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
                 <div className="page-actions">
-                    <button className="btn btn-secondary btn-sm" onClick={() => alert('Export CSV coming soon')}>
+                    <button
+                        className="btn btn-secondary btn-sm"
+                        disabled
+                        title="Export CSV — coming in a future update"
+                    >
                         Export CSV
                     </button>
                     <button className="btn btn-primary" onClick={() => navigate('/admin/agents')}>

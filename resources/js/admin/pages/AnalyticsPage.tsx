@@ -288,12 +288,7 @@ export default function AnalyticsPage() {
     }, [range, sortKey, fetchAnalytics]);
 
     function handleRangeChange(e: React.ChangeEvent<HTMLSelectElement>) {
-        const val = e.target.value;
-        if (val === 'custom') {
-            alert('Custom date range coming soon');
-            return;
-        }
-        setRange(val);
+        setRange(e.target.value);
     }
 
     function handleRetry() {
@@ -357,9 +352,12 @@ export default function AnalyticsPage() {
                         <option value="7d">Last 7 days</option>
                         <option value="30d">Last 30 days</option>
                         <option value="90d">Last 90 days</option>
-                        <option value="custom">Custom range&hellip;</option>
                     </select>
-                    <button className="btn btn-secondary btn-sm" onClick={() => alert('Export CSV coming soon')}>
+                    <button
+                        className="btn btn-secondary btn-sm"
+                        disabled
+                        title="Export CSV — coming in a future update"
+                    >
                         Export CSV
                     </button>
                 </div>
@@ -543,16 +541,11 @@ export default function AnalyticsPage() {
                         <select
                             className="filter-select"
                             value={sortKey}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === 'conversion') return;
-                                setSortKey(val);
-                            }}
+                            onChange={(e) => setSortKey(e.target.value)}
                         >
                             <option value="deposit_clicks">Sort by: Click Count</option>
                             <option value="minutes_live">Sort by: Live Hours</option>
                             <option value="click_rate">Sort by: Click Rate (per minute live)</option>
-                            <option value="conversion" disabled>Sort by: Conversion Rate (coming soon)</option>
                         </select>
                     </div>
                 </div>
