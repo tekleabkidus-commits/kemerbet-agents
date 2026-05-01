@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-01
 **Current phase:** Phase H — Admin Polish & Security (in progress)
-**Build progress:** Phase A–G functionally complete. Phase H started — H1, H2, H3 shipped tonight.
+**Build progress:** Phase A–G functionally complete. Phase H near-complete — H1, H2, H3, EV1-3, Wave 2 shipped.
 
 ---
 
@@ -17,7 +17,7 @@
 | E | Notifications (service worker) | Complete |
 | F | Analytics (rollups, charts, leaderboard) | Complete (F7 smoke test checklist written, manual walkthrough not yet performed) |
 | G | Polish & Deploy | Complete (G1, G2, G2.5, G3 shipped; smoke test + deploy prep remaining) |
-| H | Admin Polish & Security | In progress — H1, H2, H3 shipped |
+| H | Admin Polish & Security | In progress — H1, H2, H3, EV1-3, Wave 2 shipped |
 
 ---
 
@@ -31,9 +31,15 @@
 
 - **H3 (df4658d)** — Login rate limit widened from 5 attempts per 1 minute to 5 attempts per 15 minutes per IP. One-line change in AppServiceProvider; existing throttle infrastructure already wired. 3 new tests verifying boundary, Retry-After header, and rate limit applies even with valid credentials. AuthTest description string updated to match new window.
 
-### Remaining for Phase H
+- **EV1 (1020caa)** — Backend onboarding_video_url setting. Validation accepts YouTube URL formats (youtube.com/watch, youtu.be, youtube.com/embed) and empty string. Exposed via existing /api/public/agents endpoint. Seeded with empty default. 6 backend tests.
 
-- **Embed video integration** — Admin-configurable onboarding video at top of embed widget. Mockup approved (2-column layout: video left, "How to Deposit" text right with English + Amharic). YouTube iframe player. New setting key `onboarding_video_url` in Settings General tab with URL validation. Visible to all embed visitors (always, not time-limited). Estimated 1.5-2 hours.
+- **EV2 (e73bbb3)** — Settings General tab UI panel for editing the video URL. Inline regex validation feedback (green/red/neutral). Auto-wired to existing dirty detection and diff-only PATCH save flow. 2 frontend tests.
+
+- **EV3 (7489774)** — Embed widget integration. localStorage-based 24h visibility (kemerbet_first_seen_at key), YouTube URL parser handles 3 supported formats, conditional iframe injection in #videoWrap above agent list. Verified end-to-end in browser. Skipped tests (no embed test infrastructure exists).
+
+- **Wave 2 honesty pass (249ee43)** — Removed deceptive alert("coming soon") patterns from Dashboard + Analytics pages. Export CSV buttons now disabled with tooltip; "Custom" date range and "Conversion Rate" sort options removed entirely. Matches G2.3 honesty pattern applied to Settings.
+
+### Remaining for Phase H
 
 - **Force logout other devices on password change** — Requires AuthenticateSession middleware setup. Deferred from H1 due to cascading risk.
 
@@ -70,15 +76,15 @@
 
 ## Test counts (current)
 
-- Backend: 303 (991 assertions)
-- Frontend: 28 across 6 test files
+- Backend: 309 (1006 assertions)
+- Frontend: 30 across 6 test files
   - DashboardPage.test.tsx (5 tests, Phase F)
   - AnalyticsPage.test.tsx (7 tests, Phase F)
   - PaymentMethodsPage.test.tsx (4 tests, G1)
-  - SettingsPage.test.tsx (8 tests, G2 + G2.5 + H1)
+  - SettingsPage.test.tsx (11 tests, G2 + G2.5 + H1 + EV2)
   - ActivityPage.test.tsx (3 tests, G3)
   - NotFoundPage.test.tsx (1 test, H2)
-- **Total: 331 tests**
+- **Total: 339 tests**
 
 ---
 
@@ -117,22 +123,21 @@ Mid-session bug fix: parseRange returned 7-day range when range=today was passed
 
 ## Resume next session
 
-**Next action:** Build the embed video integration feature (mockup approved by architect, see H-phase chat history for design details).
+**Next action:** No specific next feature scoped. Phase H mostly complete.
 
-Approach:
-1. Backend: extend settings table to support `onboarding_video_url` key with URL validation
-2. Settings General tab: add new panel "Onboarding Video" with URL input + live preview
-3. Embed widget: when setting is non-empty, render video card above agent list using lite-youtube pattern (thumbnail → click → loads iframe)
-4. Tests: empty state (no video), valid URL, invalid URL, embed integration
-
-Estimated: 1.5-2 hours.
-
-After that:
-- Real-device smoke tests (Phase E notifications + embed widget)
+Open work that could be picked up:
+- Force logout other devices on password change (deferred from H1, requires AuthenticateSession middleware)
+- Audit log infrastructure (admin_audit_log table for password changes, settings changes, login events)
+- 2FA for admin login (TOTP setup, backup codes — major scope)
+- Public Page settings tab (currently placeholder, scope unclear)
+- Account settings tab (currently placeholder, admin profile)
+- Frontend 429 handling on LoginPage (read Retry-After, format wait time)
+- Embed test infrastructure (set up vitest scaffold for the embed widget)
 - F+G manual smoke test execution (checklist exists at docs/F-AND-G-FINAL-SMOKE-TEST.md, untested)
 - Bundle size optimization (code-split AnalyticsPage)
 - Production deployment prep
 - Hosting decision (Forge+DO recommended; Laravel Cloud also viable)
+- Real-device validation (Phase E notifications + embed widget on actual mobile/desktop)
 
 ---
 
