@@ -17,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RateLimiter::for('admin-login', function (Request $request) {
-            return Limit::perMinute(5)->by($request->ip());
+            return Limit::perMinutes(15, 5)->by($request->ip());
         });
 
         RateLimiter::for('agent-actions', function (Request $request) {

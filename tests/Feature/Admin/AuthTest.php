@@ -68,7 +68,7 @@ test('login with extra remember field is ignored not rejected', function () {
         ->assertJsonPath('user.email', 'kidus@kemerbet.com');
 });
 
-test('login rate limits to 5 per minute per ip', function () {
+test('login rate limits to 5 attempts per 15 minutes per ip', function () {
     for ($i = 0; $i < 5; $i++) {
         $this->postJson('/api/admin/login', [
             'email' => 'kidus@kemerbet.com',
