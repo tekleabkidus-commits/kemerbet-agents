@@ -13,6 +13,11 @@ interface Settings {
     shuffle_live_agents: boolean;
 }
 
+interface SettingsResponse {
+    settings: Settings;
+    embed_base_url: string;
+}
+
 const DEFAULT_SETTINGS: Settings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
     agent_hide_after_hours: 12,
@@ -84,15 +89,18 @@ export default function SettingsPage() {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('general');
+    const [embedBaseUrl, setEmbedBaseUrl] = useState<string>('');
+    const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
 
     const fetchSettings = useCallback(() => {
         setLoading(true);
         setError(null);
         api.get('/api/admin/settings')
             .then((res) => {
-                const data = res.data.data as Settings;
-                setSavedSettings(data);
-                setForm(data);
+                const data = res.data.data as SettingsResponse;
+                setSavedSettings(data.settings);
+                setForm(data.settings);
+                setEmbedBaseUrl(data.embed_base_url);
             })
             .catch(() => setError('Failed to load settings'))
             .finally(() => setLoading(false));
@@ -135,9 +143,10 @@ export default function SettingsPage() {
 
         try {
             const res = await api.patch('/api/admin/settings', diff);
-            const data = res.data.data as Settings;
-            setSavedSettings(data);
-            setForm(data);
+            const data = res.data.data as SettingsResponse;
+            setSavedSettings(data.settings);
+            setForm(data.settings);
+            setEmbedBaseUrl(data.embed_base_url);
             setSaveSuccess(true);
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err: unknown) {
@@ -145,6 +154,17 @@ export default function SettingsPage() {
             setSaveError(resp?.data?.message ?? 'Failed to save settings');
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function handleCopySnippet() {
+        const snippet = `<div id="kemerbet-agents"></div>\n<script src="${embedBaseUrl}/embed/embed.js"></script>`;
+        try {
+            await navigator.clipboard.writeText(snippet);
+            setCopyState('copied');
+            setTimeout(() => setCopyState('idle'), 2000);
+        } catch {
+            // Older browsers / restricted environments
         }
     }
 
@@ -242,6 +262,66 @@ export default function SettingsPage() {
                             <button className="btn btn-primary" onClick={handleSave} disabled={!isDirty || saving}>
                                 {saving ? <><Loader2 size={14} className="loader-spin" /> Saving&hellip;</> : 'Save'}
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Install Embed */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Install Embed</div>
+                        </div>
+                        <div className="panel-body">
+                            <div style={{ marginBottom: 12, fontSize: '.86rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                                Paste this snippet anywhere on the betting site where you want the agents block to appear. The widget loads live agents and updates automatically.
+                            </div>
+
+                            <div style={{
+                                background: 'var(--bg-elev-2)',
+                                border: '1px solid var(--border)',
+                                borderRadius: 8,
+                                padding: 14,
+                                fontFamily: "'SF Mono', ui-monospace, monospace",
+                                fontSize: '.82rem',
+                                color: 'var(--text)',
+                                whiteSpace: 'pre',
+                                overflowX: 'auto',
+                            }}>
+                                {`<div id="kemerbet-agents"></div>\n<script src="${embedBaseUrl}/embed/embed.js"></script>`}
+                            </div>
+
+                            <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={handleCopySnippet}
+                                >
+                                    {copyState === 'copied' ? '\u2713 Copied!' : '\uD83D\uDCCB Copy snippet'}
+                                </button>
+                                <a
+                                    href="/embed-test.html"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="btn btn-secondary btn-sm"
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    &#128269; Preview embed
+                                </a>
+                            </div>
+
+                            <div style={{
+                                marginTop: 14,
+                                padding: '10px 14px',
+                                background: 'rgba(59,130,246,0.06)',
+                                border: '1px solid rgba(59,130,246,0.18)',
+                                borderRadius: 8,
+                                fontSize: '.78rem',
+                                color: 'var(--text-muted)',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: 8,
+                            }}>
+                                <span>&#8505;</span>
+                                <span>The widget uses Shadow DOM, so its styling won&apos;t conflict with the host site&apos;s CSS. The current public refresh interval is <strong>{form.public_refresh_interval_seconds} seconds</strong> (configurable below).</span>
+                            </div>
                         </div>
                     </div>
 

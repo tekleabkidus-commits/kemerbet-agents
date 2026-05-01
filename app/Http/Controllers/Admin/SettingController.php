@@ -13,7 +13,7 @@ class SettingController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(['data' => $this->allSettings()]);
+        return response()->json(['data' => $this->buildResponseData()]);
     }
 
     public function update(UpdateSettingsRequest $request): JsonResponse
@@ -31,7 +31,15 @@ class SettingController extends Controller
 
         Cache::forget('settings.public');
 
-        return response()->json(['data' => $this->allSettings()]);
+        return response()->json(['data' => $this->buildResponseData()]);
+    }
+
+    private function buildResponseData(): array
+    {
+        return [
+            'settings' => $this->allSettings(),
+            'embed_base_url' => rtrim(config('app.url'), '/'),
+        ];
     }
 
     private function allSettings(): array

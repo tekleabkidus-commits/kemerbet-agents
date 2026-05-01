@@ -2,7 +2,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "vite build && vite build --config vite.embed.config.ts",
+        "build:admin": "vite build",
+        "build:embed": "vite build --config vite.embed.config.ts",
         "dev": "vite",
         "test": "vitest run",
         "test:watch": "vitest"

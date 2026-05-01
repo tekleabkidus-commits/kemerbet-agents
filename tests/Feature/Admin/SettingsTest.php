@@ -26,8 +26,8 @@ test('admin can get all settings', function () {
 
     $response->assertOk();
 
-    $data = $response->json('data');
-    expect($data)->toHaveKeys([
+    $settings = $response->json('data.settings');
+    expect($settings)->toHaveKeys([
         'prefill_message',
         'agent_hide_after_hours',
         'public_refresh_interval_seconds',
@@ -37,9 +37,9 @@ test('admin can get all settings', function () {
     ]);
 
     // Type checks
-    expect($data['prefill_message'])->toBeString();
-    expect($data['agent_hide_after_hours'])->toBeInt();
-    expect($data['show_offline_agents'])->toBeBool();
+    expect($settings['prefill_message'])->toBeString();
+    expect($settings['agent_hide_after_hours'])->toBeInt();
+    expect($settings['show_offline_agents'])->toBeBool();
 });
 
 // 2. Unauthenticated cannot get settings
@@ -131,8 +131,8 @@ test('response returns full settings after update', function () {
 
     $response->assertOk();
 
-    $data = $response->json('data');
-    expect($data)->toHaveKeys([
+    $settings = $response->json('data.settings');
+    expect($settings)->toHaveKeys([
         'prefill_message',
         'agent_hide_after_hours',
         'public_refresh_interval_seconds',
@@ -140,7 +140,7 @@ test('response returns full settings after update', function () {
         'warn_on_offline_click',
         'shuffle_live_agents',
     ]);
-    expect($data['prefill_message'])->toBe('Updated');
+    expect($settings['prefill_message'])->toBe('Updated');
 });
 
 // 10. Boolean values round-trip correctly
@@ -154,7 +154,21 @@ test('boolean values round trip correctly', function () {
     $response = $this->actingAs($this->admin)
         ->getJson('/api/admin/settings');
 
+    $settings = $response->json('data.settings');
+    expect($settings['show_offline_agents'])->toBeFalse();
+    expect($settings['show_offline_agents'])->toBeBool();
+});
+
+// 11. Settings response includes embed_base_url
+test('settings response includes embed_base_url', function () {
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/settings');
+
+    $response->assertOk();
     $data = $response->json('data');
-    expect($data['show_offline_agents'])->toBeFalse();
-    expect($data['show_offline_agents'])->toBeBool();
+
+    expect($data)->toHaveKey('settings');
+    expect($data)->toHaveKey('embed_base_url');
+    expect($data['embed_base_url'])->toBeString();
+    expect($data['embed_base_url'])->not->toEndWith('/');
 });

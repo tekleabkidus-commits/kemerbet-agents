@@ -30,7 +30,14 @@ const mockSettings = {
 };
 
 function setupMocks() {
-    mockedGet.mockResolvedValue({ data: { data: { ...mockSettings } } });
+    mockedGet.mockResolvedValue({
+        data: {
+            data: {
+                settings: { ...mockSettings },
+                embed_base_url: 'http://localhost:8001',
+            },
+        },
+    });
 }
 
 function renderPage() {
@@ -83,7 +90,12 @@ describe('SettingsPage', () => {
     it('save calls API with only changed fields', async () => {
         setupMocks();
         mockedPatch.mockResolvedValue({
-            data: { data: { ...mockSettings, prefill_message: 'New message' } },
+            data: {
+                data: {
+                    settings: { ...mockSettings, prefill_message: 'New message' },
+                    embed_base_url: 'http://localhost:8001',
+                },
+            },
         });
 
         const user = userEvent.setup();
@@ -148,5 +160,46 @@ describe('SettingsPage', () => {
 
         expect(screen.getByText(/not yet functional/i)).toBeInTheDocument();
         expect(screen.getByText(/not yet wired up/i)).toBeInTheDocument();
+    });
+
+    // 6. Renders embed snippet with embed_base_url from API
+    it('renders embed snippet with base URL from API response', async () => {
+        setupMocks();
+
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Install Embed')).toBeInTheDocument();
+        });
+
+        expect(screen.getByText(/kemerbet-agents/)).toBeInTheDocument();
+        expect(screen.getByText(/localhost:8001\/embed\/embed\.js/)).toBeInTheDocument();
+    });
+
+    // 7. Copy button attempts clipboard write and shows feedback
+    it('shows copied feedback when copy button clicked', async () => {
+        setupMocks();
+
+        // Provide clipboard API for jsdom
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: vi.fn().mockResolvedValue(undefined) },
+            writable: true,
+            configurable: true,
+        });
+
+        const user = userEvent.setup();
+        renderPage();
+
+        await waitFor(() => {
+            expect(screen.getByText('Install Embed')).toBeInTheDocument();
+        });
+
+        const copyBtn = screen.getByText(/Copy snippet/);
+        await user.click(copyBtn);
+
+        // The button should show "Copied!" feedback
+        await waitFor(() => {
+            expect(screen.getByText(/Copied/)).toBeInTheDocument();
+        });
     });
 });
