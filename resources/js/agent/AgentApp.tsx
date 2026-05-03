@@ -195,7 +195,12 @@ export default function AgentApp({ token }: { token: string }) {
 
   return (
     <div className="wrap">
-      <TopBar showBellAlert={permission === 'default'} />
+      <TopBar
+        showBellAlert={permission === 'default'}
+        onBellClick={permission === 'default' ? () => {
+          Notification.requestPermission().then((p) => setPermission(p));
+        } : undefined}
+      />
       {pageState === 'loading' && <LoadingSpinner />}
       {pageState === 'invalid' && <InvalidCard />}
       {pageState === 'disabled' && disabledAgent && (
@@ -207,9 +212,7 @@ export default function AgentApp({ token }: { token: string }) {
       {(pageState === 'live' || pageState === 'offline') && serverState && (
         <>
           <Greeting displayNumber={serverState.agent.display_number} />
-          {pageState === 'live' && (
-            <NotificationBanner permission={permission} onPermissionChange={setPermission} />
-          )}
+          <NotificationBanner permission={permission} onPermissionChange={setPermission} />
           <StatusCard
             state={serverState}
             onGoOffline={() => setOfflineModalOpen(true)}
