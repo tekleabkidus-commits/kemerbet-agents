@@ -1100,7 +1100,7 @@ The CSS is identical to the most recent design in `kemerbet-agents.html` (#1a2b4
     grid.innerHTML = data.agents.map(agent => {
       const isLive = agent.status === 'live';
       const username = esc(agent.telegram_username);
-      const depositUrl = `https://t.me/${username}`;
+      const depositUrl = `https://telegram.me/${username}`;
       const chatUrl = chatMsg ? `${depositUrl}?text=${chatMsg}` : depositUrl;
       const num = String(agent.display_number).padStart(2, '0');
       const banks = (agent.payment_methods || [])

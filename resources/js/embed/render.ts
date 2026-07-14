@@ -89,7 +89,7 @@ export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): 
   const isLive = agent.status === 'live';
   const username = esc(agent.telegram_username);
   const encodedMsg = encodeURIComponent(prefillMsg);
-  const depositUrl = `https://t.me/${username}?text=${encodedMsg}`;
+  const depositUrl = `https://telegram.me/${username}?text=${encodedMsg}`;
   const num = String(agent.display_number).padStart(2, '0');
 
   const methodSlugs = (agent.payment_methods || []).map((m) => m.slug);

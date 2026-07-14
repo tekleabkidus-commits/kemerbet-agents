@@ -7,7 +7,7 @@ it('renders branded 404 page for unknown public route', function () {
     $response->assertSee('Go to Kemerbet');
     $response->assertSee('@KemerbetSupport');
     $response->assertSee('https://kemerbet.com');
-    $response->assertSee('https://t.me/KemerbetSupport');
+    $response->assertSee('https://telegram.me/KemerbetSupport');
 });
 
 it('returns JSON 404 for unknown api route', function () {

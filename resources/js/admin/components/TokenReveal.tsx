@@ -17,7 +17,7 @@ export default function TokenReveal({
     onDismiss,
     warning,
 }: TokenRevealProps) {
-    const telegramLink = `https://t.me/${telegramUsername}?text=${encodeURIComponent(tokenUrl)}`;
+    const telegramLink = `https://telegram.me/${telegramUsername}?text=${encodeURIComponent(tokenUrl)}`;
 
     return (
         <div className="token-reveal">

@@ -104,10 +104,10 @@
         <p class="subhead">This page doesn't exist or is not available.</p>
         <div class="actions">
             <a href="https://kemerbet.com" class="btn btn-primary" target="_blank" rel="noopener">Go to Kemerbet</a>
-            <a href="https://t.me/KemerbetSupport" class="btn btn-secondary" target="_blank" rel="noopener">Contact Support</a>
+            <a href="https://telegram.me/KemerbetSupport" class="btn btn-secondary" target="_blank" rel="noopener">Contact Support</a>
         </div>
         <div class="footer">
-            Need help? Reach us on Telegram <a href="https://t.me/KemerbetSupport" target="_blank" rel="noopener">@KemerbetSupport</a>
+            Need help? Reach us on Telegram <a href="https://telegram.me/KemerbetSupport" target="_blank" rel="noopener">@KemerbetSupport</a>
         </div>
     </div>
 </body>
