@@ -2,6 +2,7 @@
 
 use App\Models\Admin;
 use App\Models\Agent;
+use App\Models\StatusEvent;
 use Database\Seeders\AgentSeeder;
 use Database\Seeders\PaymentMethodSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,6 +48,12 @@ test('pin sets pinned_at on a live agent', function () {
     expect($response->json('data.is_pinned'))->toBeTrue();
     expect($response->json('data.pinned_at'))->not->toBeNull();
     expect($agent->fresh()->pinned_at)->not->toBeNull();
+
+    $event = StatusEvent::where('agent_id', $agent->id)
+        ->where('event_type', StatusEvent::EVENT_PINNED_BY_ADMIN)
+        ->first();
+    expect($event)->not->toBeNull();
+    expect($event->admin_id)->toBe($this->admin->id);
 });
 
 test('pin on an offline agent returns 422', function () {
@@ -82,6 +89,12 @@ test('pin on a pinned agent unpins it', function () {
     expect($response->json('data.is_pinned'))->toBeFalse();
     expect($response->json('data.pinned_at'))->toBeNull();
     expect($agent->fresh()->pinned_at)->toBeNull();
+
+    $event = StatusEvent::where('agent_id', $agent->id)
+        ->where('event_type', StatusEvent::EVENT_UNPINNED_BY_ADMIN)
+        ->first();
+    expect($event)->not->toBeNull();
+    expect($event->admin_id)->toBe($this->admin->id);
 });
 
 test('unpinning is allowed even when the agent is offline', function () {

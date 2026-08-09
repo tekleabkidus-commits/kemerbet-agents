@@ -27,6 +27,10 @@ class StatusEvent extends Model
 
     public const EVENT_SESSION_EXPIRED = 'session_expired';
 
+    public const EVENT_PINNED_BY_ADMIN = 'pinned_by_admin';
+
+    public const EVENT_UNPINNED_BY_ADMIN = 'unpinned_by_admin';
+
     public const EVENT_TYPES = [
         self::EVENT_WENT_ONLINE,
         self::EVENT_WENT_OFFLINE,
@@ -38,6 +42,8 @@ class StatusEvent extends Model
         self::EVENT_TOKEN_REGENERATED,
         self::EVENT_DELETED_BY_ADMIN,
         self::EVENT_RESTORED_BY_ADMIN,
+        self::EVENT_PINNED_BY_ADMIN,
+        self::EVENT_UNPINNED_BY_ADMIN,
     ];
 
     public $timestamps = false;

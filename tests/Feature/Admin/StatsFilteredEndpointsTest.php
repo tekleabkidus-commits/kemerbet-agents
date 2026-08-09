@@ -87,6 +87,10 @@ beforeEach(function () {
     $event($this->agentA, StatusEvent::EVENT_WENT_ONLINE, '2026-05-09 13:30:00');
     $event($this->agentA, StatusEvent::EVENT_SESSION_EXPIRED, '2026-05-09 14:30:00');
 
+    // Pin history: A pinned 05-09 10:00 -> unpinned 14:00 (4 pinned hours).
+    $event($this->agentA, StatusEvent::EVENT_PINNED_BY_ADMIN, '2026-05-09 10:00:00');
+    $event($this->agentA, StatusEvent::EVENT_UNPINNED_BY_ADMIN, '2026-05-09 14:00:00');
+
     DB::table('notification_log')->insert([
         'agent_id' => $this->agentA->id,
         'notification_type' => 'post_offline_1h',
@@ -362,6 +366,57 @@ it('records honors agent_id', function () {
 
     $data = $response->assertOk()->json('data');
     expect($data['best_click_day'])->toEqual(['date' => '2026-05-09', 'count' => 1]);
+});
+
+// =====================================================================
+// pin-effectiveness
+// =====================================================================
+
+it('pin-effectiveness compares clicks per hour pinned vs unpinned', function () {
+    $response = $this->actingAs($this->admin)->getJson('/api/admin/stats/pin-effectiveness?range=7d');
+
+    $data = $response->assertOk()->json('data');
+    expect($data['agents'])->toHaveCount(1); // only A has pin history
+
+    $a = $data['agents'][0];
+    expect($a['agent_id'])->toBe($this->agentA->id);
+    // Range holds 156 elapsed hours (05-04 00:00 -> now 05-10 12:00).
+    expect($a['pinned_hours'])->toEqual(4);
+    expect($a['unpinned_hours'])->toEqual(152);
+    expect($a['pinned_clicks'])->toBe(1);   // c4 at 10:30
+    expect($a['unpinned_clicks'])->toBe(2); // c1, c2
+    expect($a['pinned_clicks_per_hour'])->toEqual(0.25);
+    expect($a['unpinned_clicks_per_hour'])->toEqual(round(2 / 152, 2));
+    expect($a['insufficient_data'])->toBeFalse();
+
+    expect($data['aggregate']['pinned_clicks'])->toBe(1);
+    expect($data['aggregate']['pinned_hours'])->toEqual(4);
+});
+
+it('pin-effectiveness returns empty for an agent without pin history', function () {
+    $response = $this->actingAs($this->admin)
+        ->getJson("/api/admin/stats/pin-effectiveness?range=7d&agent_id={$this->agentB->id}");
+
+    $data = $response->assertOk()->json('data');
+    expect($data['agents'])->toBe([]);
+    expect($data['aggregate'])->toBeNull();
+});
+
+it('pin-effectiveness flags insufficient data under 2 hours in a state', function () {
+    // B pinned 30 minutes before "now" and still pinned (open interval).
+    StatusEvent::create([
+        'agent_id' => $this->agentB->id,
+        'event_type' => StatusEvent::EVENT_PINNED_BY_ADMIN,
+        'created_at' => Carbon::parse('2026-05-10 11:30:00'),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson("/api/admin/stats/pin-effectiveness?range=7d&agent_id={$this->agentB->id}");
+
+    $data = $response->assertOk()->json('data');
+    expect($data['agents'])->toHaveCount(1);
+    expect($data['agents'][0]['pinned_hours'])->toEqual(0.5);
+    expect($data['agents'][0]['insufficient_data'])->toBeTrue();
 });
 
 it('accepts bare from and to params without range=custom', function () {

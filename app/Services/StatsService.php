@@ -166,6 +166,18 @@ class StatsService
     }
 
     /**
+     * Clicks/hour while pinned vs unpinned, per agent with pin history.
+     */
+    public function pinEffectiveness(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:pin-effectiveness:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computePinEffectiveness($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
      * All-time records. Ignores date/hour filters by design; honors agent_id.
      */
     public function records(?int $agentId): array
@@ -829,6 +841,101 @@ class StatsService
         ];
     }
 
+    private function computePinEffectiveness(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $rangeEnd = $to->copy()->addDay();
+        $now = now();
+        $effectiveEnd = $rangeEnd->lt($now) ? $rangeEnd : $now->copy();
+
+        // Pinned intervals reconstructed from pinned_by_admin/unpinned_by_admin
+        // events; an interval still open at range end is clipped to "now".
+        $intervalsByAgent = $this->pinnedIntervals($from, $effectiveEnd, $agentId);
+
+        if ($intervalsByAgent === []) {
+            return ['agents' => [], 'aggregate' => null];
+        }
+
+        $totalHours = $this->rangeHours($from, $rangeEnd, $effectiveEnd, $hourFrom, $hourTo);
+
+        $agents = Agent::whereIn('id', array_keys($intervalsByAgent))
+            ->get(['id', 'display_number', 'telegram_username'])
+            ->keyBy('id');
+
+        $aggPinnedHours = 0.0;
+        $aggUnpinnedHours = 0.0;
+        $aggPinnedClicks = 0;
+        $aggUnpinnedClicks = 0;
+
+        $rows = [];
+        foreach ($intervalsByAgent as $id => $intervals) {
+            $agent = $agents->get($id);
+            if (! $agent) {
+                continue; // deleted agent
+            }
+
+            $bucket = [];
+            foreach ($intervals as [$start, $end]) {
+                $this->accumulateHourFractions($start, $end, $bucket);
+            }
+            $pinnedHours = 0.0;
+            foreach ($bucket as $key => $fraction) {
+                $hour = (int) substr($key, strrpos($key, '|') + 1);
+                if ($this->hourAllowed($hour, $hourFrom, $hourTo)) {
+                    $pinnedHours += $fraction;
+                }
+            }
+            $unpinnedHours = max(0.0, $totalHours - $pinnedHours);
+
+            $clickQ = ClickEvent::where('click_type', 'deposit')
+                ->where('agent_id', $id)
+                ->where('created_at', '>=', $from)->where('created_at', '<', $rangeEnd);
+            $this->applyHourFilter($clickQ, $hourFrom, $hourTo);
+            $clickTimes = $clickQ->pluck('created_at');
+
+            $pinnedClicks = 0;
+            foreach ($clickTimes as $clickedAt) {
+                foreach ($intervals as [$start, $end]) {
+                    if ($clickedAt->gte($start) && $clickedAt->lt($end)) {
+                        $pinnedClicks++;
+                        break;
+                    }
+                }
+            }
+            $unpinnedClicks = $clickTimes->count() - $pinnedClicks;
+
+            $aggPinnedHours += $pinnedHours;
+            $aggUnpinnedHours += $unpinnedHours;
+            $aggPinnedClicks += $pinnedClicks;
+            $aggUnpinnedClicks += $unpinnedClicks;
+
+            $rows[] = [
+                'agent_id' => $id,
+                'display_number' => $agent->display_number,
+                'telegram_username' => $agent->telegram_username,
+                'pinned_hours' => round($pinnedHours, 2),
+                'unpinned_hours' => round($unpinnedHours, 2),
+                'pinned_clicks' => $pinnedClicks,
+                'unpinned_clicks' => $unpinnedClicks,
+                'pinned_clicks_per_hour' => $pinnedHours > 0 ? round($pinnedClicks / $pinnedHours, 2) : null,
+                'unpinned_clicks_per_hour' => $unpinnedHours > 0 ? round($unpinnedClicks / $unpinnedHours, 2) : null,
+                'insufficient_data' => $pinnedHours < 2 || $unpinnedHours < 2,
+            ];
+        }
+
+        return [
+            'agents' => array_values($rows),
+            'aggregate' => $rows === [] ? null : [
+                'pinned_hours' => round($aggPinnedHours, 2),
+                'unpinned_hours' => round($aggUnpinnedHours, 2),
+                'pinned_clicks' => $aggPinnedClicks,
+                'unpinned_clicks' => $aggUnpinnedClicks,
+                'pinned_clicks_per_hour' => $aggPinnedHours > 0 ? round($aggPinnedClicks / $aggPinnedHours, 2) : null,
+                'unpinned_clicks_per_hour' => $aggUnpinnedHours > 0 ? round($aggUnpinnedClicks / $aggUnpinnedHours, 2) : null,
+                'insufficient_data' => $aggPinnedHours < 2 || $aggUnpinnedHours < 2,
+            ],
+        ];
+    }
+
     private function computeRecords(?int $agentId): array
     {
         // All-time absolutes: ignores date and hour filters by design.
@@ -970,6 +1077,85 @@ class StatsService
         }
 
         return $intervals;
+    }
+
+    /**
+     * Reconstruct [start, end) pinned intervals per agent from pin events.
+     * Agents already pinned at $from are seeded from their latest prior event.
+     *
+     * @return array<int, array<int, array{0: Carbon, 1: Carbon}>>
+     */
+    private function pinnedIntervals(Carbon $from, Carbon $end, ?int $agentId): array
+    {
+        $pinEvents = [StatusEvent::EVENT_PINNED_BY_ADMIN, StatusEvent::EVENT_UNPINNED_BY_ADMIN];
+
+        $seeds = DB::select(
+            'SELECT DISTINCT ON (agent_id) agent_id, event_type FROM status_events
+             WHERE created_at < ? AND event_type IN (?, ?)'
+            .($agentId ? ' AND agent_id = '.((int) $agentId) : '')
+            .' ORDER BY agent_id, created_at DESC, id DESC',
+            [$from, ...$pinEvents],
+        );
+
+        $open = [];
+        foreach ($seeds as $seed) {
+            if ($seed->event_type === StatusEvent::EVENT_PINNED_BY_ADMIN) {
+                $open[$seed->agent_id] = $from->copy();
+            }
+        }
+
+        $events = StatusEvent::whereIn('event_type', $pinEvents)
+            ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId))
+            ->orderBy('created_at')->orderBy('id')
+            ->get(['agent_id', 'event_type', 'created_at']);
+
+        $intervals = [];
+        foreach ($events as $event) {
+            $isPin = $event->event_type === StatusEvent::EVENT_PINNED_BY_ADMIN;
+            if ($isPin && ! isset($open[$event->agent_id])) {
+                $open[$event->agent_id] = $event->created_at->copy();
+            } elseif (! $isPin && isset($open[$event->agent_id])) {
+                $intervals[$event->agent_id][] = [$open[$event->agent_id], $event->created_at->copy()];
+                unset($open[$event->agent_id]);
+            } elseif (! $isPin) {
+                // Unpin without a tracked pin start: agent was pinned for some
+                // window entirely before the range — nothing to add.
+                $intervals[$event->agent_id] ??= [];
+            }
+        }
+        foreach ($open as $id => $start) {
+            $intervals[$id][] = [$start, $end->copy()];
+        }
+
+        return $intervals;
+    }
+
+    /**
+     * Total hour-filtered hours available between $from and range end,
+     * clipped to "now" for ranges that include today.
+     */
+    private function rangeHours(Carbon $from, Carbon $rangeEnd, Carbon $effectiveEnd, ?int $hourFrom, ?int $hourTo): float
+    {
+        $total = 0.0;
+        $day = $from->copy();
+        while ($day->lt($rangeEnd)) {
+            foreach (range(0, 23) as $hour) {
+                if (! $this->hourAllowed($hour, $hourFrom, $hourTo)) {
+                    continue;
+                }
+                $slotStart = $day->copy()->setTime($hour, 0);
+                if ($slotStart->gte($effectiveEnd)) {
+                    continue;
+                }
+                $slotEnd = $slotStart->copy()->addHour();
+                $chunkEnd = $slotEnd->lt($effectiveEnd) ? $slotEnd : $effectiveEnd->copy();
+                $total += $slotStart->diffInSeconds($chunkEnd) / 3600;
+            }
+            $day->addDay();
+        }
+
+        return $total;
     }
 
     /**

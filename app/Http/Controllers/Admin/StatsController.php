@@ -115,6 +115,14 @@ class StatsController extends Controller
             $this->stats->coverage($from, $to, $agentId, $hourFrom, $hourTo));
     }
 
+    public function pinEffectiveness(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->pinEffectiveness($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
     public function records(Request $request): JsonResponse
     {
         [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);

@@ -199,10 +199,17 @@ class AgentController extends Controller
         return $this->respondWithDetail($agent->fresh());
     }
 
-    public function pin(Agent $agent): JsonResponse
+    public function pin(Request $request, Agent $agent): JsonResponse
     {
         if ($agent->pinned_at !== null) {
             $agent->update(['pinned_at' => null]);
+
+            $agent->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => StatusEvent::EVENT_UNPINNED_BY_ADMIN,
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
 
             return $this->respondWithDetail($agent->fresh());
         }
@@ -212,6 +219,13 @@ class AgentController extends Controller
         }
 
         $agent->update(['pinned_at' => now()]);
+
+        $agent->statusEvents()->create([
+            'admin_id' => $request->user()->id,
+            'event_type' => StatusEvent::EVENT_PINNED_BY_ADMIN,
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return $this->respondWithDetail($agent->fresh());
     }
