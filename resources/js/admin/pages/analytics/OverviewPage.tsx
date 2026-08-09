@@ -94,6 +94,14 @@ export default function OverviewPage() {
             .finally(() => setLoading(false));
     }, [fetchAll]);
 
+    function handleRetry() {
+        setLoading(true);
+        setError(null);
+        fetchAll()
+            .catch(() => setError('Failed to load analytics'))
+            .finally(() => setLoading(false));
+    }
+
     const chartData = timeline.map((d) => ({
         date: formatShortDate(d.date),
         visitors: d.total_visits,
@@ -112,7 +120,7 @@ export default function OverviewPage() {
             {error && (
                 <div className="dash-error">
                     <span>{error}</span>
-                    <button className="btn btn-sm btn-danger" onClick={() => window.location.reload()}>Retry</button>
+                    <button className="btn btn-sm btn-danger" onClick={handleRetry}>Retry</button>
                 </div>
             )}
 

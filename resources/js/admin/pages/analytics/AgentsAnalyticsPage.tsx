@@ -109,6 +109,14 @@ export default function AgentsAnalyticsPage() {
             .finally(() => setLoading(false));
     }, [fetchAll]);
 
+    function handleRetry() {
+        setLoading(true);
+        setError(null);
+        fetchAll()
+            .catch(() => setError('Failed to load agent analytics'))
+            .finally(() => setLoading(false));
+    }
+
     function handleSort(col: SortableColumn) {
         if (col === sortCol) {
             setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
@@ -133,7 +141,7 @@ export default function AgentsAnalyticsPage() {
             {error && (
                 <div className="dash-error">
                     <span>{error}</span>
-                    <button className="btn btn-sm btn-danger" onClick={() => window.location.reload()}>Retry</button>
+                    <button className="btn btn-sm btn-danger" onClick={handleRetry}>Retry</button>
                 </div>
             )}
 

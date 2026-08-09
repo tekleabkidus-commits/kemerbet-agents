@@ -55,6 +55,14 @@ export default function CoveragePage() {
             .finally(() => setLoading(false));
     }, [fetchAll]);
 
+    function handleRetry() {
+        setLoading(true);
+        setError(null);
+        fetchAll()
+            .catch(() => setError('Failed to load coverage analytics'))
+            .finally(() => setLoading(false));
+    }
+
     if (loading) {
         return <div className="dash-loading">Loading coverage analytics...</div>;
     }
@@ -74,7 +82,7 @@ export default function CoveragePage() {
             {error && (
                 <div className="dash-error">
                     <span>{error}</span>
-                    <button className="btn btn-sm btn-danger" onClick={() => window.location.reload()}>Retry</button>
+                    <button className="btn btn-sm btn-danger" onClick={handleRetry}>Retry</button>
                 </div>
             )}
 
