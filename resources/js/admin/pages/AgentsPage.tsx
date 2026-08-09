@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Pencil, RefreshCw, Trash2, Plus, Loader2, RotateCcw } from 'lucide-react';
+import { Pencil, Pin, RefreshCw, Trash2, Plus, Loader2, RotateCcw } from 'lucide-react';
 import api from '@/api';
 import ConfirmModal from '@/components/ConfirmModal';
 import EditAgentModal from '@/components/EditAgentModal';
@@ -25,6 +25,8 @@ interface Agent {
     live_until: string | null;
     seconds_remaining: number | null;
     last_status_change_at: string | null;
+    is_pinned: boolean;
+    pinned_at: string | null;
     payment_methods: PaymentMethod[];
     notes: string | null;
     clicks_today: number;
@@ -123,11 +125,13 @@ function FilterBar({ search, status, paymentMethod, sort, onSearch, onStatus, on
     );
 }
 
-function AgentRow({ agent: a, onEdit, isDeletedView, onRestore }: {
+function AgentRow({ agent: a, onEdit, isDeletedView, onRestore, onTogglePin, isPinning }: {
     agent: Agent;
     onEdit: (id: number) => void;
     isDeletedView: boolean;
     onRestore: (id: number) => void;
+    onTogglePin: (agent: Agent) => void;
+    isPinning: boolean;
 }) {
     const num = pad(a.display_number);
     const extra = a.payment_methods.length - 3;
@@ -168,6 +172,20 @@ function AgentRow({ agent: a, onEdit, isDeletedView, onRestore }: {
                         </button>
                     ) : (
                         <>
+                            <button
+                                className="icon-btn"
+                                onClick={() => onTogglePin(a)}
+                                disabled={isPinning || (a.computed_status !== 'live' && !a.is_pinned)}
+                                title={
+                                    a.is_pinned
+                                        ? 'Unpin from top of lists'
+                                        : a.computed_status !== 'live'
+                                            ? 'Agent must be online to pin'
+                                            : 'Pin to top of lists'
+                                }
+                            >
+                                <Pin size={13} fill={a.is_pinned ? 'currentColor' : 'none'} />
+                            </button>
                             <button className="icon-btn" onClick={() => onEdit(a.id)}><Pencil size={13} /></button>
                             <button className="icon-btn" disabled title={t2}><RefreshCw size={13} /></button>
                             <button className="icon-btn danger" disabled title={t2}><Trash2 size={13} /></button>
@@ -190,6 +208,7 @@ export default function AgentsPage() {
     const [editingAgentId, setEditingAgentId] = useState<number | null>(null);
     const [isNewAgentOpen, setIsNewAgentOpen] = useState(false);
     const [agentsVersion, setAgentsVersion] = useState(0);
+    const [pinningAgentId, setPinningAgentId] = useState<number | null>(null);
 
     // Restore flow
     const [restoringAgentId, setRestoringAgentId] = useState<number | null>(null);
@@ -258,6 +277,14 @@ export default function AgentsPage() {
     const isDeletedView = status === 'deleted';
 
     const restoringAgent = restoringAgentId ? agents.find((a) => a.id === restoringAgentId) : null;
+
+    const handleTogglePin = useCallback((agent: Agent) => {
+        setPinningAgentId(agent.id);
+        api.post(`/api/admin/agents/${agent.id}/pin`)
+            .then(() => setAgentsVersion((v) => v + 1))
+            .catch(() => setError(`Failed to ${agent.is_pinned ? 'unpin' : 'pin'} agent. Try again.`))
+            .finally(() => setPinningAgentId(null));
+    }, []);
 
     function handleRestore() {
         if (!restoringAgentId) return;
@@ -359,7 +386,7 @@ export default function AgentsPage() {
                                 </thead>
                                 <tbody>
                                     {agents.map((agent) => (
-                                        <AgentRow key={agent.id} agent={agent} onEdit={setEditingAgentId} isDeletedView={isDeletedView} onRestore={setRestoringAgentId} />
+                                        <AgentRow key={agent.id} agent={agent} onEdit={setEditingAgentId} isDeletedView={isDeletedView} onRestore={setRestoringAgentId} onTogglePin={handleTogglePin} isPinning={pinningAgentId === agent.id} />
                                     ))}
                                 </tbody>
                             </table>

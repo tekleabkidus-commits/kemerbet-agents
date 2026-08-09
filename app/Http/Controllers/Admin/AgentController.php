@@ -61,6 +61,14 @@ class AgentController extends Controller
             });
         }
 
+        // Pinned agents that are currently live sort first (oldest pin on top),
+        // then the user-selected sort applies to everyone else.
+        $query->orderByRaw(
+            'CASE WHEN pinned_at IS NOT NULL AND status = ? AND live_until > ? THEN 0 ELSE 1 END, '
+            .'CASE WHEN pinned_at IS NOT NULL AND status = ? AND live_until > ? THEN pinned_at END ASC',
+            [Agent::STATUS_ACTIVE, now(), Agent::STATUS_ACTIVE, now()]
+        );
+
         match ($sort) {
             'last_seen' => $query->orderByRaw('last_status_change_at DESC NULLS LAST'),
             default => $query->orderBy('display_number', 'asc'),
@@ -87,6 +95,8 @@ class AgentController extends Controller
                 'live_until' => $agent->live_until?->toIso8601String(),
                 'seconds_remaining' => $secondsRemaining,
                 'last_status_change_at' => $agent->last_status_change_at?->toIso8601String(),
+                'is_pinned' => $agent->pinned_at !== null,
+                'pinned_at' => $agent->pinned_at?->toIso8601String(),
                 'payment_methods' => $agent->paymentMethods->map(fn ($pm) => [
                     'id' => $pm->id,
                     'slug' => $pm->slug,
@@ -167,6 +177,23 @@ class AgentController extends Controller
             'ip_address' => $request->ip(),
             'created_at' => now(),
         ]);
+
+        return $this->respondWithDetail($agent->fresh());
+    }
+
+    public function pin(Agent $agent): JsonResponse
+    {
+        if ($agent->pinned_at !== null) {
+            $agent->update(['pinned_at' => null]);
+
+            return $this->respondWithDetail($agent->fresh());
+        }
+
+        if ($this->computeStatus($agent, now()) !== 'live') {
+            return response()->json(['message' => 'Agent must be online to pin'], 422);
+        }
+
+        $agent->update(['pinned_at' => now()]);
 
         return $this->respondWithDetail($agent->fresh());
     }
@@ -338,6 +365,8 @@ class AgentController extends Controller
             'live_until' => $agent->live_until?->toIso8601String(),
             'seconds_remaining' => $secondsRemaining,
             'last_status_change_at' => $agent->last_status_change_at?->toIso8601String(),
+            'is_pinned' => $agent->pinned_at !== null,
+            'pinned_at' => $agent->pinned_at?->toIso8601String(),
             'payment_methods' => $agent->paymentMethods->map(fn ($pm) => [
                 'id' => $pm->id,
                 'slug' => $pm->slug,

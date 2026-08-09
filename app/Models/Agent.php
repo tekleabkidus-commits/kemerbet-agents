@@ -23,6 +23,7 @@ class Agent extends Model
         'min_birr',
         'max_birr',
         'notes',
+        'pinned_at',
         'live_until',
         'last_status_change_at',
     ];
@@ -31,6 +32,7 @@ class Agent extends Model
     {
         return [
             'live_until' => 'datetime',
+            'pinned_at' => 'datetime',
             'last_status_change_at' => 'datetime',
             'min_birr' => 'decimal:4',
             'max_birr' => 'decimal:4',

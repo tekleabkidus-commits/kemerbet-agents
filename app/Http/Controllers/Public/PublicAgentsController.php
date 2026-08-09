@@ -46,9 +46,14 @@ class PublicAgentsController extends Controller
             ])
             ->get();
 
-        $live = $agents
+        // Pinned agents render at the top of the live section, oldest pin
+        // first; unpinned agents keep display_number order.
+        [$pinnedLive, $unpinnedLive] = $agents
             ->filter(fn (Agent $a) => $a->live_until && $a->live_until->gt($now))
-            ->sortBy('display_number')
+            ->partition(fn (Agent $a) => $a->pinned_at !== null);
+
+        $live = $pinnedLive->sortBy('pinned_at')
+            ->concat($unpinnedLive->sortBy('display_number'))
             ->values();
 
         $recentlyOffline = collect();
@@ -143,6 +148,7 @@ class PublicAgentsController extends Controller
             'display_number' => $agent->display_number,
             'telegram_username' => $agent->telegram_username,
             'status' => $status,
+            'is_pinned' => $agent->pinned_at !== null,
             'payment_methods' => $agent->paymentMethods->map(fn ($pm) => [
                 'slug' => $pm->slug,
                 'display_name' => $pm->display_name,

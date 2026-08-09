@@ -8,6 +8,7 @@ export interface PublicAgent {
   display_number: number;
   telegram_username: string;
   status: 'live' | 'recently_offline';
+  is_pinned?: boolean;
   last_seen_at?: string; // ISO 8601, only for recently_offline
   payment_methods: AgentPaymentMethod[];
 }

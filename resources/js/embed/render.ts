@@ -176,7 +176,14 @@ export function renderPage(data: PublicAgentsResponse, shadow: ShadowRoot): void
       return bTime - aTime;
     });
 
-  const displayLive = data.settings.shuffle_live_agents ? shuffleArray(liveAgents) : liveAgents;
+  // Pinned agents keep their API order (pinned first); shuffle only applies
+  // to the unpinned remainder so pins always stay at the top.
+  const pinnedLive = liveAgents.filter((a) => a.is_pinned);
+  const unpinnedLive = liveAgents.filter((a) => !a.is_pinned);
+  const displayLive = [
+    ...pinnedLive,
+    ...(data.settings.shuffle_live_agents ? shuffleArray(unpinnedLive) : unpinnedLive),
+  ];
   const prefillMsg = data.settings?.chat_prefilled_message || 'Hi Kemerbet agent, I want to deposit';
 
   const liveCountText = shadow.getElementById('liveCountText');

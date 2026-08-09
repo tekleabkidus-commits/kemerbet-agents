@@ -759,60 +759,60 @@
   .agent-grid{grid-template-columns:1fr;gap:12px}
   .refresh-indicator{top:12px;left:12px}
 }
-`,v={am:{title:"Kemerbet ኤጀንቶች",subtitle:"ኦንላይን ያሉ ኤጀንቶች ቅድሚያ ይታያሉ። ዲፖዚት ለማድረግ ይምረጡ።",live_now:"አሁን ኦንላይን",recently_online:"በቅርብ ጊዜ ኦንላይን የነበሩ",agents_online:"ኤጀንቶች ኦንላይን ናቸው",no_agents_online:"ምንም ኤጀንት ኦንላይን የለም",live_label:"ኦንላይን",offline_label:"ኦፍላይን",truly_online:"ትክክለኛ ኦንላይን ያሉ",last_seen:"መጨረሻ የታየው",just_now:"አሁን",min_ago_suffix:"ደቂቃ በፊት",hour_unit:"ሰዓት",day_unit:"ቀን",ago:"በፊት",deposit:"ዲፖዚት",agent:"ኤጀንት",live_count:"ኦንላይን",no_agents_title:"ምንም ኤጀንት አሁን ኦንላይን የለም",no_agents_desc:"ከታች በቅርብ ጊዜ ኦንላይን የነበሩ ኤጀንቶችን ይመልከቱ።",loading:"በመጫን ላይ…",updating:"እያዘመነ ነው",warn_title:"ይህ ኤጀንት ኦፍላይን ሊሆን ይችላል",warn_desc:"ኤጀንቱ ለተወሰነ ጊዜ ኦንላይን አልነበረም እና በፍጥነት ላይመልስልዎ ይችላል። መቀጠል ይፈልጋሉ?",cancel:"ይቅር",continue:"ቀጥል"},en:{title:"Kemerbet Agents",subtitle:"Live agents are shown first. Tap to deposit.",live_now:"Live Now",recently_online:"Recently online",agents_online:"agents online",no_agents_online:"No agents online",live_label:"Live",offline_label:"Offline",truly_online:"Truly online",last_seen:"Last seen",just_now:"just now",min_ago_suffix:"min ago",hour_unit:"h",day_unit:"d",ago:"ago",deposit:"Deposit",agent:"Agent",live_count:"live",no_agents_title:"No agents live right now",no_agents_desc:"Check below for recently online agents.",loading:"Loading agents…",updating:"Updating",warn_title:"This agent may be offline",warn_desc:"The agent has not been online for a while and may not respond quickly. Do you want to continue?",cancel:"Cancel",continue:"Continue"}},E="kemerbet_lang";function I(){try{const t=localStorage.getItem(E);if(t==="am"||t==="en")return t}catch{}return"am"}function N(t){try{localStorage.setItem(E,t)}catch{}}const C={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};function y(t){return String(t).replace(/[&<>"']/g,a=>C[a])}function j(t){const a=[...t];for(let e=a.length-1;e>0;e--){const n=Math.floor(Math.random()*(e+1));[a[e],a[n]]=[a[n],a[e]]}return a}function O(t,a){const e=v[a],n=Math.max(0,Math.floor((Date.now()-new Date(t).getTime())/1e3));if(n<60)return`${e.last_seen} ${e.just_now}`;const o=Math.floor(n/60);if(o<60)return`${e.last_seen} ${o} ${e.min_ago_suffix}`;const i=Math.floor(o/60),d=o%60;if(i<24)return a==="am"?d>0?`${e.last_seen} ${i} ${e.hour_unit} ${d} ደቂቃ ${e.ago}`:`${e.last_seen} ${i} ${e.hour_unit} ${e.ago}`:d>0?`${e.last_seen} ${i}${e.hour_unit} ${d}m ${e.ago}`:`${e.last_seen} ${i}${e.hour_unit} ${e.ago}`;const g=Math.floor(i/24);return a==="am"?`${e.last_seen} ${g} ${e.day_unit} ${e.ago}`:`${e.last_seen} ${g}${e.day_unit} ${e.ago}`}const k="kemerbet_first_seen_at",Y=1440*60*1e3;function R(){try{const t=localStorage.getItem(k);if(!t)return localStorage.setItem(k,String(Date.now())),!0;const a=parseInt(t,10);return isNaN(a)?(localStorage.setItem(k,String(Date.now())),!0):Date.now()-a<Y}catch{return!0}}function W(t){if(!t)return null;const a=[/youtube\.com\/watch\?v=([\w\-_]+)/i,/youtube\.com\/embed\/([\w\-_]+)/i,/youtu\.be\/([\w\-_]+)/i];for(const e of a){const n=t.match(e);if(n)return n[1]}return null}function T(t,a,e){const n=v[e],o=t.status==="live",i=y(t.telegram_username),d=encodeURIComponent(a),g=`https://telegram.me/${i}?text=${d}`,f=String(t.display_number).padStart(2,"0"),m=(t.payment_methods||[]).map(s=>s.slug),p=y(JSON.stringify(m)),h=(t.payment_methods||[]).map(s=>`<span class="bank">${y(s.display_name)}</span>`).join(""),b=o?`<div class="waiting-text">
+`,w={am:{title:"Kemerbet ኤጀንቶች",subtitle:"ኦንላይን ያሉ ኤጀንቶች ቅድሚያ ይታያሉ። ዲፖዚት ለማድረግ ይምረጡ።",live_now:"አሁን ኦንላይን",recently_online:"በቅርብ ጊዜ ኦንላይን የነበሩ",agents_online:"ኤጀንቶች ኦንላይን ናቸው",no_agents_online:"ምንም ኤጀንት ኦንላይን የለም",live_label:"ኦንላይን",offline_label:"ኦፍላይን",truly_online:"ትክክለኛ ኦንላይን ያሉ",last_seen:"መጨረሻ የታየው",just_now:"አሁን",min_ago_suffix:"ደቂቃ በፊት",hour_unit:"ሰዓት",day_unit:"ቀን",ago:"በፊት",deposit:"ዲፖዚት",agent:"ኤጀንት",live_count:"ኦንላይን",no_agents_title:"ምንም ኤጀንት አሁን ኦንላይን የለም",no_agents_desc:"ከታች በቅርብ ጊዜ ኦንላይን የነበሩ ኤጀንቶችን ይመልከቱ።",loading:"በመጫን ላይ…",updating:"እያዘመነ ነው",warn_title:"ይህ ኤጀንት ኦፍላይን ሊሆን ይችላል",warn_desc:"ኤጀንቱ ለተወሰነ ጊዜ ኦንላይን አልነበረም እና በፍጥነት ላይመልስልዎ ይችላል። መቀጠል ይፈልጋሉ?",cancel:"ይቅር",continue:"ቀጥል"},en:{title:"Kemerbet Agents",subtitle:"Live agents are shown first. Tap to deposit.",live_now:"Live Now",recently_online:"Recently online",agents_online:"agents online",no_agents_online:"No agents online",live_label:"Live",offline_label:"Offline",truly_online:"Truly online",last_seen:"Last seen",just_now:"just now",min_ago_suffix:"min ago",hour_unit:"h",day_unit:"d",ago:"ago",deposit:"Deposit",agent:"Agent",live_count:"live",no_agents_title:"No agents live right now",no_agents_desc:"Check below for recently online agents.",loading:"Loading agents…",updating:"Updating",warn_title:"This agent may be offline",warn_desc:"The agent has not been online for a while and may not respond quickly. Do you want to continue?",cancel:"Cancel",continue:"Continue"}},I="kemerbet_lang";function L(){try{const t=localStorage.getItem(I);if(t==="am"||t==="en")return t}catch{}return"am"}function N(t){try{localStorage.setItem(I,t)}catch{}}const C={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};function _(t){return String(t).replace(/[&<>"']/g,n=>C[n])}function j(t){const n=[...t];for(let e=n.length-1;e>0;e--){const a=Math.floor(Math.random()*(e+1));[n[e],n[a]]=[n[a],n[e]]}return n}function O(t,n){const e=w[n],a=Math.max(0,Math.floor((Date.now()-new Date(t).getTime())/1e3));if(a<60)return`${e.last_seen} ${e.just_now}`;const o=Math.floor(a/60);if(o<60)return`${e.last_seen} ${o} ${e.min_ago_suffix}`;const r=Math.floor(o/60),d=o%60;if(r<24)return n==="am"?d>0?`${e.last_seen} ${r} ${e.hour_unit} ${d} ደቂቃ ${e.ago}`:`${e.last_seen} ${r} ${e.hour_unit} ${e.ago}`:d>0?`${e.last_seen} ${r}${e.hour_unit} ${d}m ${e.ago}`:`${e.last_seen} ${r}${e.hour_unit} ${e.ago}`;const g=Math.floor(r/24);return n==="am"?`${e.last_seen} ${g} ${e.day_unit} ${e.ago}`:`${e.last_seen} ${g}${e.day_unit} ${e.ago}`}const E="kemerbet_first_seen_at",Y=1440*60*1e3;function R(){try{const t=localStorage.getItem(E);if(!t)return localStorage.setItem(E,String(Date.now())),!0;const n=parseInt(t,10);return isNaN(n)?(localStorage.setItem(E,String(Date.now())),!0):Date.now()-n<Y}catch{return!0}}function W(t){if(!t)return null;const n=[/youtube\.com\/watch\?v=([\w\-_]+)/i,/youtube\.com\/embed\/([\w\-_]+)/i,/youtu\.be\/([\w\-_]+)/i];for(const e of n){const a=t.match(e);if(a)return a[1]}return null}function T(t,n,e){const a=w[e],o=t.status==="live",r=_(t.telegram_username),d=encodeURIComponent(n),g=`https://telegram.me/${r}?text=${d}`,c=String(t.display_number).padStart(2,"0"),x=(t.payment_methods||[]).map(b=>b.slug),p=_(JSON.stringify(x)),y=(t.payment_methods||[]).map(b=>`<span class="bank">${_(b.display_name)}</span>`).join(""),h=o?`<div class="waiting-text">
          <span class="typing-dots"><span></span><span></span><span></span></span>
-         ${n.truly_online}
-       </div>`:`<div class="last-seen">⏱ ${t.last_seen_at?O(t.last_seen_at,e):""}</div>`,u=o?`<div class="badge live">${n.live_label}</div>`:`<div class="badge offline">${n.offline_label}</div>`,x=o?`<a href="${g}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${t.id}" data-payment-methods="${p}">
-         <span>${n.deposit}</span>
+         ${a.truly_online}
+       </div>`:`<div class="last-seen">⏱ ${t.last_seen_at?O(t.last_seen_at,e):""}</div>`,f=o?`<div class="badge live">${a.live_label}</div>`:`<div class="badge offline">${a.offline_label}</div>`,m=o?`<a href="${g}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${t.id}" data-payment-methods="${p}">
+         <span>${a.deposit}</span>
          <span class="arrow">→</span>
-       </a>`:`<button class="deposit-btn" data-agent-id="${t.id}" data-deposit-url="${y(g)}" data-offline="true" data-payment-methods="${p}">
-         <span>${n.deposit}</span>
+       </a>`:`<button class="deposit-btn" data-agent-id="${t.id}" data-deposit-url="${_(g)}" data-offline="true" data-payment-methods="${p}">
+         <span>${a.deposit}</span>
          <span class="arrow">→</span>
        </button>`;return`
     <div class="agent-card ${o?"live":"offline"}">
       <div class="agent-top">
         <div class="agent-name-wrap">
-          <div class="agent-avatar">${f}</div>
+          <div class="agent-avatar">${c}</div>
           <div>
-            <div class="agent-name">${n.agent} ${y(String(t.display_number))}</div>
+            <div class="agent-name">${a.agent} ${_(String(t.display_number))}</div>
           </div>
         </div>
-        ${u}
+        ${f}
       </div>
-      ${b}
-      <div class="banks">${h}</div>
-      ${x}
+      ${h}
+      <div class="banks">${y}</div>
+      ${m}
     </div>
-  `}function L(t,a){var x;const e=I(),n=v[e],o=a.getElementById("videoWrap");if(o){const s=t.settings.onboarding_video_url??"",c=W(s);c!==null&&R()?o.innerHTML=`
+  `}function S(t,n){var v;const e=L(),a=w[e],o=n.getElementById("videoWrap");if(o){const s=t.settings.onboarding_video_url??"",u=W(s);u!==null&&R()?o.innerHTML=`
         <div class="kb-video-wrap">
           <iframe
-            src="https://www.youtube.com/embed/${c}"
+            src="https://www.youtube.com/embed/${u}"
             frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
             title="How to Deposit"
           ></iframe>
         </div>
-      `:o.innerHTML=""}const i=t.agents.filter(s=>s.status==="live"),d=t.agents.filter(s=>s.status==="recently_offline").sort((s,c)=>{const w=s.last_seen_at?new Date(s.last_seen_at).getTime():0;return(c.last_seen_at?new Date(c.last_seen_at).getTime():0)-w}),g=t.settings.shuffle_live_agents?j(i):i,f=((x=t.settings)==null?void 0:x.chat_prefilled_message)||"Hi Kemerbet agent, I want to deposit",m=a.getElementById("liveCountText");m&&(m.textContent=i.length>0?`${i.length} ${n.agents_online}`:n.no_agents_online);const p=a.getElementById("liveCountInline");p&&(p.textContent=`${i.length} ${n.live_count}`);const h=a.getElementById("liveGrid");h&&(i.length===0?h.innerHTML=`
+      `:o.innerHTML=""}const r=t.agents.filter(s=>s.status==="live"),d=t.agents.filter(s=>s.status==="recently_offline").sort((s,u)=>{const k=s.last_seen_at?new Date(s.last_seen_at).getTime():0;return(u.last_seen_at?new Date(u.last_seen_at).getTime():0)-k}),g=r.filter(s=>s.is_pinned),c=r.filter(s=>!s.is_pinned),x=[...g,...t.settings.shuffle_live_agents?j(c):c],p=((v=t.settings)==null?void 0:v.chat_prefilled_message)||"Hi Kemerbet agent, I want to deposit",y=n.getElementById("liveCountText");y&&(y.textContent=r.length>0?`${r.length} ${a.agents_online}`:a.no_agents_online);const h=n.getElementById("liveCountInline");h&&(h.textContent=`${r.length} ${a.live_count}`);const f=n.getElementById("liveGrid");f&&(r.length===0?f.innerHTML=`
         <div class="empty-state">
           <div class="icon">○</div>
-          <h3>${n.no_agents_title}</h3>
-          <p>${n.no_agents_desc}</p>
+          <h3>${a.no_agents_title}</h3>
+          <p>${a.no_agents_desc}</p>
         </div>
-      `:h.innerHTML=g.map(s=>T(s,f,e)).join(""));const b=a.getElementById("offlineWrap"),u=a.getElementById("offlineGrid");b&&u&&(d.length>0?(b.style.display="block",u.innerHTML=d.map(s=>T(s,f,e)).join("")):b.style.display="none")}function P(t){const a=t.dataset.api;if(a)return a;const e=document.querySelectorAll('script[src*="embed.js"]'),n=e[e.length-1];if(n!=null&&n.src)try{return new URL(n.src).origin}catch{}return window.location.origin}function S(){var w,$,B;const t=document.getElementById("kemerbet-agents");if(!t)return;const a=P(t),e=t.attachShadow({mode:"open"}),n=document.createElement("style");n.textContent=D,e.appendChild(n);const o=I();t.setAttribute("lang",o);const i=document.createElement("div");i.innerHTML=H(o),e.appendChild(i),z(o,e,t),sessionStorage.getItem("kemerbet_visited")||(sessionStorage.setItem("kemerbet_visited","1"),fetch(`${a}/api/public/visit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({referrer:document.referrer||null})}).catch(()=>{}));let d=null,g=null,f=null,m=null,p=null;function h(){const r=e.getElementById("refreshIndicator");r&&(r.classList.add("show"),setTimeout(()=>r.classList.remove("show"),1400))}function b(r,l){fetch(`${a}/api/public/agents/${r}/click`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({referrer:window.location.href,payment_methods:l&&l.length>0?l:null}),keepalive:!0}).catch(()=>{})}async function u(){h();try{const r=await fetch(`${a}/api/public/agents`);if(!r.ok)throw new Error(`HTTP ${r.status}`);const l=await r.json();d=l,L(l,e)}catch{console.warn("[kemerbet-agents] fetch failed, retrying in 60s")}}function x(){p=window.setTimeout(async()=>{document.hidden||await u(),document.hidden?p=null:x()},6e4)}document.addEventListener("visibilitychange",()=>{document.hidden?p!==null&&(clearTimeout(p),p=null):p===null&&(u(),x())});function s(){var r;(r=e.getElementById("offlineWarnModal"))==null||r.classList.add("show")}function c(){var r;(r=e.getElementById("offlineWarnModal"))==null||r.classList.remove("show"),g=null,f=null,m=null}(w=e.getElementById("confirmDepositBtn"))==null||w.addEventListener("click",()=>{f&&b(f,m??void 0),g&&window.open(g,"_blank","noopener"),c()}),($=e.getElementById("cancelWarnBtn"))==null||$.addEventListener("click",()=>{c()}),(B=e.getElementById("offlineWarnModal"))==null||B.addEventListener("click",r=>{r.target.id==="offlineWarnModal"&&c()}),document.addEventListener("keydown",r=>{if(r.key==="Escape"){const l=e.getElementById("offlineWarnModal");l!=null&&l.classList.contains("show")&&c()}}),e.addEventListener("click",r=>{const _=r.target.closest("[data-agent-id]");if(!_)return;const M=_.dataset.agentId,A=JSON.parse(_.dataset.paymentMethods||"[]");_.dataset.offline==="true"?(r.preventDefault(),g=_.dataset.depositUrl||null,f=M,m=A,s()):b(M,A)}),e.querySelectorAll(".lang-btn").forEach(r=>{r.addEventListener("click",()=>{const l=r.dataset.lang;N(l),z(l,e,t),d&&L(d,e)})}),u(),x()}function z(t,a,e){const n=v[t];e.setAttribute("lang",t),a.querySelectorAll("[data-i18n]").forEach(o=>{const i=o.dataset.i18n;n[i]!==void 0&&(o.textContent=n[i])}),a.querySelectorAll(".lang-btn").forEach(o=>{const i=o;i.classList.toggle("active",i.dataset.lang===t)})}function H(t){const a=v[t];return`
+      `:f.innerHTML=x.map(s=>T(s,p,e)).join(""));const m=n.getElementById("offlineWrap"),b=n.getElementById("offlineGrid");m&&b&&(d.length>0?(m.style.display="block",b.innerHTML=d.map(s=>T(s,p,e)).join("")):m.style.display="none")}function P(t){const n=t.dataset.api;if(n)return n;const e=document.querySelectorAll('script[src*="embed.js"]'),a=e[e.length-1];if(a!=null&&a.src)try{return new URL(a.src).origin}catch{}return window.location.origin}function z(){var s,u,k;const t=document.getElementById("kemerbet-agents");if(!t)return;const n=P(t),e=t.attachShadow({mode:"open"}),a=document.createElement("style");a.textContent=D,e.appendChild(a);const o=L();t.setAttribute("lang",o);const r=document.createElement("div");r.innerHTML=H(o),e.appendChild(r),B(o,e,t),sessionStorage.getItem("kemerbet_visited")||(sessionStorage.setItem("kemerbet_visited","1"),fetch(`${n}/api/public/visit`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({referrer:document.referrer||null})}).catch(()=>{}));let d=null,g=null,c=null,x=null,p=null;function y(){const i=e.getElementById("refreshIndicator");i&&(i.classList.add("show"),setTimeout(()=>i.classList.remove("show"),1400))}function h(i,l){fetch(`${n}/api/public/agents/${i}/click`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({referrer:window.location.href,payment_methods:l&&l.length>0?l:null}),keepalive:!0}).catch(()=>{})}async function f(){y();try{const i=await fetch(`${n}/api/public/agents`);if(!i.ok)throw new Error(`HTTP ${i.status}`);const l=await i.json();d=l,S(l,e)}catch{console.warn("[kemerbet-agents] fetch failed, retrying in 60s")}}function m(){p=window.setTimeout(async()=>{document.hidden||await f(),document.hidden?p=null:m()},6e4)}document.addEventListener("visibilitychange",()=>{document.hidden?p!==null&&(clearTimeout(p),p=null):p===null&&(f(),m())});function b(){var i;(i=e.getElementById("offlineWarnModal"))==null||i.classList.add("show")}function v(){var i;(i=e.getElementById("offlineWarnModal"))==null||i.classList.remove("show"),g=null,c=null,x=null}(s=e.getElementById("confirmDepositBtn"))==null||s.addEventListener("click",()=>{c&&h(c,x??void 0),g&&window.open(g,"_blank","noopener"),v()}),(u=e.getElementById("cancelWarnBtn"))==null||u.addEventListener("click",()=>{v()}),(k=e.getElementById("offlineWarnModal"))==null||k.addEventListener("click",i=>{i.target.id==="offlineWarnModal"&&v()}),document.addEventListener("keydown",i=>{if(i.key==="Escape"){const l=e.getElementById("offlineWarnModal");l!=null&&l.classList.contains("show")&&v()}}),e.addEventListener("click",i=>{const $=i.target.closest("[data-agent-id]");if(!$)return;const M=$.dataset.agentId,A=JSON.parse($.dataset.paymentMethods||"[]");$.dataset.offline==="true"?(i.preventDefault(),g=$.dataset.depositUrl||null,c=M,x=A,b()):h(M,A)}),e.querySelectorAll(".lang-btn").forEach(i=>{i.addEventListener("click",()=>{const l=i.dataset.lang;N(l),B(l,e,t),d&&S(d,e)})}),f(),m()}function B(t,n,e){const a=w[t];e.setAttribute("lang",t),n.querySelectorAll("[data-i18n]").forEach(o=>{const r=o.dataset.i18n;a[r]!==void 0&&(o.textContent=a[r])}),n.querySelectorAll(".lang-btn").forEach(o=>{const r=o;r.classList.toggle("active",r.dataset.lang===t)})}function H(t){const n=w[t];return`
     <div class="refresh-indicator" id="refreshIndicator">
       <div class="spinner"></div>
-      <span data-i18n="updating">${a.updating}</span>
+      <span data-i18n="updating">${n.updating}</span>
     </div>
 
     <div class="modal-backdrop" id="offlineWarnModal">
       <div class="modal-warn">
         <div class="icon-wrap">⚠️</div>
-        <h3 data-i18n="warn_title">${a.warn_title}</h3>
-        <p data-i18n="warn_desc">${a.warn_desc}</p>
+        <h3 data-i18n="warn_title">${n.warn_title}</h3>
+        <p data-i18n="warn_desc">${n.warn_desc}</p>
         <div class="modal-actions">
-          <button class="modal-btn cancel" id="cancelWarnBtn" data-i18n="cancel">${a.cancel}</button>
-          <button class="modal-btn confirm" id="confirmDepositBtn" data-i18n="continue">${a.continue}</button>
+          <button class="modal-btn cancel" id="cancelWarnBtn" data-i18n="cancel">${n.cancel}</button>
+          <button class="modal-btn confirm" id="confirmDepositBtn" data-i18n="continue">${n.continue}</button>
         </div>
       </div>
     </div>
@@ -828,26 +828,26 @@
       <div class="header">
         <div class="header-logo">
           <span class="live-indicator"></span>
-          <span id="liveCountText">${a.loading}</span>
+          <span id="liveCountText">${n.loading}</span>
         </div>
-        <h1 data-i18n="title">${a.title}</h1>
-        <p data-i18n="subtitle">${a.subtitle}</p>
+        <h1 data-i18n="title">${n.title}</h1>
+        <p data-i18n="subtitle">${n.subtitle}</p>
       </div>
 
       <div id="videoWrap"></div>
 
       <div class="section-title">
-        <h2 data-i18n="live_now">${a.live_now}</h2>
+        <h2 data-i18n="live_now">${n.live_now}</h2>
         <div class="agent-count" id="liveCountInline">—</div>
       </div>
 
       <div class="agent-grid" id="liveGrid">
-        <div class="empty-state"><h3 data-i18n="loading">${a.loading}</h3></div>
+        <div class="empty-state"><h3 data-i18n="loading">${n.loading}</h3></div>
       </div>
 
       <div id="offlineWrap" style="display:none">
-        <div class="offline-divider" data-i18n="recently_online">${a.recently_online}</div>
+        <div class="offline-divider" data-i18n="recently_online">${n.recently_online}</div>
         <div class="agent-grid" id="offlineGrid"></div>
       </div>
     </div>
-  `}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",S):S()})();
+  `}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",z):z()})();
