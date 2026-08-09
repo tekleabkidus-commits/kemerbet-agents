@@ -75,6 +75,55 @@ class StatsController extends Controller
         ]);
     }
 
+    public function funnel(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->funnel($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
+    public function traffic(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->traffic($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
+    public function clicksInsights(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->clicksInsights($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
+    public function agentPerformance(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->agentPerformance($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
+    public function coverage(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->coverage($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
+    public function records(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        // Records ignore the date/hour filters by design (all-time bests).
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->records($agentId));
+    }
+
     public function agentDetail(Request $request, int $agent): JsonResponse
     {
         $agentModel = Agent::find($agent);
@@ -91,9 +140,55 @@ class StatsController extends Controller
         ]);
     }
 
+    /**
+     * Global filter contract: from/to dates, optional agent_id, optional
+     * hour_from/hour_to (EAT hours, wrap-around allowed). A single hour
+     * bound defaults the other end (0 or 23).
+     */
+    private function parseFilters(Request $request): array
+    {
+        $request->validate([
+            'agent_id' => 'sometimes|integer|exists:agents,id',
+            'hour_from' => 'sometimes|integer|min:0|max:23',
+            'hour_to' => 'sometimes|integer|min:0|max:23',
+        ]);
+
+        [$from, $to] = $this->parseRange($request);
+
+        $agentId = $request->filled('agent_id') ? (int) $request->input('agent_id') : null;
+
+        $hourFrom = null;
+        $hourTo = null;
+        if ($request->filled('hour_from') || $request->filled('hour_to')) {
+            $hourFrom = (int) $request->input('hour_from', 0);
+            $hourTo = (int) $request->input('hour_to', 23);
+        }
+
+        return [$from, $to, $agentId, $hourFrom, $hourTo];
+    }
+
+    private function respondFiltered(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo, array $data): JsonResponse
+    {
+        return response()->json([
+            'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'filters' => [
+                'agent_id' => $agentId,
+                'hour_from' => $hourFrom,
+                'hour_to' => $hourTo,
+            ],
+            'data' => $data,
+        ]);
+    }
+
     private function parseRange(Request $request): array
     {
         $range = $request->input('range', '7d');
+
+        // Bare from/to (without range=custom) also selects a custom range —
+        // the filter contract sends dates directly.
+        if ($range !== 'custom' && $request->filled('from') && $request->filled('to')) {
+            $range = 'custom';
+        }
 
         if ($range === 'custom') {
             $request->validate([

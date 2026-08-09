@@ -50,6 +50,12 @@ Route::prefix('admin')->group(function () {
         Route::get('stats/leaderboard', [StatsController::class, 'leaderboard']);
         Route::get('stats/heatmap', [StatsController::class, 'heatmap']);
         Route::get('stats/payment-methods', [StatsController::class, 'paymentMethods']);
+        Route::get('stats/funnel', [StatsController::class, 'funnel']);
+        Route::get('stats/traffic', [StatsController::class, 'traffic']);
+        Route::get('stats/clicks-insights', [StatsController::class, 'clicksInsights']);
+        Route::get('stats/agent-performance', [StatsController::class, 'agentPerformance']);
+        Route::get('stats/coverage', [StatsController::class, 'coverage']);
+        Route::get('stats/records', [StatsController::class, 'records']);
         Route::get('stats/agent/{agent}', [StatsController::class, 'agentDetail']);
     });
 });

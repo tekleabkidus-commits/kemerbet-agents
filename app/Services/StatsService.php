@@ -6,6 +6,8 @@ use App\Models\Agent;
 use App\Models\ClickEvent;
 use App\Models\DailyStat;
 use App\Models\PaymentMethod;
+use App\Models\StatusEvent;
+use App\Models\VisitEvent;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
@@ -99,6 +101,79 @@ class StatsService
             "stats:payment-methods:{$from->toDateString()}:{$to->toDateString()}",
             self::CACHE_TTL,
             fn () => $this->computePaymentMethodsBreakdown($from, $to),
+        );
+    }
+
+    /**
+     * Visit -> click funnel with previous-period comparison.
+     */
+    public function funnel(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:funnel:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeFunnel($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
+     * Referrer / device / new-vs-returning breakdown of visit_events.
+     */
+    public function traffic(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:traffic:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeTraffic($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
+     * Click behavior insights: repeat clickers, distribution, referrers,
+     * offline click attempts.
+     */
+    public function clicksInsights(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:clicks-insights:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeClicksInsights($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
+     * Per-agent performance metrics for the range.
+     */
+    public function agentPerformance(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:agent-performance:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeAgentPerformance($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
+     * Live-coverage and click-demand hour x weekday matrices + gap hours.
+     */
+    public function coverage(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:coverage:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeCoverage($from, $to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
+     * All-time records. Ignores date/hour filters by design; honors agent_id.
+     */
+    public function records(?int $agentId): array
+    {
+        return Cache::remember(
+            'stats:records:'.($agentId ?? 'all'),
+            self::CACHE_TTL,
+            fn () => $this->computeRecords($agentId),
         );
     }
 
@@ -410,5 +485,505 @@ class StatsService
         }
 
         return $rows;
+    }
+
+    // -----------------------------------------------------------------
+    // Filtered analytics (funnel / traffic / clicks / performance / coverage)
+    // -----------------------------------------------------------------
+
+    private function computeFunnel(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $days = (int) $from->diffInDays($to) + 1;
+        $prevTo = $from->copy()->subDay();
+        $prevFrom = $prevTo->copy()->subDays($days - 1);
+
+        $current = $this->funnelMetrics($from, $to, $agentId, $hourFrom, $hourTo);
+        $previous = $this->funnelMetrics($prevFrom, $prevTo, $agentId, $hourFrom, $hourTo);
+
+        $change = [];
+        foreach ($current as $key => $value) {
+            $prev = $previous[$key];
+            $change[$key] = $prev > 0 ? round(($value - $prev) / $prev * 100, 1) : null;
+        }
+
+        return [
+            'current' => $current,
+            'previous' => $previous,
+            'change' => $change,
+            'previous_range' => ['from' => $prevFrom->toDateString(), 'to' => $prevTo->toDateString()],
+        ];
+    }
+
+    private function funnelMetrics(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $end = $to->copy()->addDay();
+
+        // visit_events has no agent link — visit metrics stay site-wide even
+        // when agent_id is set; only click metrics are agent-scoped.
+        $visits = VisitEvent::where('created_at', '>=', $from)->where('created_at', '<', $end);
+        $this->applyHourFilter($visits, $hourFrom, $hourTo);
+        $totalVisits = (clone $visits)->count();
+        $uniqueVisitors = (clone $visits)->distinct()->count('visitor_id');
+
+        $clicks = ClickEvent::where('click_type', 'deposit')
+            ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId));
+        $this->applyHourFilter($clicks, $hourFrom, $hourTo);
+        $depositClicks = (clone $clicks)->count();
+        $uniqueClickers = (clone $clicks)->distinct()->count('visitor_id');
+
+        return [
+            'total_visits' => $totalVisits,
+            'unique_visitors' => $uniqueVisitors,
+            'deposit_clicks' => $depositClicks,
+            'unique_clickers' => $uniqueClickers,
+            'visit_to_click_rate' => $uniqueVisitors > 0 ? round($uniqueClickers / $uniqueVisitors, 4) : 0,
+        ];
+    }
+
+    private function computeTraffic(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $end = $to->copy()->addDay();
+
+        $base = function () use ($from, $end, $hourFrom, $hourTo) {
+            $q = VisitEvent::where('created_at', '>=', $from)->where('created_at', '<', $end);
+            $this->applyHourFilter($q, $hourFrom, $hourTo);
+
+            return $q;
+        };
+
+        $referrers = $this->normalizeReferrers(
+            $base()->selectRaw('referrer, COUNT(*) AS count')->groupBy('referrer')->get()
+        );
+
+        $deviceRows = $base()
+            ->selectRaw("CASE WHEN user_agent ~* 'Mobile|Android|iPhone|iPad' THEN 'mobile'
+                              WHEN user_agent ~* 'Windows|Macintosh|X11|Linux' THEN 'desktop'
+                              ELSE 'other' END AS device, COUNT(*) AS count")
+            ->groupBy('device')
+            ->pluck('count', 'device');
+
+        // A visitor is "new" when their first-ever visit falls inside the
+        // range; first-seen is computed over all history (not hour-filtered).
+        $hourSql = $this->hourFilterSql('created_at', $hourFrom, $hourTo);
+        $newVsReturning = DB::select(
+            'SELECT COUNT(*) FILTER (WHERE first_seen >= ?) AS new_count,
+                    COUNT(*) FILTER (WHERE first_seen < ?) AS returning_count
+             FROM (
+                 SELECT visitor_id, MIN(created_at) AS first_seen
+                 FROM visit_events
+                 WHERE visitor_id IN (
+                     SELECT DISTINCT visitor_id FROM visit_events
+                     WHERE created_at >= ? AND created_at < ?'.($hourSql ? " AND {$hourSql}" : '').'
+                 )
+                 GROUP BY visitor_id
+             ) t',
+            [$from, $from, $from, $end],
+        )[0];
+
+        $result = [
+            'referrers' => $referrers,
+            'devices' => [
+                'mobile' => (int) ($deviceRows['mobile'] ?? 0),
+                'desktop' => (int) ($deviceRows['desktop'] ?? 0),
+                'other' => (int) ($deviceRows['other'] ?? 0),
+            ],
+            'new_vs_returning' => [
+                'new' => (int) $newVsReturning->new_count,
+                'returning' => (int) $newVsReturning->returning_count,
+            ],
+        ];
+
+        // visit_events carries no agent_id, so traffic cannot be agent-scoped.
+        if ($agentId !== null) {
+            $result['agent_filter_unsupported'] = true;
+        }
+
+        return $result;
+    }
+
+    private function computeClicksInsights(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $end = $to->copy()->addDay();
+
+        $base = function () use ($from, $end, $agentId, $hourFrom, $hourTo) {
+            $q = ClickEvent::where('click_type', 'deposit')
+                ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+                ->when($agentId, fn ($qq) => $qq->where('agent_id', $agentId));
+            $this->applyHourFilter($q, $hourFrom, $hourTo);
+
+            return $q;
+        };
+
+        $dayCounts = $base()
+            ->selectRaw('visitor_id, COUNT(DISTINCT DATE(created_at)) AS days')
+            ->groupBy('visitor_id')
+            ->pluck('days');
+
+        $perVisitor = $base()
+            ->selectRaw('visitor_id, COUNT(*) AS clicks')
+            ->groupBy('visitor_id')
+            ->pluck('clicks');
+
+        // Buckets: 1, 2-3, 4-10 (inclusive), 10+ meaning more than 10.
+        $distribution = ['1' => 0, '2-3' => 0, '4-10' => 0, '10+' => 0];
+        foreach ($perVisitor as $clicks) {
+            $bucket = match (true) {
+                $clicks <= 1 => '1',
+                $clicks <= 3 => '2-3',
+                $clicks <= 10 => '4-10',
+                default => '10+',
+            };
+            $distribution[$bucket]++;
+        }
+
+        $clickReferrers = $this->normalizeReferrers(
+            $base()->selectRaw('referrer, COUNT(*) AS count')->groupBy('referrer')->get()
+        );
+
+        // Offline attempt method: a click counts as offline when the agent's
+        // most recent lifecycle status event (went_online/extended/
+        // went_offline/session_expired) at the click timestamp is an offline
+        // one — or when the agent has no lifecycle events at all. live_until
+        // history is not stored, so the event stream is the best available
+        // record of liveness at click time.
+        $hourSql = $this->hourFilterSql('c.created_at', $hourFrom, $hourTo);
+        $offlineAttempts = (int) DB::select(
+            "SELECT COUNT(*) AS count FROM click_events c
+             WHERE c.click_type = 'deposit' AND c.created_at >= ? AND c.created_at < ?"
+            .($agentId ? ' AND c.agent_id = '.((int) $agentId) : '')
+            .($hourSql ? " AND {$hourSql}" : '')
+            ." AND COALESCE((
+                 SELECT se.event_type FROM status_events se
+                 WHERE se.agent_id = c.agent_id
+                   AND se.event_type IN ('went_online', 'extended', 'went_offline', 'session_expired')
+                   AND se.created_at <= c.created_at
+                 ORDER BY se.created_at DESC, se.id DESC LIMIT 1
+               ), 'none') NOT IN ('went_online', 'extended')",
+            [$from, $end],
+        )[0]->count;
+
+        return [
+            'repeat_clickers' => $dayCounts->filter(fn ($d) => $d >= 2)->count(),
+            'one_day_clickers' => $dayCounts->filter(fn ($d) => $d == 1)->count(),
+            'clicks_per_visitor_distribution' => $distribution,
+            'click_referrers' => $clickReferrers,
+            'offline_click_attempts' => $offlineAttempts,
+        ];
+    }
+
+    private function computeAgentPerformance(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $hourFiltered = $hourFrom !== null && $hourTo !== null;
+        $end = $to->copy()->addDay();
+        $days = (int) $from->diffInDays($to) + 1;
+
+        $agents = Agent::when($agentId, fn ($q) => $q->where('id', $agentId))
+            ->orderBy('display_number')
+            ->get(['id', 'display_number', 'telegram_username']);
+
+        // Deposit clicks always come from raw click_events (hour-filterable
+        // and exact); daily_stats rollups only feed the minutes/session
+        // metrics below.
+        $clickQ = ClickEvent::where('click_type', 'deposit')
+            ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId));
+        $this->applyHourFilter($clickQ, $hourFrom, $hourTo);
+        $clicks = $clickQ->groupBy('agent_id')->selectRaw('agent_id, COUNT(*) AS count')->pluck('count', 'agent_id');
+
+        $rollups = $this->getAgentRows($from, $to, $agentId)->groupBy('agent_id');
+
+        $offQ = StatusEvent::whereIn('event_type', [StatusEvent::EVENT_SESSION_EXPIRED, StatusEvent::EVENT_WENT_OFFLINE])
+            ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId));
+        $this->applyHourFilter($offQ, $hourFrom, $hourTo);
+        $offRows = $offQ->groupBy('agent_id')
+            ->selectRaw("agent_id,
+                COUNT(*) FILTER (WHERE event_type = 'session_expired') AS expired,
+                COUNT(*) FILTER (WHERE event_type = 'went_offline') AS manual")
+            ->get()
+            ->keyBy('agent_id');
+
+        // Post-offline notifications answered by a went_online within 60 min.
+        $hourSql = $this->hourFilterSql('n.created_at', $hourFrom, $hourTo);
+        $notifRows = collect(DB::select(
+            "SELECT n.agent_id, COUNT(*) AS total,
+                    COUNT(*) FILTER (WHERE EXISTS (
+                        SELECT 1 FROM status_events se
+                        WHERE se.agent_id = n.agent_id AND se.event_type = 'went_online'
+                          AND se.created_at > n.created_at
+                          AND se.created_at <= n.created_at + INTERVAL '60 minutes'
+                    )) AS responded
+             FROM notification_log n
+             WHERE n.notification_type LIKE '%post_offline%'
+               AND n.created_at >= ? AND n.created_at < ?"
+            .($agentId ? ' AND n.agent_id = '.((int) $agentId) : '')
+            .($hourSql ? " AND {$hourSql}" : '')
+            .' GROUP BY n.agent_id',
+            [$from, $end],
+        ))->keyBy('agent_id');
+
+        $rows = $agents->map(function (Agent $agent) use ($clicks, $rollups, $offRows, $notifRows, $days) {
+            $r = $rollups->get($agent->id, collect());
+            $minutes = (int) $r->sum('minutes_live');
+            $sessions = (int) $r->sum('times_went_online');
+            $liveDays = $r->filter(fn ($x) => $x['minutes_live'] >= 1)->count();
+            $clickCount = (int) ($clicks->get($agent->id) ?? 0);
+            $off = $offRows->get($agent->id);
+            $notif = $notifRows->get($agent->id);
+            $expired = (int) ($off->expired ?? 0);
+            $manual = (int) ($off->manual ?? 0);
+
+            return [
+                'agent_id' => $agent->id,
+                'display_number' => $agent->display_number,
+                'telegram_username' => $agent->telegram_username,
+                'deposit_clicks' => $clickCount,
+                'minutes_live' => $minutes,
+                'clicks_per_hour_online' => $minutes > 0 ? round($clickCount / ($minutes / 60), 2) : null,
+                'uptime_days' => round($liveDays / $days, 4),
+                'sessions' => $sessions,
+                'avg_session_minutes' => $sessions > 0 ? (int) round($minutes / $sessions) : 0,
+                'expired_offline_count' => $expired,
+                'manual_offline_count' => $manual,
+                'expired_vs_manual_offline' => $manual > 0 ? round($expired / $manual, 2) : null,
+                'notification_response_rate' => ($notif && (int) $notif->total > 0)
+                    ? round((int) $notif->responded / (int) $notif->total, 4)
+                    : null,
+            ];
+        })->sortByDesc('deposit_clicks')->values()->all();
+
+        return [
+            'agents' => $rows,
+            // Minutes/session metrics come from daily_stats rollups, which
+            // have no hour granularity — flagged instead of silently wrong.
+            'hour_filter_unsupported' => $hourFiltered
+                ? ['minutes_live', 'clicks_per_hour_online', 'uptime_days', 'sessions', 'avg_session_minutes']
+                : [],
+        ];
+    }
+
+    private function computeCoverage(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        $rangeEnd = $to->copy()->addDay();
+        $now = now();
+        $effectiveEnd = $rangeEnd->lt($now) ? $rangeEnd : $now->copy();
+
+        // Live agent-hours per concrete date-hour slot.
+        $liveBySlot = [];
+        foreach ($this->liveIntervals($from, $effectiveEnd, $agentId) as [$start, $intervalEnd]) {
+            $this->accumulateHourFractions($start, $intervalEnd, $liveBySlot);
+        }
+
+        $occurrences = [];
+        $liveByDowHour = [];
+        $gaps = [];
+        $day = $from->copy();
+        while ($day->lt($rangeEnd)) {
+            foreach (range(0, 23) as $hour) {
+                $slotStart = $day->copy()->setTime($hour, 0);
+                if ($slotStart->gte($effectiveEnd) || ! $this->hourAllowed($hour, $hourFrom, $hourTo)) {
+                    continue;
+                }
+                $dowKey = $slotStart->dayOfWeek.'|'.$hour;
+                $occurrences[$dowKey] = ($occurrences[$dowKey] ?? 0) + 1;
+                $live = $liveBySlot[$day->format('Y-m-d').'|'.$hour] ?? 0.0;
+                $liveByDowHour[$dowKey] = ($liveByDowHour[$dowKey] ?? 0) + $live;
+                if ($live == 0.0) {
+                    $gaps[] = ['date' => $day->toDateString(), 'hour' => $hour];
+                }
+            }
+            $day->addDay();
+        }
+
+        $liveMatrix = [];
+        foreach ($occurrences as $dowKey => $count) {
+            $avg = $liveByDowHour[$dowKey] / $count;
+            if ($avg > 0) {
+                [$dow, $hour] = explode('|', $dowKey);
+                $liveMatrix[] = ['day' => (int) $dow, 'hour' => (int) $hour, 'avg_agents_live' => round($avg, 2)];
+            }
+        }
+
+        // Click-demand matrix — mirrors computeHeatmap with the filter
+        // contract applied.
+        $clickQ = ClickEvent::where('click_type', 'deposit')
+            ->where('created_at', '>=', $from)->where('created_at', '<', $rangeEnd)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId));
+        $this->applyHourFilter($clickQ, $hourFrom, $hourTo);
+        $clicksMatrix = $clickQ
+            ->selectRaw('EXTRACT(DOW FROM created_at) AS day, EXTRACT(HOUR FROM created_at) AS hour, COUNT(*) AS count')
+            ->groupByRaw('EXTRACT(DOW FROM created_at), EXTRACT(HOUR FROM created_at)')
+            ->get()
+            ->map(fn ($row) => [
+                'day' => (int) $row->day,
+                'hour' => (int) $row->hour,
+                'count' => (int) $row->count,
+            ])
+            ->all();
+
+        return [
+            'live_matrix' => $liveMatrix,
+            'clicks_matrix' => $clicksMatrix,
+            'gap_hours' => $gaps,
+        ];
+    }
+
+    private function computeRecords(?int $agentId): array
+    {
+        // All-time absolutes: ignores date and hour filters by design.
+        // visit_events has no agent link, so visit records stay site-wide.
+        $bestVisitDay = VisitEvent::selectRaw('DATE(created_at) AS day, COUNT(*) AS count')
+            ->groupByRaw('DATE(created_at)')->orderByDesc('count')->orderBy('day')->first();
+        $bestVisitHour = VisitEvent::selectRaw("date_trunc('hour', created_at) AS slot, COUNT(*) AS count")
+            ->groupByRaw("date_trunc('hour', created_at)")->orderByDesc('count')->orderBy('slot')->first();
+
+        $clickQ = fn () => ClickEvent::where('click_type', 'deposit')
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId));
+        $bestClickDay = $clickQ()->selectRaw('DATE(created_at) AS day, COUNT(*) AS count')
+            ->groupByRaw('DATE(created_at)')->orderByDesc('count')->orderBy('day')->first();
+        $bestClickHour = $clickQ()->selectRaw("date_trunc('hour', created_at) AS slot, COUNT(*) AS count")
+            ->groupByRaw("date_trunc('hour', created_at)")->orderByDesc('count')->orderBy('slot')->first();
+
+        $fmtDay = fn ($row) => $row ? ['date' => substr((string) $row->day, 0, 10), 'count' => (int) $row->count] : null;
+        $fmtHour = fn ($row) => $row ? ['hour' => (string) $row->slot, 'count' => (int) $row->count] : null;
+
+        return [
+            'best_visit_day' => $fmtDay($bestVisitDay),
+            'best_visit_hour' => $fmtHour($bestVisitHour),
+            'best_click_day' => $fmtDay($bestClickDay),
+            'best_click_hour' => $fmtHour($bestClickHour),
+        ];
+    }
+
+    // -----------------------------------------------------------------
+    // Filter + interval helpers
+    // -----------------------------------------------------------------
+
+    private function filterKey(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): string
+    {
+        return "{$from->toDateString()}:{$to->toDateString()}:".($agentId ?? 'all').':'.($hourFrom ?? '-').':'.($hourTo ?? '-');
+    }
+
+    /**
+     * Timestamps are stored as EAT strings (see CLAUDE.md timezone notes),
+     * so EXTRACT(HOUR ...) yields the Africa/Addis_Ababa hour directly.
+     * Wrap-around ranges (e.g. 22-04) select hours >= from OR <= to.
+     * Bounds are validated 0-23 integers, safe to inline.
+     */
+    private function hourFilterSql(string $column, ?int $hourFrom, ?int $hourTo): ?string
+    {
+        if ($hourFrom === null || $hourTo === null) {
+            return null;
+        }
+        if ($hourFrom <= $hourTo) {
+            return "EXTRACT(HOUR FROM {$column}) BETWEEN {$hourFrom} AND {$hourTo}";
+        }
+
+        return "(EXTRACT(HOUR FROM {$column}) >= {$hourFrom} OR EXTRACT(HOUR FROM {$column}) <= {$hourTo})";
+    }
+
+    private function applyHourFilter($query, ?int $hourFrom, ?int $hourTo, string $column = 'created_at'): void
+    {
+        $sql = $this->hourFilterSql($column, $hourFrom, $hourTo);
+        if ($sql !== null) {
+            $query->whereRaw($sql);
+        }
+    }
+
+    private function hourAllowed(int $hour, ?int $hourFrom, ?int $hourTo): bool
+    {
+        if ($hourFrom === null || $hourTo === null) {
+            return true;
+        }
+
+        return $hourFrom <= $hourTo
+            ? ($hour >= $hourFrom && $hour <= $hourTo)
+            : ($hour >= $hourFrom || $hour <= $hourTo);
+    }
+
+    /**
+     * @param  Collection<int, object{referrer: ?string, count: mixed}>  $rows
+     */
+    private function normalizeReferrers($rows): array
+    {
+        return $rows->groupBy(function ($row) {
+            if (! $row->referrer) {
+                return 'direct';
+            }
+
+            return parse_url($row->referrer, PHP_URL_HOST) ?: 'direct';
+        })->map(fn ($group, $source) => [
+            'source' => $source,
+            'count' => (int) $group->sum('count'),
+        ])->sortByDesc('count')->values()->all();
+    }
+
+    /**
+     * Reconstruct [start, end) live intervals from lifecycle status events.
+     * Agents already live at $from are seeded from their latest prior event.
+     */
+    private function liveIntervals(Carbon $from, Carbon $end, ?int $agentId): array
+    {
+        $lifecycle = [
+            StatusEvent::EVENT_WENT_ONLINE,
+            StatusEvent::EVENT_EXTENDED,
+            StatusEvent::EVENT_WENT_OFFLINE,
+            StatusEvent::EVENT_SESSION_EXPIRED,
+        ];
+        $online = [StatusEvent::EVENT_WENT_ONLINE, StatusEvent::EVENT_EXTENDED];
+
+        $placeholders = implode(',', array_fill(0, count($lifecycle), '?'));
+        $seeds = DB::select(
+            "SELECT DISTINCT ON (agent_id) agent_id, event_type FROM status_events
+             WHERE created_at < ? AND event_type IN ({$placeholders})"
+            .($agentId ? ' AND agent_id = '.((int) $agentId) : '')
+            .' ORDER BY agent_id, created_at DESC, id DESC',
+            [$from, ...$lifecycle],
+        );
+
+        $open = [];
+        foreach ($seeds as $seed) {
+            if (in_array($seed->event_type, $online)) {
+                $open[$seed->agent_id] = $from->copy();
+            }
+        }
+
+        $events = StatusEvent::whereIn('event_type', $lifecycle)
+            ->where('created_at', '>=', $from)->where('created_at', '<', $end)
+            ->when($agentId, fn ($q) => $q->where('agent_id', $agentId))
+            ->orderBy('created_at')->orderBy('id')
+            ->get(['agent_id', 'event_type', 'created_at']);
+
+        $intervals = [];
+        foreach ($events as $event) {
+            $isOnline = in_array($event->event_type, $online);
+            if ($isOnline && ! isset($open[$event->agent_id])) {
+                $open[$event->agent_id] = $event->created_at->copy();
+            } elseif (! $isOnline && isset($open[$event->agent_id])) {
+                $intervals[] = [$open[$event->agent_id], $event->created_at->copy()];
+                unset($open[$event->agent_id]);
+            }
+        }
+        foreach ($open as $start) {
+            $intervals[] = [$start, $end->copy()];
+        }
+
+        return $intervals;
+    }
+
+    /**
+     * Split [start, end) into fractional hours keyed 'Y-m-d|H'.
+     */
+    private function accumulateHourFractions(Carbon $start, Carbon $end, array &$bucket): void
+    {
+        $t = $start->copy();
+        while ($t->lt($end)) {
+            $slotEnd = $t->copy()->startOfHour()->addHour();
+            $chunkEnd = $slotEnd->lt($end) ? $slotEnd : $end->copy();
+            $key = $t->format('Y-m-d').'|'.$t->hour;
+            $bucket[$key] = ($bucket[$key] ?? 0) + $t->diffInSeconds($chunkEnd) / 3600;
+            $t = $chunkEnd;
+        }
     }
 }
