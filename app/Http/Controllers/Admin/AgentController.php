@@ -7,6 +7,8 @@ use App\Http\Requests\Admin\CreateAgentRequest;
 use App\Http\Requests\Admin\ListAgentsRequest;
 use App\Http\Requests\Admin\UpdateAgentRequest;
 use App\Models\Agent;
+use App\Models\ClickEvent;
+use App\Models\DailyStat;
 use App\Models\StatusEvent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,8 +79,23 @@ class AgentController extends Controller
         $paginator = $query->paginate($perPage);
 
         $now = now();
+        $agentIds = $paginator->getCollection()->pluck('id');
 
-        $data = $paginator->getCollection()->map(function (Agent $agent) use ($now) {
+        $clicksToday = ClickEvent::whereIn('agent_id', $agentIds)
+            ->where('click_type', 'deposit')
+            ->where('created_at', '>=', $now->copy()->startOfDay())
+            ->groupBy('agent_id')
+            ->selectRaw('agent_id, COUNT(*) as count')
+            ->pluck('count', 'agent_id');
+
+        // daily_stats only holds fully rolled-up past days (02:00 rollup),
+        // so today's clicks come from raw click_events on top of it.
+        $rolledUpClicks = DailyStat::whereIn('agent_id', $agentIds)
+            ->groupBy('agent_id')
+            ->selectRaw('agent_id, SUM(deposit_clicks) as total')
+            ->pluck('total', 'agent_id');
+
+        $data = $paginator->getCollection()->map(function (Agent $agent) use ($now, $clicksToday, $rolledUpClicks) {
             $computedStatus = $this->computeStatus($agent, $now);
             $secondsRemaining = null;
 
@@ -103,8 +120,9 @@ class AgentController extends Controller
                     'display_name' => $pm->display_name,
                 ]),
                 'notes' => $agent->notes,
-                'clicks_today' => 0, // TODO: Phase F — wire to click_events aggregate
-                'clicks_total' => 0, // TODO: Phase F — wire to daily_stats + click_events
+                'clicks_today' => (int) ($clicksToday->get($agent->id) ?? 0),
+                'clicks_total' => (int) ($rolledUpClicks->get($agent->id) ?? 0)
+                    + (int) ($clicksToday->get($agent->id) ?? 0),
                 'created_at' => $agent->created_at->toIso8601String(),
             ];
         });

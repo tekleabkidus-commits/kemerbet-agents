@@ -41,6 +41,13 @@ interface AgentStatsSummary {
     avg_session_duration_minutes: number;
 }
 
+interface AgentMethodClicks {
+    slug: string;
+    display_name: string;
+    clicks: number;
+    percentage: number;
+}
+
 interface EditAgentModalProps {
     agentId: number | null;
     onClose: () => void;
@@ -125,6 +132,7 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     const [agent, setAgent] = useState<AgentDetail | null>(null);
     const [allMethods, setAllMethods] = useState<PaymentMethod[]>([]);
     const [agentStats, setAgentStats] = useState<AgentStatsSummary | null>(null);
+    const [methodClicks, setMethodClicks] = useState<AgentMethodClicks[]>([]);
     const [statsLoading, setStatsLoading] = useState(false);
 
     // Form state
@@ -200,12 +208,19 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     useEffect(() => {
         if (agentId === null) {
             setAgentStats(null);
+            setMethodClicks([]);
             return;
         }
         setStatsLoading(true);
         api.get(`/api/admin/stats/agent/${agentId}?range=30d`)
-            .then((res) => setAgentStats(res.data.data.summary))
-            .catch(() => setAgentStats(null))
+            .then((res) => {
+                setAgentStats(res.data.data.summary);
+                setMethodClicks(res.data.data.payment_methods ?? []);
+            })
+            .catch(() => {
+                setAgentStats(null);
+                setMethodClicks([]);
+            })
             .finally(() => setStatsLoading(false));
     }, [agentId]);
 
@@ -484,6 +499,30 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                                 <div style={{ color: 'var(--text-dim)', fontSize: '.82rem', padding: '8px 0' }}>No activity recorded yet</div>
                             )}
                         </div>
+
+                        {/* Clicks by payment method */}
+                        {!statsLoading && methodClicks.length > 0 && (
+                            <div className="form-row">
+                                <label className="form-label">Clicks by payment method &mdash; last 30 days</label>
+                                <div className="bar-list">
+                                    {methodClicks.map((m) => (
+                                        <div className="bar-row" key={m.slug}>
+                                            <div className="bar-label">{m.display_name}</div>
+                                            <div className="bar-track">
+                                                <div
+                                                    className="bar-fill"
+                                                    style={{
+                                                        width: `${(m.clicks / Math.max(1, ...methodClicks.map((x) => x.clicks))) * 100}%`,
+                                                        background: 'linear-gradient(90deg, var(--green-dark), var(--green))',
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="bar-value">{m.clicks} &middot; {m.percentage}%</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <hr className="section-divider" />
 

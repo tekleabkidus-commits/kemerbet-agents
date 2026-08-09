@@ -236,7 +236,42 @@ class StatsService
                 'minutes_live' => (int) ($allTime->minutes_live ?? 0),
                 'times_went_online' => (int) ($allTime->times_went_online ?? 0),
             ],
+            'payment_methods' => $this->computeAgentPaymentMethods($agent, $from, $to),
         ];
+    }
+
+    /**
+     * This agent's deposit clicks aggregated by payment method slug.
+     * Slugs no longer present in payment_methods are skipped; percentages
+     * are shares of the remaining (known-slug) click total.
+     */
+    private function computeAgentPaymentMethods(Agent $agent, Carbon $from, Carbon $to): array
+    {
+        $end = $to->copy()->addDay();
+        $clickCounts = collect(DB::select(
+            'SELECT element AS slug, COUNT(*) AS count
+             FROM click_events
+             CROSS JOIN LATERAL jsonb_array_elements_text(payment_methods) AS element
+             WHERE agent_id = ? AND click_type = ? AND created_at >= ? AND created_at < ? AND payment_methods IS NOT NULL
+             GROUP BY element',
+            [$agent->id, 'deposit', $from, $end],
+        ))->pluck('count', 'slug');
+
+        $methods = PaymentMethod::whereIn('slug', $clickCounts->keys())->get()->keyBy('slug');
+
+        $known = $clickCounts->filter(fn ($count, $slug) => $methods->has($slug));
+        $total = (int) $known->sum();
+
+        return $known
+            ->map(fn ($count, $slug) => [
+                'slug' => $slug,
+                'display_name' => $methods->get($slug)->display_name,
+                'clicks' => (int) $count,
+                'percentage' => $total > 0 ? round((int) $count / $total * 100, 1) : 0,
+            ])
+            ->sortByDesc('clicks')
+            ->values()
+            ->all();
     }
 
     private function computeHeatmap(Carbon $from, Carbon $to): array

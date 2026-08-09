@@ -493,3 +493,55 @@ it('leaderboard returns is_live boolean for each agent', function () {
     expect($live['is_live'])->toBeTrue()
         ->and($offline['is_live'])->toBeFalse();
 });
+
+// =====================================================================
+// agent/{id} payment methods breakdown
+// =====================================================================
+
+it('agentDetail returns payment_methods breakdown counts', function () {
+    $telebirr = PaymentMethod::create(['slug' => 'telebirr', 'display_name' => 'Telebirr', 'display_order' => 1, 'is_active' => true]);
+    $cbe = PaymentMethod::create(['slug' => 'cbe', 'display_name' => 'CBE Birr', 'display_order' => 2, 'is_active' => true]);
+
+    $otherAgent = Agent::create([
+        'display_number' => 2,
+        'telegram_username' => 'OTHERAGENT',
+        'status' => 'active',
+    ]);
+
+    $makeClick = fn (int $agentId, string $type, ?array $methods) => ClickEvent::create([
+        'agent_id' => $agentId,
+        'click_type' => $type,
+        'visitor_id' => 'v_'.uniqid(),
+        'ip_address' => '127.0.0.1',
+        'payment_methods' => $methods,
+        'created_at' => now(),
+    ]);
+
+    $makeClick($this->agent->id, 'deposit', ['telebirr']);
+    $makeClick($this->agent->id, 'deposit', ['telebirr']);
+    $makeClick($this->agent->id, 'deposit', ['telebirr', 'cbe']);
+    $makeClick($this->agent->id, 'deposit', ['discontinued-method']); // slug no longer exists — skipped
+    $makeClick($this->agent->id, 'deposit', null);                    // untagged — ignored
+    $makeClick($this->agent->id, 'chat', ['cbe']);                    // non-deposit — ignored
+    $makeClick($otherAgent->id, 'deposit', ['cbe']);                  // other agent — excluded
+
+    $response = $this->actingAs($this->admin)
+        ->getJson("/api/admin/stats/agent/{$this->agent->id}?range=7d");
+
+    $response->assertOk();
+    $breakdown = $response->json('data.payment_methods');
+
+    expect($breakdown)->toHaveCount(2);
+    expect($breakdown[0])->toEqual([
+        'slug' => $telebirr->slug,
+        'display_name' => 'Telebirr',
+        'clicks' => 3,
+        'percentage' => 75.0,
+    ]);
+    expect($breakdown[1])->toEqual([
+        'slug' => $cbe->slug,
+        'display_name' => 'CBE Birr',
+        'clicks' => 1,
+        'percentage' => 25.0,
+    ]);
+});

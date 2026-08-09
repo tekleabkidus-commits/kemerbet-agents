@@ -2,6 +2,8 @@
 
 use App\Models\Admin;
 use App\Models\Agent;
+use App\Models\ClickEvent;
+use App\Models\DailyStat;
 use Database\Seeders\AgentSeeder;
 use Database\Seeders\PaymentMethodSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -253,4 +255,57 @@ test('sort by last_seen with mixed null/non-null last_status_change_at puts null
     for ($i = 2; $i < count($data); $i++) {
         expect($data[$i]['last_status_change_at'])->toBeNull();
     }
+});
+
+// --- Click counts ---
+
+test('clicks_today and clicks_total combine daily_stats with today click events', function () {
+    $agent = Agent::where('display_number', 1)->first();
+
+    // Historical rolled-up days
+    DailyStat::create([
+        'date' => now()->subDays(2)->toDateString(),
+        'agent_id' => $agent->id,
+        'deposit_clicks' => 10,
+        'created_at' => now(),
+    ]);
+    DailyStat::create([
+        'date' => now()->subDay()->toDateString(),
+        'agent_id' => $agent->id,
+        'deposit_clicks' => 5,
+        'created_at' => now(),
+    ]);
+
+    // Today's raw deposit clicks (not yet rolled up)
+    foreach (range(1, 3) as $i) {
+        ClickEvent::create([
+            'agent_id' => $agent->id,
+            'click_type' => 'deposit',
+            'visitor_id' => "v_{$i}",
+            'ip_address' => '127.0.0.1',
+            'created_at' => now(),
+        ]);
+    }
+
+    // A non-deposit click today must not count
+    ClickEvent::create([
+        'agent_id' => $agent->id,
+        'click_type' => 'chat',
+        'visitor_id' => 'v_chat',
+        'ip_address' => '127.0.0.1',
+        'created_at' => now(),
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->getJson('/api/admin/agents?per_page=50');
+
+    $response->assertOk();
+    $row = collect($response->json('data'))->firstWhere('id', $agent->id);
+
+    expect($row['clicks_today'])->toBe(3);
+    expect($row['clicks_total'])->toBe(18); // 10 + 5 rolled up + 3 today
+
+    $other = collect($response->json('data'))->firstWhere('display_number', 2);
+    expect($other['clicks_today'])->toBe(0);
+    expect($other['clicks_total'])->toBe(0);
 });
