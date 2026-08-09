@@ -419,6 +419,31 @@ it('pin-effectiveness flags insufficient data under 2 hours in a state', functio
     expect($data['agents'][0]['insufficient_data'])->toBeTrue();
 });
 
+// =====================================================================
+// sparklines
+// =====================================================================
+
+it('sparklines returns aligned 14-day click series per agent', function () {
+    $response = $this->actingAs($this->admin)->getJson('/api/admin/stats/sparklines?range=7d');
+
+    $data = $response->assertOk()->json('data');
+    expect($data['days'])->toHaveCount(14);
+    expect($data['days'][13])->toBe('2026-05-10');
+
+    $seriesA = $data['agents'][(string) $this->agentA->id];
+    expect(array_sum($seriesA))->toBe(3); // c1 + c2 + c4 in window
+    expect($seriesA[array_search('2026-05-09', $data['days'])])->toBe(2);
+});
+
+it('sparklines scopes to agent_id', function () {
+    $response = $this->actingAs($this->admin)
+        ->getJson("/api/admin/stats/sparklines?range=7d&agent_id={$this->agentB->id}");
+
+    $agents = $response->assertOk()->json('data.agents');
+    expect($agents)->toHaveKey((string) $this->agentB->id);
+    expect($agents)->not->toHaveKey((string) $this->agentA->id);
+});
+
 it('accepts bare from and to params without range=custom', function () {
     $response = $this->actingAs($this->admin)
         ->getJson('/api/admin/stats/funnel?from=2026-05-08&to=2026-05-09');

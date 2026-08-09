@@ -123,6 +123,14 @@ class StatsController extends Controller
             $this->stats->pinEffectiveness($from, $to, $agentId, $hourFrom, $hourTo));
     }
 
+    public function sparklines(Request $request): JsonResponse
+    {
+        [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);
+
+        return $this->respondFiltered($from, $to, $agentId, $hourFrom, $hourTo,
+            $this->stats->sparklines($from, $to, $agentId, $hourFrom, $hourTo));
+    }
+
     public function records(Request $request): JsonResponse
     {
         [$from, $to, $agentId, $hourFrom, $hourTo] = $this->parseFilters($request);

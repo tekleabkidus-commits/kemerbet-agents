@@ -1,9 +1,12 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
     LayoutDashboard,
     Users,
     BarChart3,
+    UsersRound,
+    Globe,
+    Grid,
     CreditCard,
     Settings,
     ScrollText,
@@ -11,8 +14,13 @@ import {
 
 export default function AdminLayout() {
     const { user } = useAuth();
+    const location = useLocation();
 
     const initial = user?.name?.charAt(0).toUpperCase() ?? 'A';
+
+    // Keep the analytics filter selection (URL search params) when moving
+    // between analytics pages.
+    const analyticsSearch = location.pathname.startsWith('/admin/analytics') ? location.search : '';
 
     return (
         <div className="app">
@@ -39,9 +47,26 @@ export default function AdminLayout() {
                     <span className="badge">24</span>
                 </NavLink>
 
-                <NavLink to="/admin/analytics" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                <div className="nav-label">Analytics</div>
+
+                <NavLink to={`/admin/analytics/overview${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                     <BarChart3 size={18} className="icon" />
-                    <span>Analytics</span>
+                    <span>Overview</span>
+                </NavLink>
+
+                <NavLink to={`/admin/analytics/agents${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                    <UsersRound size={18} className="icon" />
+                    <span>Agents</span>
+                </NavLink>
+
+                <NavLink to={`/admin/analytics/customers${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                    <Globe size={18} className="icon" />
+                    <span>Customers</span>
+                </NavLink>
+
+                <NavLink to={`/admin/analytics/coverage${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                    <Grid size={18} className="icon" />
+                    <span>Coverage</span>
                 </NavLink>
 
                 <div className="nav-label">Setup</div>

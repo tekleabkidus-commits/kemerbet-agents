@@ -178,6 +178,18 @@ class StatsService
     }
 
     /**
+     * Batched 14-day click sparkline series per agent (window ends at $to).
+     */
+    public function sparklines(Carbon $from, Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        return Cache::remember(
+            'stats:sparklines:'.$this->filterKey($from, $to, $agentId, $hourFrom, $hourTo),
+            self::CACHE_TTL,
+            fn () => $this->computeSparklines($to, $agentId, $hourFrom, $hourTo),
+        );
+    }
+
+    /**
      * All-time records. Ignores date/hour filters by design; honors agent_id.
      */
     public function records(?int $agentId): array
@@ -933,6 +945,42 @@ class StatsService
                 'unpinned_clicks_per_hour' => $aggUnpinnedHours > 0 ? round($aggUnpinnedClicks / $aggUnpinnedHours, 2) : null,
                 'insufficient_data' => $aggPinnedHours < 2 || $aggUnpinnedHours < 2,
             ],
+        ];
+    }
+
+    private function computeSparklines(Carbon $to, ?int $agentId, ?int $hourFrom, ?int $hourTo): array
+    {
+        // Fixed 14-day window ending at the range's last day — sparklines are
+        // a fixed-width visual, so the range's `from` is intentionally unused.
+        $start = $to->copy()->subDays(13);
+        $end = $to->copy()->addDay();
+
+        $q = ClickEvent::where('click_type', 'deposit')
+            ->where('created_at', '>=', $start)->where('created_at', '<', $end)
+            ->when($agentId, fn ($qq) => $qq->where('agent_id', $agentId));
+        $this->applyHourFilter($q, $hourFrom, $hourTo);
+        $rows = $q->selectRaw('agent_id, DATE(created_at) AS day, COUNT(*) AS count')
+            ->groupByRaw('agent_id, DATE(created_at)')
+            ->get();
+
+        $days = [];
+        foreach (range(0, 13) as $i) {
+            $days[] = $start->copy()->addDays($i)->toDateString();
+        }
+
+        $byAgent = [];
+        foreach ($rows as $row) {
+            $byAgent[$row->agent_id][substr((string) $row->day, 0, 10)] = (int) $row->count;
+        }
+
+        $series = [];
+        foreach ($byAgent as $id => $counts) {
+            $series[(string) $id] = array_map(fn ($day) => $counts[$day] ?? 0, $days);
+        }
+
+        return [
+            'days' => $days,
+            'agents' => $series === [] ? new \stdClass : $series,
         ];
     }
 
