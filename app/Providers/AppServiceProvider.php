@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\NotificationDispatcher;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Without an explicit binding the container would autowire the
+        // dispatcher's optional WebPush parameter, building the VAPID
+        // client on every resolve. Let the dispatcher create it lazily.
+        $this->app->bind(NotificationDispatcher::class, fn () => new NotificationDispatcher);
     }
 
     public function boot(): void

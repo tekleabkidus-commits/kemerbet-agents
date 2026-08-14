@@ -33,6 +33,8 @@ class NotificationLog extends Model
 
     public const TYPE_WAKEUP_7AM = 'wakeup_7am';
 
+    public const TYPE_ADMIN_NOTICE = 'admin_notice';
+
     public const TYPES = [
         self::TYPE_PRE_EXPIRATION_15,
         self::TYPE_PRE_EXPIRATION_10,
@@ -45,6 +47,7 @@ class NotificationLog extends Model
         self::TYPE_POST_OFFLINE_12H,
         self::TYPE_SLEEP_POST_OFFLINE_15,
         self::TYPE_WAKEUP_7AM,
+        self::TYPE_ADMIN_NOTICE,
     ];
 
     public $timestamps = false;

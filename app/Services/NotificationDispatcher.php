@@ -11,11 +11,21 @@ use Minishlink\WebPush\WebPush;
 
 class NotificationDispatcher
 {
-    private WebPush $webPush;
+    private ?WebPush $webPush;
 
     public function __construct(?WebPush $webPush = null)
     {
-        $this->webPush = $webPush ?? new WebPush([
+        $this->webPush = $webPush;
+    }
+
+    /**
+     * Build the WebPush client lazily so resolving the dispatcher
+     * (e.g. via controller injection) doesn't pay the VAPID setup cost
+     * unless a push is actually sent.
+     */
+    private function webPush(): WebPush
+    {
+        return $this->webPush ??= new WebPush([
             'VAPID' => [
                 'subject' => config('services.webpush.subject'),
                 'publicKey' => config('services.webpush.public_key'),
@@ -52,7 +62,7 @@ class NotificationDispatcher
         $byEndpoint = $subscriptions->keyBy('endpoint');
 
         foreach ($subscriptions as $sub) {
-            $this->webPush->queueNotification(
+            $this->webPush()->queueNotification(
                 Subscription::create([
                     'endpoint' => $sub->endpoint,
                     'publicKey' => $sub->p256dh_key,
@@ -64,7 +74,7 @@ class NotificationDispatcher
 
         $succeeded = 0;
 
-        foreach ($this->webPush->flush() as $report) {
+        foreach ($this->webPush()->flush() as $report) {
             $sub = $byEndpoint->get($report->getEndpoint());
 
             if (! $sub) {

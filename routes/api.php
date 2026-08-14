@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\StatsController;
@@ -30,6 +31,11 @@ Route::prefix('admin')->group(function () {
         Route::put('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update']);
         Route::delete('payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy']);
         Route::post('payment-methods/reorder', [PaymentMethodController::class, 'reorder']);
+        Route::get('notices', [NoticeController::class, 'index']);
+        Route::post('notices', [NoticeController::class, 'store']);
+        Route::put('notices/{notice}', [NoticeController::class, 'update']);
+        Route::post('notices/{notice}/toggle', [NoticeController::class, 'toggle']);
+        Route::delete('notices/{notice}', [NoticeController::class, 'destroy']);
         Route::get('settings', [SettingController::class, 'index']);
         Route::patch('settings', [SettingController::class, 'update']);
         Route::get('activity', [ActivityController::class, 'index']);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Agent;
 use App\Http\Controllers\Agent\Concerns\ResolvesAgentToken;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\Notice;
 use App\Models\PushSubscription;
 use App\Models\StatusEvent;
 use App\Rules\AllowedDuration;
@@ -263,6 +264,13 @@ class AgentSecretController extends Controller
             'available_durations' => AllowedDuration::availableDurations(),
             'recommended_duration' => AllowedDuration::recommendedDuration(),
             'token_suffix' => substr($agent->activeToken?->token ?? '', -4),
+            'notices' => Notice::currentlyVisible()->get()->map(fn (Notice $notice) => [
+                'id' => $notice->id,
+                'title' => $notice->title,
+                'body' => $notice->body,
+                'priority' => $notice->priority,
+                'created_at' => $notice->created_at->toIso8601String(),
+            ])->values(),
         ];
     }
 
