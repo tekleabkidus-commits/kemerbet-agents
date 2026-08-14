@@ -9,6 +9,7 @@ import {
     Grid,
     CreditCard,
     Settings,
+    Megaphone,
     ScrollText,
 } from 'lucide-react';
 
@@ -79,6 +80,11 @@ export default function AdminLayout() {
                 <NavLink to="/admin/settings" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                     <Settings size={18} className="icon" />
                     <span>Settings</span>
+                </NavLink>
+
+                <NavLink to="/admin/notices" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                    <Megaphone size={18} className="icon" />
+                    <span>Notices</span>
                 </NavLink>
 
                 <div className="nav-label">Audit</div>

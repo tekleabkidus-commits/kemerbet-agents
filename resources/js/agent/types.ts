@@ -25,6 +25,14 @@ export interface ActivityEvent {
   created_at: string; // ISO 8601
 }
 
+export interface NoticeItem {
+  id: number;
+  title: string | null;
+  body: string;
+  priority: 'urgent' | 'info';
+  created_at: string; // ISO 8601
+}
+
 export interface AgentState {
   agent: AgentInfo;
   status: AgentStatus;
@@ -33,6 +41,7 @@ export interface AgentState {
   available_durations: number[];
   recommended_duration: number | null;
   token_suffix: string;
+  notices: NoticeItem[];
 }
 
 /** Reduced payload returned when agent is disabled */

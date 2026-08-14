@@ -540,6 +540,80 @@ html,body{
   background:rgba(0,168,107,0.15);
 }
 
+/* NOTICE BOARD — same card shell as .notif-banner, neutral card colors */
+.notif-banner.notice-board{
+  background:var(--card-bg);
+  border-color:var(--card-border);
+  position:relative;
+  gap:8px;
+}
+
+.notice-viewport{
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+}
+
+.notice-track{
+  display:flex;
+  transition:transform .3s ease;
+}
+
+.notice-slide{
+  flex:0 0 100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+
+.notif-banner.notice-board .notif-icon{
+  background:var(--card-bg);
+}
+
+.notice-slide.urgent .notif-icon{
+  background:rgba(245,197,24,0.15);
+}
+
+.notice-slide.urgent .notif-title{
+  color:var(--gold);
+}
+
+.notice-nav{
+  background:none;
+  border:none;
+  color:var(--text-muted);
+  font-size:1.3rem;
+  line-height:1;
+  padding:4px 2px;
+  cursor:pointer;
+  flex-shrink:0;
+  font-family:inherit;
+}
+
+.notice-nav:active{transform:scale(.9)}
+
+.notice-dots{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-top:8px;
+}
+
+.notice-dot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  border:none;
+  padding:0;
+  background:var(--text-dim);
+  cursor:pointer;
+}
+
+.notice-dot.active{
+  background:var(--gold);
+}
+
 /* ACTIVITY */
 .activity{
   background:var(--card-bg);

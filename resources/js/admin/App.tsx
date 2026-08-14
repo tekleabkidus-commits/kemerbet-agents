@@ -12,6 +12,7 @@ import CustomersPage from '@/pages/analytics/CustomersPage';
 import CoveragePage from '@/pages/analytics/CoveragePage';
 import PaymentMethodsPage from '@/pages/PaymentMethodsPage';
 import SettingsPage from '@/pages/SettingsPage';
+import NoticesPage from '@/pages/NoticesPage';
 import ActivityPage from '@/pages/ActivityPage';
 
 // Old /admin/analytics URL keeps working — forward to Overview with filters.
@@ -39,6 +40,7 @@ export default function App() {
                             <Route path="/admin/analytics/coverage" element={<CoveragePage />} />
                             <Route path="/admin/payment-methods" element={<PaymentMethodsPage />} />
                             <Route path="/admin/settings" element={<SettingsPage />} />
+                            <Route path="/admin/notices" element={<NoticesPage />} />
                             <Route path="/admin/activity" element={<ActivityPage />} />
                         </Route>
                     </Route>

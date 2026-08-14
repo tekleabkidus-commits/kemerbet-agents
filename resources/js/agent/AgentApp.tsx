@@ -212,7 +212,11 @@ export default function AgentApp({ token }: { token: string }) {
       {(pageState === 'live' || pageState === 'offline') && serverState && (
         <>
           <Greeting displayNumber={serverState.agent.display_number} />
-          <NotificationBanner permission={permission} onPermissionChange={setPermission} />
+          <NotificationBanner
+            permission={permission}
+            onPermissionChange={setPermission}
+            notices={serverState.notices ?? []}
+          />
           <StatusCard
             state={serverState}
             onGoOffline={() => setOfflineModalOpen(true)}
