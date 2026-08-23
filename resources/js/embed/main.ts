@@ -373,6 +373,7 @@ function buildShellHTML(lang: Lang): string {
       <div class="screen" id="screenDeposit">
         <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
 
+        <div id="noticeWrapDep"></div>
         <div id="videoWrap"></div>
 
         <div class="section-title">

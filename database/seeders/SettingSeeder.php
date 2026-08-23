@@ -21,7 +21,11 @@ class SettingSeeder extends Seeder
                 'onboarding_video_url' => '',
 
                 // --- Withdrawal system ---
-                'withdrawals_enabled' => true,
+                // LAUNCH DARK: withdrawals ship disabled. The widget behaves as
+                // the classic deposit-only embed until an admin flips this on in
+                // Settings -> Withdrawals (after configuring agent IDs, banks,
+                // and templates).
+                'withdrawals_enabled' => false,
                 'withdrawal_min' => 200,
                 'withdrawal_max_default' => 10000,
                 'withdrawal_quick_amounts' => [200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000],

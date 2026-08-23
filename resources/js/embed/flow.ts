@@ -98,14 +98,31 @@ export function renderHomeExtras(deps: FlowDeps): void {
   const lang = getLang();
   const t = I18N[lang];
 
+  // MASTER SWITCH — withdrawals disabled: the widget behaves like the classic
+  // deposit-only embed. No intent chooser; the player lands directly on the
+  // agent list (deposit screen) with its back button hidden. Player notices
+  // render at the top of that screen instead of the (unreachable) home.
+  const withdrawalsOn = data.settings.withdrawals_enabled !== false;
+  const depBack = shadow.querySelector('#screenDeposit .backrow') as HTMLElement | null;
+  if (!withdrawalsOn) {
+    if (depBack) depBack.style.display = 'none';
+    showScreen(shadow, 'deposit');
+  } else if (depBack) {
+    depBack.style.display = '';
+  }
+
   // Player notice board (admin-managed, audience=player/both)
   const noticeWrap = shadow.getElementById('noticeWrap');
-  if (noticeWrap) {
+  const noticeWrapDep = shadow.getElementById('noticeWrapDep');
+  const noticeTarget = withdrawalsOn ? noticeWrap : noticeWrapDep;
+  const noticeOther = withdrawalsOn ? noticeWrapDep : noticeWrap;
+  if (noticeOther) noticeOther.innerHTML = '';
+  if (noticeTarget) {
     const notices = data.notices ?? [];
     if (notices.length === 0) {
-      noticeWrap.innerHTML = '';
+      noticeTarget.innerHTML = '';
     } else {
-      noticeWrap.innerHTML = notices
+      noticeTarget.innerHTML = notices
         .map((n) => {
           const vid = n.video_url ? youTubeId(n.video_url) : null;
           const videoHtml = vid
