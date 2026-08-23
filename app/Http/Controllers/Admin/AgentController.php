@@ -147,10 +147,17 @@ class AgentController extends Controller
     {
         $validated = $request->validated();
 
-        $agent->update(Arr::only($validated, ['display_number', 'telegram_username', 'notes']));
+        $agent->update(Arr::only($validated, [
+            'display_number', 'telegram_username', 'notes',
+            'accepts_withdrawals', 'withdrawal_id', 'withdrawal_max',
+        ]));
 
         if (isset($validated['payment_method_ids'])) {
             $agent->paymentMethods()->sync($validated['payment_method_ids']);
+        }
+
+        if (isset($validated['withdrawal_method_ids'])) {
+            $agent->withdrawalMethods()->sync($validated['withdrawal_method_ids']);
         }
 
         return $this->respondWithDetail($agent->fresh());
@@ -361,6 +368,7 @@ class AgentController extends Controller
     {
         $agent->load([
             'paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
+            'withdrawalMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order'),
             'activeToken',
         ]);
 
@@ -405,6 +413,14 @@ class AgentController extends Controller
                 'display_name' => $pm->display_name,
             ]),
             'notes' => $agent->notes,
+            'accepts_withdrawals' => (bool) $agent->accepts_withdrawals,
+            'withdrawal_id' => $agent->withdrawal_id,
+            'withdrawal_max' => $agent->withdrawal_max !== null ? (float) $agent->withdrawal_max : null,
+            'withdrawal_methods' => $agent->withdrawalMethods->map(fn ($pm) => [
+                'id' => $pm->id,
+                'slug' => $pm->slug,
+                'display_name' => $pm->display_name,
+            ]),
             'active_token_url' => $activeTokenUrl,
             'active_token_created_at' => $agent->activeToken?->created_at?->toIso8601String(),
             'active_token_last_used_at' => $agent->activeToken?->last_used_at?->toIso8601String(),

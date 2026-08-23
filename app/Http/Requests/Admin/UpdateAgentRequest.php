@@ -36,6 +36,13 @@ class UpdateAgentRequest extends FormRequest
             // empty bank-tags row.
             'payment_method_ids' => ['sometimes', 'array', 'min:1'],
             'payment_method_ids.*' => ['integer', 'exists:payment_methods,id'],
+
+            // --- Withdrawal management (admin-only) ---
+            'accepts_withdrawals' => ['sometimes', 'boolean'],
+            'withdrawal_id' => ['sometimes', 'nullable', 'string', 'max:60'],
+            'withdrawal_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'withdrawal_method_ids' => ['sometimes', 'array'],
+            'withdrawal_method_ids.*' => ['integer', 'exists:payment_methods,id'],
         ];
     }
 }

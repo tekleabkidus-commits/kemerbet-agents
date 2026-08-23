@@ -25,6 +25,10 @@ interface AgentDetail {
     last_status_change_at: string | null;
     payment_methods: PaymentMethod[];
     notes: string | null;
+    accepts_withdrawals: boolean;
+    withdrawal_id: string | null;
+    withdrawal_max: number | null;
+    withdrawal_methods: PaymentMethod[];
     active_token_url: string | null;
     active_token_created_at: string | null;
     active_token_last_used_at: string | null;
@@ -140,6 +144,10 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     const [telegramUsername, setTelegramUsername] = useState('');
     const [notes, setNotes] = useState('');
     const [selectedMethodIds, setSelectedMethodIds] = useState<number[]>([]);
+    const [acceptsWithdrawals, setAcceptsWithdrawals] = useState(false);
+    const [withdrawalId, setWithdrawalId] = useState('');
+    const [withdrawalMax, setWithdrawalMax] = useState('');
+    const [withdrawalMethodIds, setWithdrawalMethodIds] = useState<number[]>([]);
 
     // UI state
     const [isLoading, setIsLoading] = useState(false);
@@ -160,6 +168,10 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
             setTelegramUsername('');
             setNotes('');
             setSelectedMethodIds([]);
+            setAcceptsWithdrawals(false);
+            setWithdrawalId('');
+            setWithdrawalMax('');
+            setWithdrawalMethodIds([]);
             setAllMethods([]);
             setIsLoading(false);
             setError(null);
@@ -191,6 +203,10 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                 setTelegramUsername(a.telegram_username);
                 setNotes(a.notes ?? '');
                 setSelectedMethodIds(a.payment_methods.map((pm) => pm.id));
+                setAcceptsWithdrawals(a.accepts_withdrawals ?? false);
+                setWithdrawalId(a.withdrawal_id ?? '');
+                setWithdrawalMax(a.withdrawal_max != null ? String(a.withdrawal_max) : '');
+                setWithdrawalMethodIds((a.withdrawal_methods ?? []).map((pm) => pm.id));
                 setAllMethods(methodsRes.data.data);
             })
             .catch((err) => {
@@ -236,6 +252,10 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
             telegram_username: telegramUsername,
             notes: notes || null,
             payment_method_ids: selectedMethodIds,
+            accepts_withdrawals: acceptsWithdrawals,
+            withdrawal_id: withdrawalId.trim() || null,
+            withdrawal_max: withdrawalMax.trim() ? Number(withdrawalMax) : null,
+            withdrawal_method_ids: withdrawalMethodIds,
         })
             .then((res) => {
                 setAgent(res.data.data);
@@ -326,6 +346,12 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
 
     function toggleMethod(id: number) {
         setSelectedMethodIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
+    }
+
+    function toggleWithdrawalMethod(id: number) {
+        setWithdrawalMethodIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
         );
     }
@@ -468,6 +494,79 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                                 rows={3}
                             />
                         </div>
+
+                        <hr className="section-divider" />
+
+                        {/* Withdrawal management (admin-only) */}
+                        <div className="form-row">
+                            <label className="form-label">
+                                Withdrawals <span className="hint">agent pays players out</span>
+                            </label>
+                            <label className={`check-card${acceptsWithdrawals ? ' checked' : ''}`} style={{ marginBottom: 10 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={acceptsWithdrawals}
+                                    onChange={(e) => setAcceptsWithdrawals(e.target.checked)}
+                                />
+                                Accepts withdrawals
+                            </label>
+                        </div>
+
+                        {acceptsWithdrawals && (
+                            <>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Withdrawal ID <span className="req">*</span>{' '}
+                                        <span className="hint">shown to players in the auto-message; no ID = hidden from withdrawals</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={withdrawalId}
+                                        onChange={(e) => setWithdrawalId(e.target.value)}
+                                        placeholder="e.g. KB-58133"
+                                    />
+                                </div>
+
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Withdrawal max (ETB) <span className="hint">largest single payout this agent can cover</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        className="form-input"
+                                        value={withdrawalMax}
+                                        onChange={(e) => setWithdrawalMax(e.target.value)}
+                                        placeholder="e.g. 25000"
+                                    />
+                                </div>
+
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Withdrawal banks <span className="hint">banks this agent pays OUT to (separate from deposit)</span>
+                                    </label>
+                                    <div className="check-group">
+                                        {allMethods.map((pm) => {
+                                            const checked = withdrawalMethodIds.includes(pm.id);
+                                            return (
+                                                <label
+                                                    key={pm.id}
+                                                    className={`check-card${checked ? ' checked' : ''}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={checked}
+                                                        onChange={() => toggleWithdrawalMethod(pm.id)}
+                                                    />
+                                                    {pm.display_name}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <hr className="section-divider" />
 
