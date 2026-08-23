@@ -19,7 +19,7 @@ import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 // rendered by render.ts as before — untouched.
 // ---------------------------------------------------------------------------
 
-export type ScreenName = 'home' | 'amount' | 'results';
+export type ScreenName = 'home' | 'deposit' | 'amount' | 'results';
 
 export interface FlowDeps {
   shadow: ShadowRoot;
@@ -40,11 +40,10 @@ function fmt(n: number): string {
 }
 
 export function showScreen(shadow: ShadowRoot, name: ScreenName): void {
-  ['Home', 'Amount', 'Results'].forEach((s) => {
+  ['Home', 'Deposit', 'Amount', 'Results'].forEach((s) => {
     const el = shadow.getElementById('screen' + s);
     if (el) el.classList.toggle('active', s.toLowerCase() === name);
   });
-  // scroll the widget top into view on navigation
   shadow.getElementById('screen' + name.charAt(0).toUpperCase() + name.slice(1))
     ?.scrollIntoView({ block: 'nearest' });
 }

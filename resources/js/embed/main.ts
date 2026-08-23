@@ -240,9 +240,16 @@ function init(): void {
         renderAmountScreen(flowDeps);
         showScreen(shadow, 'amount');
       } else {
-        // Deposit: stay on home; the live list below is the deposit list.
-        shadow.getElementById('liveGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Deposit is its own screen (the live agent list lives there).
+        showScreen(shadow, 'deposit');
       }
+      return;
+    }
+
+    // Back buttons on the deposit screen
+    const depBack = target.closest('#screenDeposit [data-nav="home"]') as HTMLElement | null;
+    if (depBack) {
+      showScreen(shadow, 'home');
       return;
     }
 
@@ -337,8 +344,6 @@ function buildShellHTML(lang: Lang): string {
           <p data-i18n="subtitle">${t.subtitle}</p>
         </div>
 
-        <div id="videoWrap"></div>
-
         <!-- intent choice -->
         <div class="section-title"><h2 id="intentQuestion">${t.intent_question}</h2></div>
         <div class="intent">
@@ -359,8 +364,14 @@ function buildShellHTML(lang: Lang): string {
           <div class="section-title" style="margin-top:22px"><h2>${t.recents_title}</h2><span>${t.recents_only_you}</span></div>
           <div class="recents" id="recentsGrid"></div>
         </div>
+      </div>
 
-        <!-- live agent list (deposit) -->
+      <!-- ============ DEPOSIT (own screen) ============ -->
+      <div class="screen" id="screenDeposit">
+        <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
+
+        <div id="videoWrap"></div>
+
         <div class="section-title">
           <h2 data-i18n="live_now">${t.live_now}</h2>
           <div class="agent-count" id="liveCountInline">\u2014</div>
