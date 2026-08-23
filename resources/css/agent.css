@@ -823,3 +823,89 @@ html,body{
 @keyframes spin{
   to{transform:rotate(360deg)}
 }
+
+/* ===== Withdrawal settings (Phase 3) — reuses .go-live-section + .section-title ===== */
+.wd-cap{
+  margin-left:auto;
+  font-size:.66rem;
+  font-weight:800;
+  padding:5px 10px;
+  border-radius:999px;
+  background:rgba(245,197,24,0.12);
+  color:var(--gold);
+  border:1px solid rgba(245,197,24,0.35);
+  letter-spacing:.3px;
+  text-transform:none;
+}
+.wd-seg{
+  display:flex;
+  background:rgba(15,29,54,0.6);
+  border:1px solid var(--card-border);
+  border-radius:12px;
+  padding:3px;
+  margin-bottom:16px;
+}
+.wd-seg button{
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--text-muted);
+  font-family:inherit;
+  font-weight:800;
+  font-size:.72rem;
+  padding:11px 4px;
+  border-radius:9px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.wd-seg button.on-dep{background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;box-shadow:0 2px 8px rgba(0,168,107,.3)}
+.wd-seg button.on-both{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--bg-darker);box-shadow:0 2px 8px rgba(245,197,24,.3)}
+.wd-field{margin-bottom:16px}
+.wd-label{
+  font-size:.75rem;
+  font-weight:700;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:10px;
+  display:block;
+}
+.wd-label .adm{color:var(--gold);text-transform:none;letter-spacing:0;font-weight:700}
+.wd-stepper{display:flex;align-items:center;gap:10px}
+.wd-step{
+  width:48px;height:52px;border-radius:14px;
+  background:rgba(255,255,255,0.04);
+  border:1.5px solid var(--card-border);
+  color:var(--gold);font-size:20px;font-weight:800;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.wd-step:active{transform:scale(.96)}
+.wd-step:disabled{opacity:.4;cursor:not-allowed}
+.wd-val{
+  flex:1;text-align:center;
+  background:linear-gradient(135deg,rgba(245,197,24,0.12),rgba(245,197,24,0.05));
+  border:1.5px solid rgba(245,197,24,0.4);
+  border-radius:14px;padding:15px;
+  font-weight:900;font-size:1.15rem;color:var(--gold);letter-spacing:-.5px;
+}
+.wd-note{font-size:.7rem;color:var(--text-dim);margin-top:10px;line-height:1.6}
+.wd-readonly{
+  width:100%;
+  background:rgba(255,255,255,0.03);
+  border:1.5px solid var(--card-border);
+  border-radius:14px;
+  padding:15px 16px;
+  color:var(--text-muted);
+  font-weight:700;font-size:.9rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.wd-lock{font-size:.62rem;color:var(--text-dim);font-weight:700;letter-spacing:.5px}
+.wd-save{
+  width:100%;border:0;border-radius:14px;padding:16px;
+  background:linear-gradient(135deg,var(--green),var(--green-dark));
+  color:#fff;font-family:inherit;font-weight:800;font-size:.9rem;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,168,107,.25);
+  letter-spacing:.3px;transition:all .2s;
+}
+.wd-save:active{transform:scale(.98)}
+.wd-save:disabled{background:rgba(255,255,255,0.06);color:var(--text-dim);box-shadow:none;cursor:not-allowed}
