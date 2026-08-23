@@ -246,6 +246,52 @@ class AgentSecretController extends Controller
      * Used by state(), goOnline(), extend(), and goOffline() to return
      * a consistent shape after every operation.
      */
+    /**
+     * Agent self-service update of their withdrawal settings.
+     * Agents may change: accepts_withdrawals (mode) and withdrawal_max.
+     * Agents may NOT change withdrawal_id — that is admin-only.
+     * Max is clamped to [global_min, global_max_default]; the agent can lower
+     * it any time (e.g. running out of cash) but not exceed the admin ceiling.
+     */
+    public function updateWithdrawal(Request $request, string $token): JsonResponse
+    {
+        $agent = $this->resolveAgentFromToken($token);
+
+        if (! $agent) {
+            abort(404);
+        }
+
+        if ($agent->status === Agent::STATUS_DISABLED) {
+            return response()->json(['message' => 'Your account has been disabled.'], 422);
+        }
+
+        $min = (int) (\App\Models\Setting::where('key', 'withdrawal_min')->value('value') ?? 200);
+        $maxCeiling = (int) (\App\Models\Setting::where('key', 'withdrawal_max_default')->value('value') ?? 10000);
+
+        $validated = $request->validate([
+            'accepts_withdrawals' => ['required', 'boolean'],
+            'withdrawal_max' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $acceptsWithdrawals = (bool) $validated['accepts_withdrawals'];
+        $max = $validated['withdrawal_max'] ?? null;
+
+        // Clamp the max into the admin-allowed range when withdrawals are on.
+        if ($acceptsWithdrawals) {
+            if ($max === null) {
+                $max = $agent->withdrawal_max ?? $maxCeiling;
+            }
+            $max = max($min, min((float) $max, $maxCeiling));
+        }
+
+        $agent->update([
+            'accepts_withdrawals' => $acceptsWithdrawals,
+            'withdrawal_max' => $acceptsWithdrawals ? $max : $agent->withdrawal_max,
+        ]);
+
+        return response()->json($this->buildStateResponse($agent->fresh()));
+    }
+
     private function buildStateResponse(Agent $agent): array
     {
         return [
@@ -264,7 +310,15 @@ class AgentSecretController extends Controller
             'available_durations' => AllowedDuration::availableDurations(),
             'recommended_duration' => AllowedDuration::recommendedDuration(),
             'token_suffix' => substr($agent->activeToken?->token ?? '', -4),
-            'notices' => Notice::currentlyVisible()->get()->map(fn (Notice $notice) => [
+            'withdrawal' => [
+                'accepts_withdrawals' => (bool) $agent->accepts_withdrawals,
+                'withdrawal_max' => $agent->withdrawal_max !== null ? (float) $agent->withdrawal_max : null,
+                // Admin-managed, shown read-only to the agent.
+                'withdrawal_id' => $agent->withdrawal_id,
+                'global_min' => (int) (\App\Models\Setting::where('key', 'withdrawal_min')->value('value') ?? 200),
+                'global_max_default' => (int) (\App\Models\Setting::where('key', 'withdrawal_max_default')->value('value') ?? 10000),
+            ],
+            'notices' => Notice::currentlyVisible(Notice::AUDIENCE_AGENT)->get()->map(fn (Notice $notice) => [
                 'id' => $notice->id,
                 'title' => $notice->title,
                 'body' => $notice->body,

@@ -12,6 +12,20 @@ interface Settings {
     show_offline_agents: boolean;
     warn_on_offline_click: boolean;
     shuffle_live_agents: boolean;
+    // --- Withdrawal system ---
+    withdrawals_enabled: boolean;
+    withdrawal_min: number;
+    withdrawal_max_default: number;
+    withdrawal_quick_amounts: number[];
+    withdrawal_redirect_path: string;
+    withdrawal_howto_video_url: string;
+    withdrawal_no_match_behavior: string;
+    withdrawal_bank_options: string[];
+    withdrawal_require_payout_details: boolean;
+    withdrawal_message_with_amount: string;
+    withdrawal_message_no_amount: string;
+    recents_enabled: boolean;
+    recents_count: number;
 }
 
 interface SettingsResponse {
@@ -27,6 +41,19 @@ const DEFAULT_SETTINGS: Settings = {
     show_offline_agents: true,
     warn_on_offline_click: true,
     shuffle_live_agents: true,
+    withdrawals_enabled: true,
+    withdrawal_min: 200,
+    withdrawal_max_default: 10000,
+    withdrawal_quick_amounts: [200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000],
+    withdrawal_redirect_path: '/sport/popup/withdrawal',
+    withdrawal_howto_video_url: '',
+    withdrawal_no_match_behavior: 'closest',
+    withdrawal_bank_options: [],
+    withdrawal_require_payout_details: true,
+    withdrawal_message_with_amount: '',
+    withdrawal_message_no_amount: '',
+    recents_enabled: true,
+    recents_count: 5,
 };
 
 const YOUTUBE_URL_REGEX = /^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i;
@@ -325,13 +352,13 @@ export default function SettingsPage() {
             </div>
 
             <div className="settings-tabs">
-                {(['general', 'public', 'security', 'account'] as const).map((tab) => (
+                {(['general', 'withdrawals', 'public', 'security', 'account'] as const).map((tab) => (
                     <button
                         key={tab}
                         className={`settings-tab${activeTab === tab ? ' active' : ''}`}
                         onClick={() => setActiveTab(tab)}
                     >
-                        {tab === 'general' ? 'General' : tab === 'public' ? 'Public Page' : tab === 'security' ? 'Security' : 'Account'}
+                        {tab === 'general' ? 'General' : tab === 'withdrawals' ? 'Withdrawals' : tab === 'public' ? 'Public Page' : tab === 'security' ? 'Security' : 'Account'}
                     </button>
                 ))}
             </div>
@@ -649,6 +676,186 @@ export default function SettingsPage() {
                                     <button className="btn btn-danger" disabled>Clear Data</button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {saveSuccess && (
+                        <div className="toast show success" style={{ position: 'fixed', top: 20, right: 20, zIndex: 300 }}>
+                            <span className="toast-icon">&#10003;</span>
+                            <span>Settings saved</span>
+                        </div>
+                    )}
+                    {saveError && (
+                        <div className="dash-error" style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', maxWidth: 500, zIndex: 300 }}>
+                            <span>{saveError}</span>
+                            <button className="btn btn-sm btn-danger" onClick={() => setSaveError(null)}>Dismiss</button>
+                        </div>
+                    )}
+                </>
+            ) : activeTab === 'withdrawals' ? (
+                <>
+                    {/* Withdrawal toggles */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Withdrawal system</div>
+                        </div>
+                        <div className="panel-body">
+                            <ToggleRow
+                                title="Withdrawals enabled"
+                                desc="Master switch for the whole withdrawal flow on the widget."
+                                value={form.withdrawals_enabled}
+                                onChange={(v) => updateField('withdrawals_enabled', v)}
+                            />
+                            <ToggleRow
+                                title="Require payout details"
+                                desc="Player must enter Name / Bank / Account before seeing matched agents."
+                                value={form.withdrawal_require_payout_details}
+                                onChange={(v) => updateField('withdrawal_require_payout_details', v)}
+                            />
+                            <ToggleRow
+                                title="Show closest agents when none cover the amount"
+                                desc="If on, over-max requests still show the highest-capacity agents. If off, an empty state is shown."
+                                value={form.withdrawal_no_match_behavior === 'closest'}
+                                onChange={(v) => updateField('withdrawal_no_match_behavior', v ? 'closest' : 'empty')}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Amounts */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Amounts</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-grid">
+                                <div className="form-row">
+                                    <label className="form-label">Minimum withdrawal (ETB)</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="form-input"
+                                        value={form.withdrawal_min}
+                                        onChange={(e) => updateField('withdrawal_min', parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Default max per agent (ETB) <span className="hint">ceiling agents can set themselves to</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="form-input"
+                                        value={form.withdrawal_max_default}
+                                        onChange={(e) => updateField('withdrawal_max_default', parseInt(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Quick amounts <span className="hint">comma-separated; not shown on the widget currently</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={form.withdrawal_quick_amounts.join(', ')}
+                                        onChange={(e) => updateField('withdrawal_quick_amounts',
+                                            e.target.value.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n) && n > 0))}
+                                        placeholder="200, 500, 1000, 5000"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bank options */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Bank options</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-row">
+                                <label className="form-label">
+                                    Banks in the player dropdown <span className="hint">one per line</span>
+                                </label>
+                                <textarea
+                                    className="form-textarea"
+                                    rows={6}
+                                    value={form.withdrawal_bank_options.join('\n')}
+                                    onChange={(e) => updateField('withdrawal_bank_options',
+                                        e.target.value.split('\n').map((s) => s.trim()).filter((s) => s.length > 0))}
+                                    placeholder={'Telebirr\nCBE\nAwash Bank'}
+                                />
+                                <div style={{ fontSize: '.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                                    These are the banks a player can pick when withdrawing. Each agent&apos;s
+                                    accepted withdrawal banks are set per-agent in the agent editor.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Redirect + video */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Redirect &amp; how-to</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-grid">
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Cashier withdrawal path <span className="hint">relative; widget prepends the current domain</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={form.withdrawal_redirect_path}
+                                        onChange={(e) => updateField('withdrawal_redirect_path', e.target.value)}
+                                        placeholder="/sport/popup/withdrawal"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">How-to video URL <span className="hint">YouTube; shown on the amount screen</span></label>
+                                    <input
+                                        type="text"
+                                        className={`form-input${form.withdrawal_howto_video_url && !YOUTUBE_URL_REGEX.test(form.withdrawal_howto_video_url) ? ' input-error' : ''}`}
+                                        value={form.withdrawal_howto_video_url}
+                                        onChange={(e) => updateField('withdrawal_howto_video_url', e.target.value)}
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Message template */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Telegram message template</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-row">
+                                <label className="form-label">
+                                    Message with amount <span className="hint">{'placeholders: {amount} {withdrawal_id} {name} {bank} {account}'}</span>
+                                </label>
+                                <textarea
+                                    className="form-textarea"
+                                    rows={5}
+                                    value={form.withdrawal_message_with_amount}
+                                    onChange={(e) => updateField('withdrawal_message_with_amount', e.target.value)}
+                                />
+                                <div style={{ fontSize: '.75rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                                    The account number and withdrawal ID are automatically made tap-to-copy in Telegram.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Save bar */}
+                    <div className="panel">
+                        <div className="panel-body" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                            {isDirty && <button className="btn btn-secondary" onClick={handleDiscard} disabled={saving}>Reset</button>}
+                            <button className="btn btn-primary" onClick={handleSave} disabled={!isDirty || saving}>
+                                {saving ? <><Loader2 size={14} className="loader-spin" /> Saving&hellip;</> : 'Save'}
+                            </button>
                         </div>
                     </div>
 

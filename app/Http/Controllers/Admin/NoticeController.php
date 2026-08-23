@@ -44,6 +44,8 @@ class NoticeController extends Controller
             'title' => $validated['title'] ?? null,
             'body' => $validated['body'],
             'priority' => $validated['priority'] ?? Notice::PRIORITY_INFO,
+            'audience' => $validated['audience'] ?? Notice::AUDIENCE_AGENT,
+            'video_url' => $validated['video_url'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'starts_at' => $validated['starts_at'] ?? null,
             'ends_at' => $validated['ends_at'] ?? null,

@@ -33,6 +33,14 @@ export interface NoticeItem {
   created_at: string; // ISO 8601
 }
 
+export interface AgentWithdrawalSettings {
+  accepts_withdrawals: boolean;
+  withdrawal_max: number | null;
+  withdrawal_id: string | null; // admin-managed, read-only for the agent
+  global_min: number;
+  global_max_default: number;
+}
+
 export interface AgentState {
   agent: AgentInfo;
   status: AgentStatus;
@@ -41,6 +49,7 @@ export interface AgentState {
   available_durations: number[];
   recommended_duration: number | null;
   token_suffix: string;
+  withdrawal: AgentWithdrawalSettings;
   notices: NoticeItem[];
 }
 

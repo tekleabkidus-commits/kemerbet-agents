@@ -64,6 +64,7 @@ Route::prefix('admin')->group(function () {
         Route::get('stats/pin-effectiveness', [StatsController::class, 'pinEffectiveness']);
         Route::get('stats/sparklines', [StatsController::class, 'sparklines']);
         Route::get('stats/records', [StatsController::class, 'records']);
+        Route::get('stats/withdrawal-demand', [StatsController::class, 'withdrawalDemand']);
         Route::get('stats/agent/{agent}', [StatsController::class, 'agentDetail']);
     });
 });
@@ -99,6 +100,7 @@ Route::prefix('agent/{token}')
         Route::post('go-online', [AgentSecretController::class, 'goOnline']);
         Route::post('extend', [AgentSecretController::class, 'extend']);
         Route::post('go-offline', [AgentSecretController::class, 'goOffline']);
+        Route::post('update-withdrawal', [AgentSecretController::class, 'updateWithdrawal']);
         Route::post('subscribe', [AgentSecretController::class, 'subscribe']);
         Route::delete('subscribe', [AgentSecretController::class, 'unsubscribe']);
     });

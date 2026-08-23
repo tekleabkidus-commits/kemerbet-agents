@@ -7,6 +7,7 @@ import {
     UsersRound,
     Globe,
     Grid,
+    Banknote,
     CreditCard,
     Settings,
     Megaphone,
@@ -68,6 +69,11 @@ export default function AdminLayout() {
                 <NavLink to={`/admin/analytics/coverage${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
                     <Grid size={18} className="icon" />
                     <span>Coverage</span>
+                </NavLink>
+
+                <NavLink to={`/admin/analytics/withdrawals${analyticsSearch}`} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+                    <Banknote size={18} className="icon" />
+                    <span>Withdrawals</span>
                 </NavLink>
 
                 <div className="nav-label">Setup</div>

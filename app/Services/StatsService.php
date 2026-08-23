@@ -1220,4 +1220,71 @@ class StatsService
             $t = $chunkEnd;
         }
     }
+
+    /**
+     * Withdrawal demand analytics from click_events (intent = withdrawal).
+     * Returns: totals, fill rate (a request is "filled" when at least one
+     * withdrawal-capable agent was live and could cover it at click time is not
+     * knowable retroactively, so we approximate "unmet" as clicks with source
+     * 'list' vs the no-match state recorded as source 'nomatch'), demand by
+     * amount bucket, and demand by hour of day (Africa/Addis_Ababa).
+     */
+    public function withdrawalDemand(Carbon $from, Carbon $to): array
+    {
+        $fromUtc = $from->copy()->startOfDay()->utc();
+        $toUtc = $to->copy()->endOfDay()->utc();
+
+        $base = ClickEvent::query()
+            ->where('intent', 'withdrawal')
+            ->whereBetween('created_at', [$fromUtc, $toUtc]);
+
+        $total = (clone $base)->count();
+        $totalAmount = (float) (clone $base)->sum('amount');
+        $avgAmount = $total > 0 ? $totalAmount / $total : 0.0;
+
+        // "Unmet" = clicks recorded from the no-match / partial state.
+        $unmet = (clone $base)->whereIn('source', ['nomatch', 'partial'])->count();
+        $filled = $total - $unmet;
+        $fillRate = $total > 0 ? round(($filled / $total) * 100, 1) : 0.0;
+
+        // Demand by amount bucket.
+        $buckets = [
+            ['label' => '≤ 1,000', 'min' => 0, 'max' => 1000],
+            ['label' => '1k–5k', 'min' => 1000, 'max' => 5000],
+            ['label' => '5k–25k', 'min' => 5000, 'max' => 25000],
+            ['label' => '25k–100k', 'min' => 25000, 'max' => 100000],
+            ['label' => '100k+', 'min' => 100000, 'max' => null],
+        ];
+        $byAmount = [];
+        foreach ($buckets as $b) {
+            $q = (clone $base)->where('amount', '>', $b['min']);
+            if ($b['max'] !== null) {
+                $q->where('amount', '<=', $b['max']);
+            }
+            $byAmount[] = ['label' => $b['label'], 'count' => $q->count()];
+        }
+
+        // Demand by hour of day, converted to Addis time.
+        $rows = (clone $base)->get(['created_at']);
+        $byHour = array_fill(0, 24, 0);
+        foreach ($rows as $r) {
+            $h = $r->created_at->copy()->setTimezone(self::TIMEZONE)->hour;
+            $byHour[$h]++;
+        }
+        $byHourOut = [];
+        for ($h = 0; $h < 24; $h++) {
+            $byHourOut[] = ['hour' => $h, 'count' => $byHour[$h]];
+        }
+
+        return [
+            'total_requests' => $total,
+            'total_amount' => round($totalAmount, 2),
+            'avg_amount' => round($avgAmount, 2),
+            'filled' => $filled,
+            'unmet' => $unmet,
+            'fill_rate' => $fillRate,
+            'by_amount' => $byAmount,
+            'by_hour' => $byHourOut,
+        ];
+    }
 }
