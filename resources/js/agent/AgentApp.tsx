@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { fetchState, goOnline, extend, goOffline, subscribe } from './api';
+import { fetchState, goOnline, extend, goOffline, subscribe, updateWithdrawal } from './api';
 import { registerAndSubscribe, extractSubscriptionKeys } from './pushSubscription';
 import type { AgentState, PageState, ToastState } from './types';
 import TopBar from './components/TopBar';
@@ -9,6 +9,7 @@ import DisabledCard from './components/DisabledCard';
 import Greeting from './components/Greeting';
 import StatusCard from './components/StatusCard';
 import GoLiveSection from './components/GoLiveSection';
+import WithdrawalSettings from './components/WithdrawalSettings';
 import InfoStrip from './components/InfoStrip';
 import Activity from './components/Activity';
 import Footer from './components/Footer';
@@ -167,6 +168,26 @@ export default function AgentApp({ token }: { token: string }) {
     }
   }, [token, isProcessing]);
 
+  const handleUpdateWithdrawal = useCallback(
+    async (accepts: boolean, max: number | null) => {
+      if (isProcessing) return;
+      setIsProcessing(true);
+      try {
+        const data = await updateWithdrawal(token, {
+          accepts_withdrawals: accepts,
+          withdrawal_max: max,
+        });
+        setServerState(data);
+        showToast('Withdrawal settings saved', 'success', '✓');
+      } catch {
+        showToast('Failed to save settings', 'warning', '⚠️');
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [token, isProcessing],
+  );
+
   // --- Timer expiry: re-fetch to get accurate metrics/activity ---
   const handleTimerExpired = useCallback(() => {
     fetchState(token).then((data) => {
@@ -230,6 +251,13 @@ export default function AgentApp({ token }: { token: string }) {
             onSelect={serverState.status.is_live ? handleExtend : handleGoOnline}
             isProcessing={isProcessing}
           />
+          {serverState.withdrawal && (
+            <WithdrawalSettings
+              settings={serverState.withdrawal}
+              isProcessing={isProcessing}
+              onSave={handleUpdateWithdrawal}
+            />
+          )}
           <InfoStrip metrics={serverState.metrics} />
           <Activity events={serverState.recent_activity} />
           <Footer tokenSuffix={serverState.token_suffix} />

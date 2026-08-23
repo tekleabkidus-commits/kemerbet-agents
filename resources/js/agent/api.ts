@@ -53,6 +53,16 @@ export function goOffline(token: string): Promise<AgentState> {
   });
 }
 
+export function updateWithdrawal(
+  token: string,
+  data: { accepts_withdrawals: boolean; withdrawal_max: number | null },
+): Promise<AgentState> {
+  return request(`${baseUrl(token)}/update-withdrawal`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export function subscribe(
   token: string,
   data: { endpoint: string; p256dh_key: string; auth_key: string; user_agent?: string },

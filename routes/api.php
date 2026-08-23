@@ -99,6 +99,7 @@ Route::prefix('agent/{token}')
         Route::post('go-online', [AgentSecretController::class, 'goOnline']);
         Route::post('extend', [AgentSecretController::class, 'extend']);
         Route::post('go-offline', [AgentSecretController::class, 'goOffline']);
+        Route::post('update-withdrawal', [AgentSecretController::class, 'updateWithdrawal']);
         Route::post('subscribe', [AgentSecretController::class, 'subscribe']);
         Route::delete('subscribe', [AgentSecretController::class, 'unsubscribe']);
     });
