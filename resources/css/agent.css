@@ -862,3 +862,62 @@ html,body{
 .wd-savebar{width:100%;border:0;border-radius:12px;padding:13px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;font-family:inherit;font-weight:900;font-size:.82rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,168,107,.25);letter-spacing:.3px;transition:.2s}
 .wd-savebar:active{transform:scale(.98)}
 .wd-savebar:disabled{background:rgba(255,255,255,.06);color:var(--text-dim);box-shadow:none;cursor:not-allowed}
+
+/* ===== Agent page redesign (Phase 3) — ported from concept mockup screen 5 ===== */
+.ag-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.ag-logo{display:inline-flex;align-items:center;gap:9px;padding:7px 15px;background:rgba(0,168,107,.15);border:1px solid rgba(0,168,107,.4);border-radius:999px;font-size:.72rem;font-weight:800;color:var(--green-light);letter-spacing:.4px}
+.ag-logo .live-indicator{width:8px;height:8px;background:var(--green-glow);border-radius:50%;box-shadow:0 0 12px var(--green-glow);animation:agPulse 1.4s ease-in-out infinite}
+.ag-logo.off .live-indicator{background:#3a4a64;box-shadow:none;animation:none}
+@keyframes agPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.ag-clock{font-size:.64rem;color:var(--text-dim);font-weight:700;display:flex;align-items:center;gap:10px}
+.ag-bell{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-muted);width:34px;height:34px;border-radius:11px;cursor:pointer;font-size:15px;display:grid;place-items:center;position:relative}
+.ag-bell.alert::after{content:"";position:absolute;top:7px;right:8px;width:7px;height:7px;background:var(--gold);border-radius:50%}
+
+.zone{background:var(--card-bg);border:1px solid var(--card-border);border-radius:18px;padding:16px;margin-bottom:14px}
+.zone .zh{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.zone .zh h3{font-size:.85rem;font-weight:800;display:flex;align-items:center;gap:8px;letter-spacing:-.2px;margin:0;text-transform:none}
+.zone .zh h3::before{content:"";width:4px;height:16px;background:linear-gradient(180deg,var(--gold),var(--green));border-radius:2px}
+.zone .zh span{font-size:.64rem;color:var(--text-dim);font-weight:600}
+
+.livebox{background:linear-gradient(135deg,rgba(0,168,107,.14),rgba(0,168,107,.04));border:1px solid rgba(34,255,154,.35);border-radius:14px;padding:15px;text-align:center;margin-bottom:13px}
+.livebox.on{animation:agBreathe 3s infinite}
+@keyframes agBreathe{0%,100%{box-shadow:0 0 0 0 rgba(34,255,154,.08)}50%{box-shadow:0 0 0 1px rgba(34,255,154,.3),0 0 22px rgba(34,255,154,.08)}}
+.livebox.off{background:rgba(255,255,255,.03);border-color:var(--card-border)}
+.livebox .st{display:inline-flex;align-items:center;gap:7px;font-size:.7rem;font-weight:800;color:var(--green-light);margin-bottom:7px;letter-spacing:.3px}
+.livebox.off .st{color:var(--text-dim)}
+.livebox .st .dot{width:8px;height:8px;border-radius:50%;background:var(--green-glow);box-shadow:0 0 8px var(--green-glow)}
+.livebox.off .st .dot{background:#3a4a64;box-shadow:none}
+.count{font:800 30px 'Inter',monospace;letter-spacing:.5px;color:var(--text)}
+.count small{font-family:'Inter';font-size:.68rem;color:var(--text-muted);font-weight:600;display:block;margin-top:4px;letter-spacing:0}
+.count.headline{font-size:26px}
+
+.durs{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.dur{background:rgba(255,255,255,.05);border:1px solid var(--card-border);border-radius:11px;padding:10px 2px;text-align:center;cursor:pointer;position:relative;transition:.2s;font-family:inherit;color:var(--text)}
+.dur:hover:not(:disabled){border-color:rgba(0,168,107,.5)}
+.dur:disabled{opacity:.4;cursor:not-allowed}
+.dur b{font-size:.88rem;display:block;font-weight:800}
+.dur span{font-size:.56rem;color:var(--text-dim);font-weight:700}
+.dur.rec{border-color:rgba(245,197,24,.55);background:rgba(245,197,24,.07)}
+.dur.rec::after{content:"\2605";position:absolute;top:3px;right:5px;font-size:8px;color:var(--gold)}
+.offbtn{width:100%;margin-top:11px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:var(--danger);border-radius:11px;padding:11px;font-family:inherit;font-weight:800;font-size:.76rem;cursor:pointer;letter-spacing:.3px}
+.onbtn{width:100%;margin-top:11px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:0;color:#0f1d36;border-radius:11px;padding:13px;font-family:inherit;font-weight:900;font-size:.82rem;cursor:pointer;letter-spacing:.3px;box-shadow:0 4px 12px rgba(245,197,24,.25)}
+
+.ag-notice{background:linear-gradient(135deg,rgba(245,197,24,.12),rgba(0,168,107,.07));border:1px solid rgba(245,197,24,.35);border-radius:14px;padding:12px;margin-bottom:10px}
+.ag-notice:last-child{margin-bottom:0}
+.ag-notice.info{background:var(--card-bg);border-color:var(--card-border)}
+.ag-notice .tag{display:inline-flex;align-items:center;gap:6px;font-size:.62rem;font-weight:800;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.ag-notice.info .tag{color:var(--text-dim)}
+.ag-notice h4{font-size:.82rem;font-weight:800;margin:0 0 4px;letter-spacing:-.2px}
+.ag-notice p{font-size:.74rem;color:var(--text-muted);line-height:1.55;margin:0}
+
+.tg{display:flex;align-items:center;gap:11px;background:rgba(42,150,222,.09);border:1px solid rgba(42,150,222,.35);border-radius:14px;padding:12px}
+.tg .ti{width:36px;height:36px;border-radius:50%;background:#2a96de;display:grid;place-items:center;font-size:15px;flex:0 0 auto}
+.tg .tt{flex:1;min-width:0}
+.tg .tt b{font-size:.76rem;font-weight:800;display:block}
+.tg .tt span{font-size:.62rem;color:var(--text-muted);font-weight:600}
+.tg .st-ok{font-size:.66rem;font-weight:800;color:var(--green-light);flex:0 0 auto}
+.tg .st-btn{flex:0 0 auto;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0f1d36;border:0;border-radius:9px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:.7rem;cursor:pointer}
+
+.ag-footer{text-align:center;margin-top:22px;font-size:.7rem;color:var(--text-dim)}
+.ag-footer a,.ag-footer b{color:var(--gold);font-weight:700}
+.ag-footer .tok{display:block;margin-top:5px;font-size:.6rem;color:var(--text-dim);opacity:.7}

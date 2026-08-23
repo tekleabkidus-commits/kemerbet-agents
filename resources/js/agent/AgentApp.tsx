@@ -6,15 +6,11 @@ import TopBar from './components/TopBar';
 import LoadingSpinner from './components/LoadingSpinner';
 import InvalidCard from './components/InvalidCard';
 import DisabledCard from './components/DisabledCard';
-import Greeting from './components/Greeting';
-import StatusCard from './components/StatusCard';
-import GoLiveSection from './components/GoLiveSection';
+import StatusZone from './components/StatusZone';
 import WithdrawalSettings from './components/WithdrawalSettings';
-import InfoStrip from './components/InfoStrip';
-import Activity from './components/Activity';
-import Footer from './components/Footer';
+import AgentNoticeZone from './components/AgentNoticeZone';
+import AlertsZone from './components/AlertsZone';
 import Toast from './components/Toast';
-import NotificationBanner from './components/NotificationBanner';
 import BottomSheetModal from './components/BottomSheetModal';
 
 const isIE = typeof window !== 'undefined' && /MSIE|Trident\//.test(navigator.userAgent);
@@ -216,12 +212,18 @@ export default function AgentApp({ token }: { token: string }) {
 
   return (
     <div className="wrap">
-      <TopBar
-        showBellAlert={permission === 'default'}
-        onBellClick={permission === 'default' ? () => {
-          Notification.requestPermission().then((p) => setPermission(p));
-        } : undefined}
-      />
+      {(pageState === 'live' || pageState === 'offline') && serverState && (
+        <TopBar
+          displayNumber={serverState.agent.display_number}
+          isLive={serverState.status.is_live}
+          showBellAlert={permission === 'default'}
+          onBellClick={
+            permission === 'default'
+              ? () => Notification.requestPermission().then((p) => setPermission(p))
+              : undefined
+          }
+        />
+      )}
       {pageState === 'loading' && <LoadingSpinner />}
       {pageState === 'invalid' && <InvalidCard />}
       {pageState === 'disabled' && disabledAgent && (
@@ -232,23 +234,11 @@ export default function AgentApp({ token }: { token: string }) {
       )}
       {(pageState === 'live' || pageState === 'offline') && serverState && (
         <>
-          <Greeting displayNumber={serverState.agent.display_number} />
-          <NotificationBanner
-            permission={permission}
-            onPermissionChange={setPermission}
-            notices={serverState.notices ?? []}
-          />
-          <StatusCard
+          <StatusZone
             state={serverState}
+            onSelectDuration={serverState.status.is_live ? handleExtend : handleGoOnline}
             onGoOffline={() => setOfflineModalOpen(true)}
             onTimerExpired={handleTimerExpired}
-            isProcessing={isProcessing}
-          />
-          <GoLiveSection
-            mode={serverState.status.is_live ? 'extend' : 'go-online'}
-            available={serverState.available_durations}
-            recommended={serverState.recommended_duration}
-            onSelect={serverState.status.is_live ? handleExtend : handleGoOnline}
             isProcessing={isProcessing}
           />
           {serverState.withdrawal && (
@@ -258,9 +248,15 @@ export default function AgentApp({ token }: { token: string }) {
               onSave={handleUpdateWithdrawal}
             />
           )}
-          <InfoStrip metrics={serverState.metrics} />
-          <Activity events={serverState.recent_activity} />
-          <Footer tokenSuffix={serverState.token_suffix} />
+          <AgentNoticeZone notices={serverState.notices ?? []} />
+          <AlertsZone
+            permission={permission}
+            onEnable={() => Notification.requestPermission().then((p) => setPermission(p))}
+          />
+          <div className="ag-footer">
+            Need help? <b>Contact admin</b>
+            <span className="tok">Token: &bull;&bull;&bull;&bull;&bull;&bull;{serverState.token_suffix}</span>
+          </div>
         </>
       )}
       <BottomSheetModal
