@@ -158,10 +158,6 @@ export function renderAmountScreen(deps: FlowDeps): void {
   const wrap = shadow.getElementById('screenAmount');
   if (!wrap) return;
 
-  const quick = (data.settings.withdrawal_quick_amounts ?? [])
-    .map((v) => `<button class="q" data-quick="${v}">${fmt(v)}</button>`)
-    .join('');
-
   const requirePayout = data.settings.withdrawal_require_payout_details !== false;
   const banks = data.settings.withdrawal_bank_options ?? [];
   const bankOpts = ['<option value="">' + t.payout_bank_ph + '</option>']
@@ -186,7 +182,6 @@ export function renderAmountScreen(deps: FlowDeps): void {
       <select class="pf" id="pfBank">${bankOpts}</select>
       <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
       ${savedHtml}
-      <div class="payout-note">${t.payout_note}</div>
     </div>`
     : '';
 
@@ -202,10 +197,8 @@ export function renderAmountScreen(deps: FlowDeps): void {
       </div>
       <div class="amt-hint" id="amtHint">${t.withdraw_min_prefix} ${fmt(min)} ETB</div>
     </div>
-    <div class="quick">${quick}</div>
     <button class="bigcta" id="amtGo" disabled>${t.withdraw_see_agents}</button>
     <button class="ownagent" id="ownAgentBtn"><span class="ow">${t.withdraw_own_agent}<small>${t.withdraw_own_agent_desc}</small></span><span>\u2192</span></button>
-    <p class="amt-note">${t.withdraw_note}</p>
   `;
 
   const input = shadow.getElementById('amtInput') as HTMLInputElement | null;
@@ -281,13 +274,6 @@ export function renderAmountScreen(deps: FlowDeps): void {
     });
   });
 
-  shadow.querySelectorAll('#screenAmount .q').forEach((b) => {
-    b.addEventListener('click', () => {
-      if (input) input.value = fmt(parseInt((b as HTMLElement).dataset.quick!, 10));
-      recompute();
-      input?.focus();
-    });
-  });
   go?.addEventListener('click', () => {
     if (currentAmount >= min && payoutComplete()) {
       if (requirePayout) savePayout(currentPayout);
