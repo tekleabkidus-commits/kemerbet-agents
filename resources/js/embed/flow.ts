@@ -7,7 +7,9 @@ import {
   withdrawHere,
   withdrawWithoutAgent,
   buildWithdrawalCashierUrl,
+  type PayoutDetails,
 } from './withdrawal';
+import { savePayout, suggestForBank } from './payouts';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -34,6 +36,7 @@ export interface FlowDeps {
 }
 
 let currentAmount = 0;
+let currentPayout: PayoutDetails = { name: '', bank: '', account: '' };
 
 function fmt(n: number): string {
   return n.toLocaleString('en-US');
@@ -159,9 +162,27 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .map((v) => `<button class="q" data-quick="${v}">${fmt(v)}</button>`)
     .join('');
 
+  const requirePayout = data.settings.withdrawal_require_payout_details !== false;
+  const banks = data.settings.withdrawal_bank_options ?? [];
+  const bankOpts = ['<option value="">' + t.payout_bank_ph + '</option>']
+    .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
+    .join('');
+
+  const payoutHtml = requirePayout
+    ? `
+    <div class="payout">
+      <div class="payout-title">${t.payout_title}</div>
+      <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />
+      <select class="pf" id="pfBank">${bankOpts}</select>
+      <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
+      <div class="payout-note">${t.payout_note}</div>
+    </div>`
+    : '';
+
   wrap.innerHTML = `
     <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.withdraw_title}</h2></div>
     ${howto ? videoBoxHtml(t, howto) : ''}
+    ${payoutHtml}
     <div class="amount-wrap">
       <label>${t.withdraw_amount_label}</label>
       <div class="amt-line">
@@ -179,24 +200,61 @@ export function renderAmountScreen(deps: FlowDeps): void {
   const input = shadow.getElementById('amtInput') as HTMLInputElement | null;
   const hint = shadow.getElementById('amtHint');
   const go = shadow.getElementById('amtGo') as HTMLButtonElement | null;
+  const pfName = shadow.getElementById('pfName') as HTMLInputElement | null;
+  const pfBank = shadow.getElementById('pfBank') as HTMLSelectElement | null;
+  const pfAccount = shadow.getElementById('pfAccount') as HTMLInputElement | null;
+
+  // restore previously-selected bank
+  if (pfBank && currentPayout.bank) pfBank.value = currentPayout.bank;
+
+  const payoutComplete = (): boolean => {
+    if (!requirePayout) return true;
+    return (
+      currentPayout.name.trim() !== '' &&
+      currentPayout.bank.trim() !== '' &&
+      currentPayout.account.trim() !== ''
+    );
+  };
+
+  const syncPayout = () => {
+    currentPayout = {
+      name: pfName?.value ?? '',
+      bank: pfBank?.value ?? '',
+      account: pfAccount?.value ?? '',
+    };
+  };
 
   const recompute = () => {
     if (!input || !hint || !go) return;
     const raw = input.value.replace(/[^0-9]/g, '');
     currentAmount = parseInt(raw || '0', 10);
     if (raw) input.value = fmt(currentAmount);
+    const amountOk = currentAmount >= min;
     if (currentAmount > 0 && currentAmount < min) {
       hint.textContent = `${t.withdraw_min_error} ${fmt(min)} ETB`;
       hint.classList.add('err');
-      go.disabled = true;
     } else {
       hint.textContent = `${t.withdraw_min_prefix} ${fmt(min)} ETB`;
       hint.classList.remove('err');
-      go.disabled = currentAmount < min;
     }
+    go.disabled = !(amountOk && payoutComplete());
   };
 
   input?.addEventListener('input', recompute);
+  pfName?.addEventListener('input', () => { syncPayout(); recompute(); });
+  pfAccount?.addEventListener('input', () => { syncPayout(); recompute(); });
+  pfBank?.addEventListener('change', () => {
+    syncPayout();
+    // When the player picks a bank they've used before, prefill name+account.
+    const s = suggestForBank(currentPayout.bank);
+    if (s) {
+      if (pfName && !pfName.value.trim()) pfName.value = s.name;
+      if (pfAccount && !pfAccount.value.trim()) pfAccount.value = s.account;
+      syncPayout();
+    }
+    recompute();
+  });
+
   shadow.querySelectorAll('#screenAmount .q').forEach((b) => {
     b.addEventListener('click', () => {
       if (input) input.value = fmt(parseInt((b as HTMLElement).dataset.quick!, 10));
@@ -205,7 +263,8 @@ export function renderAmountScreen(deps: FlowDeps): void {
     });
   });
   go?.addEventListener('click', () => {
-    if (currentAmount >= min) {
+    if (currentAmount >= min && payoutComplete()) {
+      if (requirePayout) savePayout(currentPayout);
       renderResultsScreen(deps, currentAmount);
       showScreen(shadow, 'results');
     }
@@ -322,6 +381,7 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
         amount,
         messageTemplate: data.settings.withdrawal_message_with_amount,
         redirectPath: data.settings.withdrawal_redirect_path,
+        payout: currentPayout,
       });
     });
   });

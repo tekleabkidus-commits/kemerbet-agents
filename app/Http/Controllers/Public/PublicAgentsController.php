@@ -40,6 +40,8 @@ class PublicAgentsController extends Controller
             'withdrawal_redirect_path',
             'withdrawal_howto_video_url',
             'withdrawal_no_match_behavior',
+            'withdrawal_bank_options',
+            'withdrawal_require_payout_details',
             'withdrawal_message_with_amount',
             'withdrawal_message_no_amount',
             'recents_enabled',
@@ -133,6 +135,14 @@ class PublicAgentsController extends Controller
                 'withdrawal_redirect_path' => $settings['withdrawal_redirect_path'] ?? '/sport/popup/withdrawal',
                 'withdrawal_howto_video_url' => $settings['withdrawal_howto_video_url'] ?? '',
                 'withdrawal_no_match_behavior' => $settings['withdrawal_no_match_behavior'] ?? 'closest',
+                'withdrawal_bank_options' => array_values(array_filter(array_map(
+                    'strval',
+                    is_array($settings['withdrawal_bank_options'] ?? null) ? $settings['withdrawal_bank_options'] : []
+                ))),
+                'withdrawal_require_payout_details' => filter_var(
+                    $settings['withdrawal_require_payout_details'] ?? true,
+                    FILTER_VALIDATE_BOOLEAN
+                ),
                 'withdrawal_message_with_amount' => $settings['withdrawal_message_with_amount']
                     ?? 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB. I will share my withdrawal code shortly.',
                 'withdrawal_message_no_amount' => $settings['withdrawal_message_no_amount']

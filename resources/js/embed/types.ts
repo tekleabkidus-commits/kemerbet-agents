@@ -46,6 +46,8 @@ export interface PublicAgentsResponse {
     withdrawal_redirect_path: string; // relative, e.g. /sport/popup/withdrawal
     withdrawal_howto_video_url: string;
     withdrawal_no_match_behavior: 'closest' | 'empty';
+    withdrawal_bank_options: string[];
+    withdrawal_require_payout_details: boolean;
     withdrawal_message_with_amount: string;
     withdrawal_message_no_amount: string;
     recents_enabled: boolean;

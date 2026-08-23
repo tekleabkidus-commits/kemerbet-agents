@@ -34,9 +34,22 @@ class SettingSeeder extends Seeder
                 // 'empty' shows only the empty-state message.
                 'withdrawal_no_match_behavior' => 'closest',
 
-                // --- Auto-message templates (placeholders: {amount}, {withdrawal_id}) ---
+                // Banks/methods offered in the withdrawal payout form (player picks one).
+                'withdrawal_bank_options' => [
+                    'Telebirr', 'CBE', 'CBE Birr', 'Awash Bank', 'Dashen Bank',
+                    'Bank of Abyssinia', 'Wegagen Bank', 'Hibret Bank', 'Nib Bank',
+                    'Cooperative Bank of Oromia', 'M-Pesa',
+                ],
+                // Require the player to enter payout details (name/bank/account)
+                // before they can see matched agents.
+                'withdrawal_require_payout_details' => true,
+
+                // --- Auto-message templates ---
+                // Placeholders: {amount}, {withdrawal_id}, {name}, {bank}, {account}
+                // NOTE: {withdrawal_id} and {account} are wrapped in backticks by
+                // the widget so Telegram renders them as tap-to-copy once sent.
                 'deposit_prefill_message' => 'Hi Kemerbet agent, I want to deposit',
-                'withdrawal_message_with_amount' => 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB. I will share my withdrawal code shortly.',
+                'withdrawal_message_with_amount' => "Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB.\nPlease send to:\nName: {name}\nBank: {bank}\nAccount: {account}\nI will share my withdrawal code shortly.",
                 'withdrawal_message_no_amount' => 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw — I will share the amount and my withdrawal code shortly.',
 
                 // --- Recents (per-player, client-side) ---

@@ -33,18 +33,37 @@ export function buildWithdrawalCashierUrl(redirectPath: string): string {
   return origin + path;
 }
 
+export interface PayoutDetails {
+  name: string;
+  bank: string;
+  account: string;
+}
+
 /**
- * Fill a message template's placeholders. Supported: {amount}, {withdrawal_id}.
- * Amount is formatted with thousands separators; a missing amount yields the
- * no-amount template being used instead (caller decides which template).
+ * Fill a message template's placeholders.
+ * Supported: {amount}, {withdrawal_id}, {name}, {bank}, {account}.
+ *
+ * {withdrawal_id} and {account} are wrapped in single backticks so that, once
+ * the player SENDS the prefilled message, Telegram renders them as monospace
+ * tap-to-copy. (Backticks appear literally in the compose box until sent —
+ * that is a Telegram prefill limitation, not something we can change.)
  */
 export function fillTemplate(
   template: string,
-  vars: { amount?: number | null; withdrawal_id?: string | null },
+  vars: {
+    amount?: number | null;
+    withdrawal_id?: string | null;
+    payout?: PayoutDetails | null;
+  },
 ): string {
+  const id = vars.withdrawal_id ?? '';
+  const account = vars.payout?.account ?? '';
   return template
     .replace(/\{amount\}/g, vars.amount != null ? vars.amount.toLocaleString('en-US') : '')
-    .replace(/\{withdrawal_id\}/g, vars.withdrawal_id ?? '');
+    .replace(/\{withdrawal_id\}/g, id ? '`' + id + '`' : '')
+    .replace(/\{name\}/g, vars.payout?.name ?? '')
+    .replace(/\{bank\}/g, vars.payout?.bank ?? '')
+    .replace(/\{account\}/g, account ? '`' + account + '`' : '');
 }
 
 /**
@@ -72,10 +91,12 @@ export function withdrawHere(opts: {
   amount: number;
   messageTemplate: string;
   redirectPath: string;
+  payout?: PayoutDetails | null;
 }): void {
   const message = fillTemplate(opts.messageTemplate, {
     amount: opts.amount,
     withdrawal_id: opts.agent.withdrawal_id ?? '',
+    payout: opts.payout ?? null,
   });
 
   const telegramUrl = buildTelegramUrl(opts.agent.telegram_username, message);

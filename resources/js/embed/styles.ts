@@ -221,4 +221,16 @@ export const STYLES = `
 
 .kb-video-wrap{position:relative;padding-bottom:56.25%;height:0;margin:0 0 16px 0;border-radius:12px;overflow:hidden;background:#000}
 .kb-video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+
+/* ---- payout details form (above amount) ---- */
+.payout{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:16px;margin-bottom:16px}
+.payout-title{font-size:.78rem;font-weight:800;letter-spacing:-.2px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.payout-title::before{content:"";width:4px;height:15px;background:linear-gradient(180deg,var(--gold),var(--green-primary));border-radius:2px}
+.pf{width:100%;background:rgba(5,13,26,.5);border:1px solid var(--card-border);border-radius:11px;padding:12px 13px;color:var(--text-light);font:700 .84rem 'Inter',sans-serif;outline:0;transition:.2s;margin-bottom:9px;font-family:inherit}
+.pf::placeholder{color:var(--text-dim)}
+.pf:focus{border-color:var(--green-primary)}
+select.pf{appearance:none;-webkit-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7a8f' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+select.pf option{background:#0e1d33;color:var(--text-light)}
+.payout-note{font-size:.64rem;color:var(--text-dim);line-height:1.6;margin-top:3px}
+:host([lang="am"]) .payout-note{font-size:.7rem}
 `;

@@ -58,6 +58,11 @@ export interface Translations {
   recents_online: string;
   recents_offline: string;
   back: string;
+  payout_title: string;
+  payout_name_ph: string;
+  payout_bank_ph: string;
+  payout_account_ph: string;
+  payout_note: string;
 }
 
 export const I18N: Record<Lang, Translations> = {
@@ -118,6 +123,11 @@ export const I18N: Record<Lang, Translations> = {
     recents_online: 'ኦንላይን',
     recents_offline: 'ኦፍላይን',
     back: 'ተመለስ',
+    payout_title: 'ገንዘቡ የሚላክበት መረጃ',
+    payout_name_ph: 'ሙሉ ስም',
+    payout_bank_ph: 'ባንክ ይምረጡ',
+    payout_account_ph: 'የሂሳብ ቁጥር',
+    payout_note: 'ይህ መረጃ ለኤጀንቱ በቴሌግራም መልእክት ውስጥ ይላካል። በመሳሪያዎ ላይ ብቻ ይቀመጣል።',
   },
   en: {
     title: 'Kemerbet Agents',
@@ -176,6 +186,11 @@ export const I18N: Record<Lang, Translations> = {
     recents_online: 'Online',
     recents_offline: 'Offline',
     back: 'Back',
+    payout_title: 'Where should the agent send the money?',
+    payout_name_ph: 'Full name',
+    payout_bank_ph: 'Select bank',
+    payout_account_ph: 'Account number',
+    payout_note: 'This is included in your Telegram message to the agent. Saved only on your device.',
   },
 };
 
