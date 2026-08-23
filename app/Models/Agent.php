@@ -64,6 +64,17 @@ class Agent extends Model
             ->withPivot('created_at');
     }
 
+    /**
+     * Banks/methods this agent will PAY OUT to (withdrawals). Managed by admin
+     * separately from deposit methods (paymentMethods), reusing the same
+     * PaymentMethod catalog via a distinct pivot.
+     */
+    public function withdrawalMethods(): BelongsToMany
+    {
+        return $this->belongsToMany(PaymentMethod::class, 'agent_withdrawal_methods')
+            ->withPivot('created_at');
+    }
+
     public function statusEvents(): HasMany
     {
         return $this->hasMany(StatusEvent::class);

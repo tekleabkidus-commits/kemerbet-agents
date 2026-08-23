@@ -69,3 +69,11 @@ export function allForBank(bank: string): PayoutDetails[] {
     .sort((a, z) => z.ts - a.ts)
     .map((e) => ({ name: e.name, bank: e.bank, account: e.account }));
 }
+
+/** Most recent saved accounts overall, newest first, capped at `n`. */
+export function recentSaved(n: number): PayoutDetails[] {
+  return read()
+    .sort((a, z) => z.ts - a.ts)
+    .slice(0, n)
+    .map((e) => ({ name: e.name, bank: e.bank, account: e.account }));
+}

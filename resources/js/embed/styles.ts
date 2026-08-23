@@ -233,4 +233,10 @@ select.pf{appearance:none;-webkit-appearance:none;cursor:pointer;background-imag
 select.pf option{background:#0e1d33;color:var(--text-light)}
 .payout-note{font-size:.64rem;color:var(--text-dim);line-height:1.6;margin-top:3px}
 :host([lang="am"]) .payout-note{font-size:.7rem}
+.payout-saved{display:flex;flex-direction:column;gap:6px;margin:2px 0 10px}
+.psug{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;text-align:left;background:rgba(0,168,107,.07);border:1px solid rgba(0,168,107,.28);border-radius:10px;padding:8px 11px;cursor:pointer;transition:.2s;font-family:inherit}
+.psug:hover{border-color:rgba(0,168,107,.55);background:rgba(0,168,107,.12)}
+.psug:active{transform:scale(.98)}
+.psug-name{font-size:.78rem;font-weight:800;color:var(--text-light)}
+.psug-meta{font-size:.64rem;color:var(--text-muted);font-weight:600}
 `;

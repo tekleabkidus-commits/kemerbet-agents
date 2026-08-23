@@ -9,7 +9,7 @@ import {
   buildWithdrawalCashierUrl,
   type PayoutDetails,
 } from './withdrawal';
-import { savePayout, suggestForBank } from './payouts';
+import { savePayout, suggestForBank, recentSaved } from './payouts';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -168,6 +168,16 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
     .join('');
 
+  const saved = requirePayout ? recentSaved(3) : [];
+  const savedHtml = saved.length
+    ? `<div class="payout-saved" id="payoutSaved">${saved
+        .map(
+          (s, i) =>
+            `<button class="psug" data-sug="${i}"><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}</span></button>`,
+        )
+        .join('')}</div>`
+    : '';
+
   const payoutHtml = requirePayout
     ? `
     <div class="payout">
@@ -175,6 +185,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
       <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />
       <select class="pf" id="pfBank">${bankOpts}</select>
       <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
+      ${savedHtml}
       <div class="payout-note">${t.payout_note}</div>
     </div>`
     : '';
@@ -255,6 +266,21 @@ export function renderAmountScreen(deps: FlowDeps): void {
     recompute();
   });
 
+  // Saved-account suggestions: clicking one fills ALL three fields, replacing
+  // whatever was there (even hand-typed values).
+  shadow.querySelectorAll('#screenAmount .psug').forEach((b) => {
+    b.addEventListener('click', () => {
+      const idx = parseInt((b as HTMLElement).dataset.sug!, 10);
+      const s = saved[idx];
+      if (!s) return;
+      if (pfName) pfName.value = s.name;
+      if (pfBank) pfBank.value = s.bank;
+      if (pfAccount) pfAccount.value = s.account;
+      syncPayout();
+      recompute();
+    });
+  });
+
   shadow.querySelectorAll('#screenAmount .q').forEach((b) => {
     b.addEventListener('click', () => {
       if (input) input.value = fmt(parseInt((b as HTMLElement).dataset.quick!, 10));
@@ -305,10 +331,23 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
   const wrap = shadow.getElementById('screenResults');
   if (!wrap) return;
 
-  // Only LIVE, withdrawal-capable agents. (Offline never appears in withdrawal
-  // results.) Covering agents are shuffled; if none cover, show closest few.
+  // Only LIVE, withdrawal-capable agents whose WITHDRAWAL banks include the
+  // player's chosen bank (exact match). Offline never appears. Covering agents
+  // are shuffled; if none cover, show closest few (still bank-matched).
+  const chosenBank = currentPayout.bank.trim();
+  const bankMatches = (a: PublicAgent): boolean => {
+    if (!chosenBank) return true; // no bank chosen (payout not required) → no bank filter
+    return (a.withdrawal_methods ?? []).some(
+      (m) => m.display_name === chosenBank || m.slug === chosenBank,
+    );
+  };
+
   const liveWithdrawers = data.agents.filter(
-    (a) => a.status === 'live' && a.accepts_withdrawals && a.withdrawal_id,
+    (a) =>
+      a.status === 'live' &&
+      a.accepts_withdrawals &&
+      a.withdrawal_id &&
+      bankMatches(a),
   );
   const covering = shuffle(
     liveWithdrawers.filter((a) => (a.withdrawal_max ?? 0) >= amount),
@@ -332,7 +371,8 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
     .map((a) => {
       const num = String(a.display_number).padStart(2, '0');
       const covers = (a.withdrawal_max ?? 0) >= amount;
-      const banks = (a.payment_methods || [])
+      // Show the agent's WITHDRAWAL banks (what they pay out to), not deposit.
+      const banks = (a.withdrawal_methods || [])
         .map((m) => `<span class="bank">${esc(m.display_name)}</span>`)
         .join('');
       const label = covers ? t.results_withdraw_here : t.results_withdraw_partial;

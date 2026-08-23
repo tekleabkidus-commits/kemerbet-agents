@@ -15,6 +15,7 @@ export interface PublicAgent {
   accepts_withdrawals?: boolean;
   withdrawal_max?: number | null;
   withdrawal_id?: string | null;
+  withdrawal_methods?: AgentPaymentMethod[];
 }
 
 // Compact entry for every active agent, used to resolve a player's stored

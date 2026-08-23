@@ -58,6 +58,7 @@ class PublicAgentsController extends Controller
 
         $agents = Agent::where('status', Agent::STATUS_ACTIVE)
             ->with(['paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order')])
+            ->with(['withdrawalMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order')])
             ->addSelect(['agents.*',
                 'last_offline_at' => StatusEvent::select('created_at')
                     ->whereColumn('agent_id', 'agents.id')
@@ -231,6 +232,14 @@ class PublicAgentsController extends Controller
                 'slug' => $pm->slug,
                 'display_name' => $pm->display_name,
             ])->values()->all(),
+            // Banks this agent pays OUT to (withdrawals) — only meaningful when
+            // withdrawal-capable; used to match the player's chosen bank.
+            'withdrawal_methods' => $canWithdraw
+                ? $agent->withdrawalMethods->map(fn ($pm) => [
+                    'slug' => $pm->slug,
+                    'display_name' => $pm->display_name,
+                ])->values()->all()
+                : [],
         ];
 
         if ($status === 'recently_offline') {
