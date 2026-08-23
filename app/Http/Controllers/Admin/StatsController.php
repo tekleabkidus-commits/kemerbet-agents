@@ -35,6 +35,16 @@ class StatsController extends Controller
         ]);
     }
 
+    public function withdrawalDemand(Request $request): JsonResponse
+    {
+        [$from, $to] = $this->parseRange($request);
+
+        return response()->json([
+            'range' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
+            'data' => $this->stats->withdrawalDemand($from, $to),
+        ]);
+    }
+
     public function leaderboard(Request $request): JsonResponse
     {
         $request->validate([

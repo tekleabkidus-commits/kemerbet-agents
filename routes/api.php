@@ -64,6 +64,7 @@ Route::prefix('admin')->group(function () {
         Route::get('stats/pin-effectiveness', [StatsController::class, 'pinEffectiveness']);
         Route::get('stats/sparklines', [StatsController::class, 'sparklines']);
         Route::get('stats/records', [StatsController::class, 'records']);
+        Route::get('stats/withdrawal-demand', [StatsController::class, 'withdrawalDemand']);
         Route::get('stats/agent/{agent}', [StatsController::class, 'agentDetail']);
     });
 });

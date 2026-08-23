@@ -430,7 +430,8 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
       const id = parseInt((btn as HTMLElement).dataset.agentId!, 10);
       const agent = list.find((a) => a.id === id);
       if (!agent) return;
-      deps.trackClick(id, 'withdrawal', { amount, source: 'list' });
+      const covers = (agent.withdrawal_max ?? 0) >= amount;
+      deps.trackClick(id, 'withdrawal', { amount, source: covers ? 'list' : 'partial' });
       toast(shadow, cashierToastMsg(data.settings.withdrawal_redirect_path));
       withdrawHere({
         agent,

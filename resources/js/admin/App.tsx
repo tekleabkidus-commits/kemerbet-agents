@@ -10,6 +10,7 @@ import OverviewPage from '@/pages/analytics/OverviewPage';
 import AgentsAnalyticsPage from '@/pages/analytics/AgentsAnalyticsPage';
 import CustomersPage from '@/pages/analytics/CustomersPage';
 import CoveragePage from '@/pages/analytics/CoveragePage';
+import WithdrawalsPage from '@/pages/analytics/WithdrawalsPage';
 import PaymentMethodsPage from '@/pages/PaymentMethodsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import NoticesPage from '@/pages/NoticesPage';
@@ -38,6 +39,7 @@ export default function App() {
                             <Route path="/admin/analytics/agents" element={<AgentsAnalyticsPage />} />
                             <Route path="/admin/analytics/customers" element={<CustomersPage />} />
                             <Route path="/admin/analytics/coverage" element={<CoveragePage />} />
+                            <Route path="/admin/analytics/withdrawals" element={<WithdrawalsPage />} />
                             <Route path="/admin/payment-methods" element={<PaymentMethodsPage />} />
                             <Route path="/admin/settings" element={<SettingsPage />} />
                             <Route path="/admin/notices" element={<NoticesPage />} />
