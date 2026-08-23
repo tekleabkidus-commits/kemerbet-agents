@@ -9,7 +9,7 @@ import {
   buildWithdrawalCashierUrl,
   type PayoutDetails,
 } from './withdrawal';
-import { savePayout, suggestForBank, recentSaved } from './payouts';
+import { savePayout, suggestForBank, recentSaved, deletePayout } from './payouts';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -164,12 +164,12 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
     .join('');
 
-  const saved = requirePayout ? recentSaved(3) : [];
+  const saved = requirePayout ? recentSaved(4) : [];
   const savedHtml = saved.length
     ? `<div class="payout-saved" id="payoutSaved">${saved
         .map(
           (s, i) =>
-            `<button class="psug" data-sug="${i}"><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}</span></button>`,
+            `<div class="psug" data-sug="${i}"><button class="psug-x" data-del="${i}" aria-label="Delete">\u2715</button><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}</span></div>`,
         )
         .join('')}</div>`
     : '';
@@ -259,13 +259,21 @@ export function renderAmountScreen(deps: FlowDeps): void {
     recompute();
   });
 
-  // Saved-account suggestions: clicking one fills ALL three fields, replacing
-  // whatever was there (even hand-typed values).
+  // Saved-account suggestions: clicking a card fills ALL three fields,
+  // replacing whatever was there. The ✕ deletes that saved account instead.
   shadow.querySelectorAll('#screenAmount .psug').forEach((b) => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', (e) => {
       const idx = parseInt((b as HTMLElement).dataset.sug!, 10);
       const s = saved[idx];
       if (!s) return;
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-del]')) {
+        // delete this saved account, then re-render the screen
+        e.stopPropagation();
+        deletePayout(s.bank, s.account);
+        renderAmountScreen(deps);
+        return;
+      }
       if (pfName) pfName.value = s.name;
       if (pfBank) pfBank.value = s.bank;
       if (pfAccount) pfAccount.value = s.account;
