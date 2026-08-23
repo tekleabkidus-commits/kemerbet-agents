@@ -5,7 +5,7 @@ import type { PayoutDetails } from './withdrawal';
 // the player picks a bank they've used before.
 
 const KEY = 'kemerbet_payout_accounts';
-const MAX = 12;
+const MAX = 4;
 
 interface StoredPayout extends PayoutDetails {
   ts: number;
@@ -46,6 +46,13 @@ export function savePayout(p: PayoutDetails): void {
   );
   list.unshift({ name, bank, account, ts: Date.now() });
   write(list);
+}
+
+/** Remove a saved account by bank+account pair. */
+export function deletePayout(bank: string, account: string): void {
+  const b = bank.trim();
+  const a = account.trim();
+  write(read().filter((e) => !(e.bank === b && e.account === a)));
 }
 
 /**
