@@ -58,7 +58,10 @@ class SettingSeeder extends Seeder
             ];
 
             foreach ($settings as $key => $value) {
-                Setting::updateOrCreate(
+                // firstOrCreate: only ADD missing keys. Never overwrite a value
+                // an admin has edited — this makes the seeder safe to re-run on
+                // production (e.g. after a deploy that introduces new settings).
+                Setting::firstOrCreate(
                     ['key' => $key],
                     [
                         'value' => $value,
