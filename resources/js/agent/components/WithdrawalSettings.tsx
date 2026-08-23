@@ -17,7 +17,6 @@ export default function WithdrawalSettings({ settings, isProcessing, onSave }: P
     settings.withdrawal_max ?? settings.global_max_default,
   );
 
-  // Re-sync when the server sends fresh state (after save or periodic refetch).
   useEffect(() => {
     setAccepts(settings.accepts_withdrawals);
     setMax(settings.withdrawal_max ?? settings.global_max_default);
@@ -34,9 +33,9 @@ export default function WithdrawalSettings({ settings, isProcessing, onSave }: P
   const hasId = !!settings.withdrawal_id;
 
   return (
-    <div className="go-live-section">
-      <div className="section-title">
-        Withdrawal settings
+    <div className="wd-zone">
+      <div className="wd-zh">
+        <h3>Withdrawal settings</h3>
         {accepts && <span className="wd-cap">Up to {fmt(max)} ETB</span>}
       </div>
 
@@ -44,7 +43,7 @@ export default function WithdrawalSettings({ settings, isProcessing, onSave }: P
       <div className="wd-seg">
         <button
           type="button"
-          className={!accepts ? 'on-dep' : ''}
+          className={!accepts ? 'on' : ''}
           disabled={isProcessing}
           onClick={() => setAccepts(false)}
         >
@@ -52,7 +51,7 @@ export default function WithdrawalSettings({ settings, isProcessing, onSave }: P
         </button>
         <button
           type="button"
-          className={accepts ? 'on-both' : ''}
+          className={accepts ? 'on' : ''}
           disabled={isProcessing}
           onClick={() => setAccepts(true)}
         >
@@ -61,54 +60,52 @@ export default function WithdrawalSettings({ settings, isProcessing, onSave }: P
       </div>
 
       {accepts && (
-        <div className="wd-field">
-          <label className="wd-label">Maximum I can pay out now</label>
+        <div className="wd-frow">
+          <label>Maximum I can pay out right now</label>
           <div className="wd-stepper">
             <button
               type="button"
-              className="wd-step"
               disabled={isProcessing || max <= min}
               onClick={() => setMax(clamp(max - step))}
             >
               &minus;
             </button>
-            <div className="wd-val">{fmt(max)} ETB</div>
+            <div className="val">{fmt(max)} ETB</div>
             <button
               type="button"
-              className="wd-step"
               disabled={isProcessing || max >= ceiling}
               onClick={() => setMax(clamp(max + step))}
             >
               +
             </button>
           </div>
-          <div className="wd-note">
-            Lower this any time you&apos;re running low on cash &mdash; players asking for
-            more than this won&apos;t see you. Range: {fmt(min)}&ndash;{fmt(ceiling)} ETB
-            (set by admin).
+          <div className="wd-fnote">
+            Lower this any time you&apos;re running out of cash &mdash; players asking
+            for more than this won&apos;t see you. Minimum withdrawal ({fmt(min)} ETB)
+            and maximum ({fmt(ceiling)} ETB) are set by admin.
           </div>
         </div>
       )}
 
       {/* admin-managed withdrawal ID - read only */}
-      <div className="wd-field">
-        <label className="wd-label">
+      <div className="wd-frow">
+        <label>
           My Withdrawal ID <span className="adm">&middot; set by admin</span>
         </label>
-        <div className="wd-readonly">
+        <div className="wd-tin">
           <span>{settings.withdrawal_id ?? 'Not set'}</span>
-          <span className="wd-lock">&#128274; READ ONLY</span>
+          <span className="lock">&#128274; READ ONLY</span>
         </div>
-        <div className="wd-note">
+        <div className="wd-fnote">
           {hasId
-            ? "Players' auto-message includes this ID so they can start the withdrawal immediately. Wrong ID? Contact admin - only they can change it."
+            ? "Players' auto-message includes this ID so they can start the withdrawal immediately. Wrong or changed ID? Contact admin - only they can edit it. Agents without an ID don't appear for withdrawals."
             : "You have no Withdrawal ID yet, so you won't appear for withdrawals. Contact admin to set one."}
         </div>
       </div>
 
       <button
         type="button"
-        className="wd-save"
+        className="wd-savebar"
         disabled={isProcessing || !dirty}
         onClick={() => onSave(accepts, accepts ? max : null)}
       >
