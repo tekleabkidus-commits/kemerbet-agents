@@ -1,6 +1,16 @@
 import { STYLES } from './styles';
 import { I18N, getLang, setLang } from './i18n';
 import { renderPage } from './render';
+import { recordRecent } from './recents';
+import {
+  showScreen,
+  renderHomeExtras,
+  renderAmountScreen,
+  handleRecentMain,
+  handleRecentContact,
+  wireVideoBoxes,
+  type FlowDeps,
+} from './flow';
 import type { Lang, PublicAgentsResponse } from './types';
 
 function getApiBase(container: HTMLElement): string {
@@ -83,6 +93,37 @@ function init(): void {
     }).catch(() => {});
   }
 
+  // --- Flow controller deps (Phase 2) ---
+  const flowDeps: FlowDeps = {
+    shadow,
+    apiBase,
+    getData: () => lastApiData,
+    trackClick: (agentId, intent, opts) => {
+      recordRecent(agentId, intent);
+      fetch(`${apiBase}/api/public/agents/${agentId}/click`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referrer: window.location.href,
+          intent,
+          amount: opts?.amount ?? null,
+          source: opts?.source ?? null,
+          payment_methods:
+            opts?.paymentMethods && opts.paymentMethods.length > 0
+              ? opts.paymentMethods
+              : null,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    },
+    openOfflineModal: (depositUrl, agentId, methods) => {
+      pendingDepositUrl = depositUrl;
+      pendingAgentId = String(agentId);
+      pendingPaymentMethods = methods;
+      showModal();
+    },
+  };
+
   // --- Fetch + render ---
   async function fetchAndRender(): Promise<void> {
     showRefreshIndicator();
@@ -92,6 +133,8 @@ function init(): void {
       const data: PublicAgentsResponse = await res.json();
       lastApiData = data;
       renderPage(data, shadow);
+      renderHomeExtras(flowDeps);
+      wireVideoBoxes(shadow);
     } catch {
       console.warn('[kemerbet-agents] fetch failed, retrying in 60s');
     }
@@ -138,7 +181,10 @@ function init(): void {
 
   // Modal: confirm button
   shadow.getElementById('confirmDepositBtn')?.addEventListener('click', () => {
-    if (pendingAgentId) trackClick(pendingAgentId, pendingPaymentMethods ?? undefined);
+    if (pendingAgentId) {
+      trackClick(pendingAgentId, pendingPaymentMethods ?? undefined);
+      recordRecent(parseInt(pendingAgentId, 10), 'deposit');
+    }
     if (pendingDepositUrl) window.open(pendingDepositUrl, '_blank', 'noopener');
     closeModal();
   });
@@ -179,6 +225,37 @@ function init(): void {
     } else {
       // Live link: tracking fires in parallel, <a target="_blank"> proceeds naturally
       trackClick(agentId, methods);
+      recordRecent(parseInt(agentId, 10), 'deposit');
+    }
+  });
+
+  // --- Intent choice + recents delegation (Phase 2) ---
+  shadow.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+
+    const intentBtn = target.closest('[data-intent-choice]') as HTMLElement | null;
+    if (intentBtn) {
+      const choice = intentBtn.dataset.intentChoice;
+      if (choice === 'withdraw') {
+        renderAmountScreen(flowDeps);
+        showScreen(shadow, 'amount');
+      } else {
+        // Deposit: stay on home; the live list below is the deposit list.
+        shadow.getElementById('liveGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
+
+    const recentMain = target.closest('[data-recent-main]') as HTMLElement | null;
+    if (recentMain) {
+      handleRecentMain(flowDeps, parseInt(recentMain.dataset.agentId!, 10), recentMain.dataset.intent!);
+      return;
+    }
+
+    const recentContact = target.closest('[data-recent-contact]') as HTMLElement | null;
+    if (recentContact) {
+      handleRecentContact(flowDeps, parseInt(recentContact.dataset.agentId!, 10));
+      return;
     }
   });
 
@@ -188,7 +265,16 @@ function init(): void {
       const newLang = (btn as HTMLElement).dataset.lang as Lang;
       setLang(newLang);
       applyLang(newLang, shadow, container);
-      if (lastApiData) renderPage(lastApiData, shadow);
+      if (lastApiData) {
+        renderPage(lastApiData, shadow);
+        renderHomeExtras(flowDeps);
+        // If the amount screen is currently showing, re-render it in the new
+        // language. (Results re-render whenever re-entered from amount.)
+        if (shadow.getElementById('screenAmount')?.classList.contains('active')) {
+          renderAmountScreen(flowDeps);
+          showScreen(shadow, 'amount');
+        }
+      }
     });
   });
 
@@ -240,30 +326,61 @@ function buildShellHTML(lang: Lang): string {
         </div>
       </div>
 
-      <div class="header">
-        <div class="header-logo">
-          <span class="live-indicator"></span>
-          <span id="liveCountText">${t.loading}</span>
+      <!-- ============ HOME ============ -->
+      <div class="screen active" id="screenHome">
+        <div class="header">
+          <div class="header-logo">
+            <span class="live-indicator"></span>
+            <span id="liveCountText">${t.loading}</span>
+          </div>
+          <h1 data-i18n="title">${t.title}</h1>
+          <p data-i18n="subtitle">${t.subtitle}</p>
         </div>
-        <h1 data-i18n="title">${t.title}</h1>
-        <p data-i18n="subtitle">${t.subtitle}</p>
+
+        <div id="videoWrap"></div>
+
+        <!-- intent choice -->
+        <div class="section-title"><h2 id="intentQuestion">${t.intent_question}</h2></div>
+        <div class="intent">
+          <button class="intent-card dep" data-intent-choice="deposit">
+            <span class="ic">\uD83D\uDCB0</span>
+            <b>${t.intent_deposit}</b>
+            <span>${t.intent_deposit_desc}</span>
+          </button>
+          <button class="intent-card wdr" data-intent-choice="withdraw">
+            <span class="ic">\uD83C\uDFE7</span>
+            <b>${t.intent_withdraw}</b>
+            <span>${t.intent_withdraw_desc}</span>
+          </button>
+        </div>
+
+        <!-- recents -->
+        <div id="recentsWrap" style="display:none">
+          <div class="section-title" style="margin-top:22px"><h2>${t.recents_title}</h2><span>${t.recents_only_you}</span></div>
+          <div class="recents" id="recentsGrid"></div>
+        </div>
+
+        <!-- live agent list (deposit) -->
+        <div class="section-title">
+          <h2 data-i18n="live_now">${t.live_now}</h2>
+          <div class="agent-count" id="liveCountInline">\u2014</div>
+        </div>
+
+        <div class="agent-grid" id="liveGrid">
+          <div class="empty-state"><h3 data-i18n="loading">${t.loading}</h3></div>
+        </div>
+
+        <div id="offlineWrap" style="display:none">
+          <div class="offline-divider" data-i18n="recently_online">${t.recently_online}</div>
+          <div class="agent-grid" id="offlineGrid"></div>
+        </div>
       </div>
 
-      <div id="videoWrap"></div>
+      <!-- ============ AMOUNT ============ -->
+      <div class="screen" id="screenAmount"></div>
 
-      <div class="section-title">
-        <h2 data-i18n="live_now">${t.live_now}</h2>
-        <div class="agent-count" id="liveCountInline">\u2014</div>
-      </div>
-
-      <div class="agent-grid" id="liveGrid">
-        <div class="empty-state"><h3 data-i18n="loading">${t.loading}</h3></div>
-      </div>
-
-      <div id="offlineWrap" style="display:none">
-        <div class="offline-divider" data-i18n="recently_online">${t.recently_online}</div>
-        <div class="agent-grid" id="offlineGrid"></div>
-      </div>
+      <!-- ============ RESULTS ============ -->
+      <div class="screen" id="screenResults"></div>
     </div>
   `;
 }

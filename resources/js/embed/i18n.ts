@@ -27,6 +27,37 @@ export interface Translations {
   warn_desc: string;
   cancel: string;
   continue: string;
+  // --- Phase 2: intent + withdrawal flow ---
+  intent_question: string;
+  intent_deposit: string;
+  intent_deposit_desc: string;
+  intent_withdraw: string;
+  intent_withdraw_desc: string;
+  withdraw_title: string;
+  withdraw_amount_label: string;
+  withdraw_min_prefix: string;
+  withdraw_min_error: string;
+  withdraw_see_agents: string;
+  withdraw_own_agent: string;
+  withdraw_own_agent_desc: string;
+  withdraw_note: string;
+  withdraw_howto: string;
+  withdraw_howto_sub: string;
+  results_title: string;
+  results_withdrawing: string;
+  results_change: string;
+  results_cap_prefix: string;
+  results_ready: string;
+  results_withdraw_here: string;
+  results_withdraw_partial: string;
+  results_none_title: string;
+  results_none_desc: string;
+  recents_title: string;
+  recents_only_you: string;
+  recents_contact: string;
+  recents_online: string;
+  recents_offline: string;
+  back: string;
 }
 
 export const I18N: Record<Lang, Translations> = {
@@ -57,6 +88,36 @@ export const I18N: Record<Lang, Translations> = {
     warn_desc: 'ኤጀንቱ ለተወሰነ ጊዜ ኦንላይን አልነበረም እና በፍጥነት ላይመልስልዎ ይችላል። መቀጠል ይፈልጋሉ?',
     cancel: 'ይቅር',
     continue: 'ቀጥል',
+    intent_question: 'ምን ማድረግ ይፈልጋሉ?',
+    intent_deposit: 'ዲፖዚት',
+    intent_deposit_desc: 'ኦንላይን ያሉ ኤጀንቶችን አይተው ገንዘብ ያስገቡ',
+    intent_withdraw: 'ማውጣት',
+    intent_withdraw_desc: 'መጠን ያስገቡ → የሚከፍሉ ኤጀንቶች ይታያሉ',
+    withdraw_title: 'ማውጣት',
+    withdraw_amount_label: 'ምን ያህል ማውጣት ይፈልጋሉ?',
+    withdraw_min_prefix: 'ዝቅተኛ',
+    withdraw_min_error: 'ዝቅተኛው መጠን',
+    withdraw_see_agents: 'ይህን መጠን የሚከፍሉ ኤጀንቶችን ይመልከቱ',
+    withdraw_own_agent: 'የራሴ ኤጀንት',
+    withdraw_own_agent_desc: 'በቀጥታ በሳይቱ ላይ ያውጡ',
+    withdraw_note: 'የገንዘብ መጠንዎን የሚሸፍኑ ኤጀንቶችን ብቻ እናሳያለን። የቴሌግራም መልእክትዎ ከመጠኑ እና ከኤጀንቱ የማውጫ መለያ ጋር ዝግጁ ሆኖ ይመጣል።',
+    withdraw_howto: 'ማውጣት እንዴት እንደሚሰራ',
+    withdraw_howto_sub: 'ቪዲዮ',
+    results_title: 'ለመጠንዎ ኤጀንቶች',
+    results_withdrawing: 'በማውጣት ላይ',
+    results_change: 'ቀይር',
+    results_cap_prefix: 'እስከ',
+    results_ready: 'ኦንላይን · ለመክፈል ዝግጁ',
+    results_withdraw_here: 'እዚህ ያውጡ',
+    results_withdraw_partial: 'በከፊል ያውጡ',
+    results_none_title: 'አሁን ይህን ሙሉ መጠን የሚከፍል ኤጀንት የለም',
+    results_none_desc: 'እነዚህ በጣም ቅርብ ናቸው — መጠኑን መከፋፈል፣ ትንሽ መጠን መምረጥ ወይም ቆይተው መመለስ ይችላሉ።',
+    recents_title: 'የቅርብ ጊዜ ኤጀንቶችዎ',
+    recents_only_you: 'እርስዎ ብቻ ያዩታል',
+    recents_contact: 'አግኝ',
+    recents_online: 'ኦንላይን',
+    recents_offline: 'ኦፍላይን',
+    back: 'ተመለስ',
   },
   en: {
     title: 'Kemerbet Agents',
@@ -85,6 +146,36 @@ export const I18N: Record<Lang, Translations> = {
     warn_desc: 'The agent has not been online for a while and may not respond quickly. Do you want to continue?',
     cancel: 'Cancel',
     continue: 'Continue',
+    intent_question: 'What do you want to do?',
+    intent_deposit: 'Deposit',
+    intent_deposit_desc: 'See all online agents and send money',
+    intent_withdraw: 'Withdraw',
+    intent_withdraw_desc: 'Enter amount → matched to agents who can pay it',
+    withdraw_title: 'Withdraw',
+    withdraw_amount_label: 'How much do you want to withdraw?',
+    withdraw_min_prefix: 'Minimum',
+    withdraw_min_error: 'Minimum is',
+    withdraw_see_agents: 'See agents who can pay this',
+    withdraw_own_agent: 'My own agent',
+    withdraw_own_agent_desc: 'withdraw directly on the site',
+    withdraw_note: 'We only show agents whose cash covers your amount, so you don\'t waste time asking. Your Telegram message comes ready with the amount and the agent\'s Withdrawal ID.',
+    withdraw_howto: 'How withdrawal works',
+    withdraw_howto_sub: 'Video',
+    results_title: 'Agents for your amount',
+    results_withdrawing: 'Withdrawing',
+    results_change: 'Change',
+    results_cap_prefix: 'Up to',
+    results_ready: 'Online · ready to pay',
+    results_withdraw_here: 'Withdraw here',
+    results_withdraw_partial: 'Withdraw partial',
+    results_none_title: 'No agent can pay this full amount right now',
+    results_none_desc: 'These agents are closest — split your withdrawal, choose a smaller amount, or check back soon.',
+    recents_title: 'Your recent agents',
+    recents_only_you: 'only you see this',
+    recents_contact: 'Contact',
+    recents_online: 'Online',
+    recents_offline: 'Offline',
+    back: 'Back',
   },
 };
 
