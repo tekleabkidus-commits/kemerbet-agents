@@ -14,6 +14,21 @@ class UpdateSettingsRequest extends FormRequest
         'warn_on_offline_click',
         'shuffle_live_agents',
         'onboarding_video_url',
+        // --- Withdrawal system ---
+        'withdrawals_enabled',
+        'withdrawal_min',
+        'withdrawal_max_default',
+        'withdrawal_quick_amounts',
+        'withdrawal_redirect_path',
+        'withdrawal_howto_video_url',
+        'withdrawal_no_match_behavior',
+        'withdrawal_bank_options',
+        'withdrawal_require_payout_details',
+        'withdrawal_message_with_amount',
+        'withdrawal_message_no_amount',
+        'deposit_prefill_message',
+        'recents_enabled',
+        'recents_count',
     ];
 
     public function authorize(): bool
@@ -37,6 +52,30 @@ class UpdateSettingsRequest extends FormRequest
                 'max:500',
                 'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i',
             ],
+
+            // --- Withdrawal system ---
+            'withdrawals_enabled' => ['sometimes', 'boolean'],
+            'withdrawal_min' => ['sometimes', 'integer', 'min:1', 'max:10000000'],
+            'withdrawal_max_default' => ['sometimes', 'integer', 'min:1', 'max:10000000'],
+            'withdrawal_quick_amounts' => ['sometimes', 'array', 'max:12'],
+            'withdrawal_quick_amounts.*' => ['integer', 'min:1'],
+            'withdrawal_redirect_path' => ['sometimes', 'string', 'max:300'],
+            'withdrawal_howto_video_url' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i',
+            ],
+            'withdrawal_no_match_behavior' => ['sometimes', 'string', 'in:closest,empty'],
+            'withdrawal_bank_options' => ['sometimes', 'array', 'max:40'],
+            'withdrawal_bank_options.*' => ['string', 'max:60'],
+            'withdrawal_require_payout_details' => ['sometimes', 'boolean'],
+            'withdrawal_message_with_amount' => ['sometimes', 'string', 'max:600'],
+            'withdrawal_message_no_amount' => ['sometimes', 'string', 'max:600'],
+            'deposit_prefill_message' => ['sometimes', 'string', 'max:200'],
+            'recents_enabled' => ['sometimes', 'boolean'],
+            'recents_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];
     }
 
@@ -44,6 +83,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'onboarding_video_url.regex' => 'Must be a valid YouTube URL (youtube.com/watch, youtu.be, or youtube.com/embed format) or empty.',
+            'withdrawal_howto_video_url.regex' => 'Must be a valid YouTube URL (youtube.com/watch, youtu.be, or youtube.com/embed format) or empty.',
         ];
     }
 

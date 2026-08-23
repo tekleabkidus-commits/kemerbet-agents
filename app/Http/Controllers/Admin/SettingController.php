@@ -30,6 +30,7 @@ class SettingController extends Controller
         });
 
         Cache::forget('settings.public');
+        Cache::forget('public_agents');
 
         return response()->json(['data' => $this->buildResponseData()]);
     }
