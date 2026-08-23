@@ -98,7 +98,29 @@ export function renderHomeExtras(deps: FlowDeps): void {
   const lang = getLang();
   const t = I18N[lang];
 
-  // Recents
+  // Player notice board (admin-managed, audience=player/both)
+  const noticeWrap = shadow.getElementById('noticeWrap');
+  if (noticeWrap) {
+    const notices = data.notices ?? [];
+    if (notices.length === 0) {
+      noticeWrap.innerHTML = '';
+    } else {
+      noticeWrap.innerHTML = notices
+        .map((n) => {
+          const vid = n.video_url ? youTubeId(n.video_url) : null;
+          const videoHtml = vid
+            ? `<div class="videobox nb-video" data-video="${esc(n.video_url ?? '')}"><div class="vplay">\u25B6</div><b>${t.withdraw_howto}</b></div>`
+            : '';
+          return `
+            <div class="notice">
+              <div class="nb-tag">${n.priority === 'urgent' ? '\uD83D\uDCE3' : '\uD83D\uDCCC'} ${esc(n.title || '')}</div>
+              <p>${esc(n.body)}</p>
+              ${videoHtml}
+            </div>`;
+        })
+        .join('');
+    }
+  }
   const recentsWrap = shadow.getElementById('recentsWrap');
   if (recentsWrap) {
     if (data.settings.recents_enabled) {

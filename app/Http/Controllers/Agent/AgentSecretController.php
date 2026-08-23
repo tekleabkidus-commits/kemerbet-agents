@@ -318,7 +318,7 @@ class AgentSecretController extends Controller
                 'global_min' => (int) (\App\Models\Setting::where('key', 'withdrawal_min')->value('value') ?? 200),
                 'global_max_default' => (int) (\App\Models\Setting::where('key', 'withdrawal_max_default')->value('value') ?? 10000),
             ],
-            'notices' => Notice::currentlyVisible()->get()->map(fn (Notice $notice) => [
+            'notices' => Notice::currentlyVisible(Notice::AUDIENCE_AGENT)->get()->map(fn (Notice $notice) => [
                 'id' => $notice->id,
                 'title' => $notice->title,
                 'body' => $notice->body,

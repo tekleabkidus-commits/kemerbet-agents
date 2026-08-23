@@ -23,10 +23,18 @@ class Notice extends Model
 
     public const STATUS_OFF = 'off';
 
+    public const AUDIENCE_AGENT = 'agent';
+
+    public const AUDIENCE_PLAYER = 'player';
+
+    public const AUDIENCE_BOTH = 'both';
+
     protected $fillable = [
         'title',
         'body',
         'priority',
+        'audience',
+        'video_url',
         'is_active',
         'starts_at',
         'ends_at',
@@ -38,6 +46,7 @@ class Notice extends Model
 
     protected $attributes = [
         'priority' => self::PRIORITY_INFO,
+        'audience' => self::AUDIENCE_AGENT,
         'is_active' => true,
         'send_push' => false,
     ];
@@ -58,13 +67,17 @@ class Notice extends Model
     }
 
     /**
-     * Notices currently visible to agents: active, inside their
-     * schedule window, ordered urgent first then newest first.
+     * Notices currently visible, optionally restricted to an audience.
+     * $audience 'agent' or 'player' also includes 'both'; null = no filter.
+     * Active, inside schedule window, urgent first then newest first.
      */
-    public function scopeCurrentlyVisible(Builder $query): Builder
+    public function scopeCurrentlyVisible(Builder $query, ?string $audience = null): Builder
     {
         return $query
             ->where('is_active', true)
+            ->when($audience !== null, function (Builder $q) use ($audience) {
+                $q->whereIn('audience', [$audience, self::AUDIENCE_BOTH]);
+            })
             ->where(function (Builder $q) {
                 $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
             })

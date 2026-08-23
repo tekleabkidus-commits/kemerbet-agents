@@ -344,6 +344,9 @@ function buildShellHTML(lang: Lang): string {
           <p data-i18n="subtitle">${t.subtitle}</p>
         </div>
 
+        <!-- player notice board (admin-managed) -->
+        <div id="noticeWrap"></div>
+
         <!-- intent choice -->
         <div class="section-title"><h2 id="intentQuestion">${t.intent_question}</h2></div>
         <div class="intent">

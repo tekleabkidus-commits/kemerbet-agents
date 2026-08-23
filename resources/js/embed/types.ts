@@ -30,11 +30,20 @@ export interface AgentDirectoryEntry {
   has_withdrawal_id: boolean;
 }
 
+export interface PlayerNotice {
+  id: number;
+  title: string | null;
+  body: string;
+  priority: 'urgent' | 'info';
+  video_url: string | null;
+}
+
 export interface PublicAgentsResponse {
   cached_at: string;
   live_count: number;
   agents: PublicAgent[];
   directory: AgentDirectoryEntry[];
+  notices?: PlayerNotice[];
   settings: {
     chat_prefilled_message: string;
     show_offline_agents: boolean;

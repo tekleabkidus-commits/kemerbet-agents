@@ -125,6 +125,15 @@ class PublicAgentsController extends Controller
             'live_count' => $live->count(),
             'agents' => $result,
             'directory' => $directory,
+            'notices' => \App\Models\Notice::currentlyVisible(\App\Models\Notice::AUDIENCE_PLAYER)
+                ->get()
+                ->map(fn (\App\Models\Notice $n) => [
+                    'id' => $n->id,
+                    'title' => $n->title,
+                    'body' => $n->body,
+                    'priority' => $n->priority,
+                    'video_url' => $n->video_url,
+                ])->values()->all(),
             'settings' => [
                 'chat_prefilled_message' => $prefillMessage,
                 'show_offline_agents' => $showOffline,

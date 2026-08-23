@@ -11,6 +11,8 @@ interface Notice {
     title: string | null;
     body: string;
     priority: 'urgent' | 'info';
+    audience: 'agent' | 'player' | 'both';
+    video_url: string | null;
     is_active: boolean;
     starts_at: string | null;
     ends_at: string | null;
@@ -115,6 +117,8 @@ export default function NoticesPage() {
     const [formTitle, setFormTitle] = useState('');
     const [formBody, setFormBody] = useState('');
     const [formPriority, setFormPriority] = useState<'urgent' | 'info'>('info');
+    const [formAudience, setFormAudience] = useState<'agent' | 'player' | 'both'>('agent');
+    const [formVideoUrl, setFormVideoUrl] = useState('');
     const [formActive, setFormActive] = useState(true);
     const [formStartsAt, setFormStartsAt] = useState('');
     const [formEndsAt, setFormEndsAt] = useState('');
@@ -145,6 +149,8 @@ export default function NoticesPage() {
         setFormTitle('');
         setFormBody('');
         setFormPriority('info');
+        setFormAudience('agent');
+        setFormVideoUrl('');
         setFormActive(true);
         setFormStartsAt('');
         setFormEndsAt('');
@@ -158,6 +164,8 @@ export default function NoticesPage() {
         setFormTitle(notice.title ?? '');
         setFormBody(notice.body);
         setFormPriority(notice.priority);
+        setFormAudience(notice.audience ?? 'agent');
+        setFormVideoUrl(notice.video_url ?? '');
         setFormActive(notice.is_active);
         setFormStartsAt(toDatetimeLocal(notice.starts_at));
         setFormEndsAt(toDatetimeLocal(notice.ends_at));
@@ -181,6 +189,8 @@ export default function NoticesPage() {
                 title: formTitle || null,
                 body: formBody,
                 priority: formPriority,
+                audience: formAudience,
+                video_url: formVideoUrl.trim() || null,
                 is_active: formActive,
                 starts_at: fromDatetimeLocal(formStartsAt),
                 ends_at: fromDatetimeLocal(formEndsAt),
@@ -403,6 +413,36 @@ export default function NoticesPage() {
                             <option value="urgent">Urgent</option>
                         </select>
                     </div>
+
+                    <div className="form-row">
+                        <label className="form-label">
+                            Audience <span className="hint">who sees this notice</span>
+                        </label>
+                        <select
+                            className="form-select"
+                            value={formAudience}
+                            onChange={(e) => setFormAudience(e.target.value as 'agent' | 'player' | 'both')}
+                        >
+                            <option value="agent">Agents (secret page)</option>
+                            <option value="player">Players (public widget)</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+
+                    {(formAudience === 'player' || formAudience === 'both') && (
+                        <div className="form-row">
+                            <label className="form-label">
+                                Video URL <span className="hint">optional YouTube link shown in the player notice</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="form-input"
+                                value={formVideoUrl}
+                                onChange={(e) => setFormVideoUrl(e.target.value)}
+                                placeholder="https://www.youtube.com/watch?v=..."
+                            />
+                        </div>
+                    )}
 
                     <div className="form-row">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>

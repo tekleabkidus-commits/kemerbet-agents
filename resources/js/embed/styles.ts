@@ -241,4 +241,5 @@ select.pf option{background:#0e1d33;color:var(--text-light)}
 .psug-x:hover{background:rgba(239,68,68,.3)}
 .psug-name{font-size:.76rem;font-weight:800;color:var(--text-light);padding-left:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .psug-meta{font-size:.62rem;color:var(--text-muted);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nb-video{margin-top:11px;margin-bottom:0}
 `;
