@@ -12,6 +12,9 @@ class ClickEvent extends Model
     protected $fillable = [
         'agent_id',
         'click_type',
+        'intent',
+        'amount',
+        'source',
         'visitor_id',
         'ip_address',
         'referrer',
@@ -24,6 +27,7 @@ class ClickEvent extends Model
         return [
             'created_at' => 'datetime',
             'payment_methods' => 'array',
+            'amount' => 'decimal:4',
         ];
     }
 

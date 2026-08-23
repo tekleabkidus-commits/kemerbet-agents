@@ -24,6 +24,9 @@ class Agent extends Model
         'max_birr',
         'notes',
         'pinned_at',
+        'accepts_withdrawals',
+        'withdrawal_max',
+        'withdrawal_id',
         'live_until',
         'last_status_change_at',
     ];
@@ -36,6 +39,8 @@ class Agent extends Model
             'last_status_change_at' => 'datetime',
             'min_birr' => 'decimal:4',
             'max_birr' => 'decimal:4',
+            'accepts_withdrawals' => 'boolean',
+            'withdrawal_max' => 'decimal:4',
         ];
     }
 
@@ -91,5 +96,31 @@ class Agent extends Model
 
         return $this->live_until->isPast()
             && $this->live_until->greaterThan(now()->subHours($hideAfterHours));
+    }
+
+    /**
+     * True when the agent is eligible to appear in withdrawal results at all.
+     * Requires the toggle on, a positive max, and a withdrawal_id — without an
+     * ID we cannot build a valid auto-message, so the agent is silently
+     * excluded from withdrawals (deposit listings are unaffected).
+     */
+    public function canWithdraw(): bool
+    {
+        return $this->accepts_withdrawals === true
+            && $this->withdrawal_id !== null
+            && $this->withdrawal_id !== ''
+            && $this->withdrawal_max !== null
+            && (float) $this->withdrawal_max > 0;
+    }
+
+    /**
+     * True when this agent can pay out the requested amount in a single
+     * withdrawal (i.e. their max covers it). Caller is responsible for the
+     * canWithdraw() gate; this only compares the amount to the max.
+     */
+    public function coversWithdrawal(float $amount): bool
+    {
+        return $this->withdrawal_max !== null
+            && (float) $this->withdrawal_max >= $amount;
     }
 }
