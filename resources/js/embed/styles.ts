@@ -254,4 +254,7 @@ select.pf option{background:#0e1d33;color:var(--text-light)}
 .psug-wrap{display:flex;align-items:stretch;gap:0}
 .psug-wrap .psug{flex:1;border-top-right-radius:0;border-bottom-right-radius:0}
 .psug-wrap .psug-x{border:1px solid rgba(0,168,107,.28);border-left:0;border-radius:0 10px 10px 0;background:rgba(0,168,107,.07)}
+.pid-note{font-size:.66rem;font-weight:700;color:var(--text-dim);margin:2px 2px 5px;display:flex;align-items:center;gap:5px}
+.pid-note.auto{color:var(--green-primary)}
+.pid-note.auto::before{content:"\\2713";font-weight:900}
 `;
