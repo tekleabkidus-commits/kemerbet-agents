@@ -62,6 +62,8 @@ export interface PublicAgentsResponse {
     withdrawal_message_no_amount: string;
     deposit_quick_amounts?: number[];
     deposit_message?: string;
+    player_id_storage_key?: string;
+    player_id_dom_selector?: string;
     recents_enabled: boolean;
     recents_count: number;
   };

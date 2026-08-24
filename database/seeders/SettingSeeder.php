@@ -58,6 +58,11 @@ class SettingSeeder extends Seeder
                 // Deposit questionnaire (amount + player id before the list)
                 'deposit_quick_amounts' => [200, 300, 500, 1000, 2000, 5000, 10000],
                 'deposit_message' => "Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}",
+                // Player-ID auto-detect on the host page (empty = off).
+                // Order: window.KEMERBET_PLAYER_ID, then this localStorage key,
+                // then this CSS selector.
+                'player_id_storage_key' => '',
+                'player_id_dom_selector' => '',
                 'withdrawal_message_with_amount' => "Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB.\nPlease send to:\nName: {name}\nBank: {bank}\nAccount: {account}\nI will share my withdrawal code shortly.",
                 'withdrawal_message_no_amount' => 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw — I will share the amount and my withdrawal code shortly.',
 

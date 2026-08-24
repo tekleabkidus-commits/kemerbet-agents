@@ -11,6 +11,7 @@ import {
 } from './withdrawal';
 import { savePayout, suggestForBank, recentSaved, deletePayout } from './payouts';
 import { savePlayerId, deletePlayerId, suggestPlayerIds } from './playerids';
+import { detectPlayerId } from './autodetect';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -40,6 +41,13 @@ let currentAmount = 0;
 let currentPayout: PayoutDetails = { name: '', bank: '', account: '' };
 let currentWPlayerId = '';
 let currentDeposit = { amount: 0, playerId: '' };
+
+function autoPlayerId(data: PublicAgentsResponse): string | null {
+  return detectPlayerId({
+    storageKey: data.settings.player_id_storage_key || undefined,
+    domSelector: data.settings.player_id_dom_selector || undefined,
+  });
+}
 let deepLinkHandled = false;
 let hashListenerAttached = false;
 
@@ -281,13 +289,21 @@ export function renderDepAskScreen(deps: FlowDeps): void {
   // Amount is never remembered — every visit starts empty.
   currentDeposit.amount = 0;
 
+  // Auto-detect the player ID from the host page. The CURRENT session's ID is
+  // authoritative: it always wins over remembered values (players can log out
+  // and back in with a different account). Still editable by the player.
+  const detectedId = autoPlayerId(data);
+  if (detectedId) currentDeposit.playerId = detectedId;
+
   // ID suggestions: deposit's own history first, topped up with IDs stored
   // inside saved withdrawal accounts (deduped), max 4.
-  const depIds = suggestPlayerIds('deposit');
-  for (const p of recentSaved(8)) {
-    if (depIds.length >= 4) break;
-    const pid = (p.playerId ?? '').trim();
-    if (pid && !depIds.includes(pid)) depIds.push(pid);
+  const depIds: string[] = detectedId ? [] : suggestPlayerIds('deposit');
+  if (!detectedId) {
+    for (const p of recentSaved(8)) {
+      if (depIds.length >= 4) break;
+      const pid = (p.playerId ?? '').trim();
+      if (pid && !depIds.includes(pid)) depIds.push(pid);
+    }
   }
 
   wrap.innerHTML = `
@@ -356,11 +372,15 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
     .join('');
 
+  // Current session's ID is authoritative (see deposit screen note).
+  const detectedId = autoPlayerId(data);
+  if (detectedId) currentWPlayerId = detectedId;
+
   const saved = requirePayout ? recentSaved(4) : [];
   // Separate ID-only chips: ONLY deposit-derived IDs, only to top up while
   // fewer than 4 saved accounts exist. A full 4 shows no separate ID chips.
   const savedIds = saved.map((p) => (p.playerId ?? '').trim()).filter(Boolean);
-  const wdIdChips = saved.length >= 4
+  const wdIdChips = (detectedId || saved.length >= 4)
     ? []
     : suggestPlayerIds('deposit')
         .filter((id) => !savedIds.includes(id))
@@ -489,7 +509,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
       if (pfName) pfName.value = s.name;
       if (pfBank) pfBank.value = s.bank;
       if (pfAccount) pfAccount.value = s.account;
-      if (pfPlayerId && s.playerId) pfPlayerId.value = s.playerId;
+      if (pfPlayerId && s.playerId && !detectedId) pfPlayerId.value = s.playerId;
       syncPayout();
       recompute();
     });
