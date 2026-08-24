@@ -31,6 +31,8 @@ class PublicAgentsController extends Controller
         $settings = Setting::whereIn('key', [
             'prefill_message',
             'deposit_prefill_message',
+            'deposit_quick_amounts',
+            'deposit_message',
             'show_offline_agents',
             'shuffle_live_agents',
             'onboarding_video_url',
@@ -155,6 +157,11 @@ class PublicAgentsController extends Controller
                 ),
                 'withdrawal_message_with_amount' => $settings['withdrawal_message_with_amount']
                     ?? 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB. I will share my withdrawal code shortly.',
+                'deposit_quick_amounts' => array_values(array_map('intval',
+                    is_array($settings['deposit_quick_amounts'] ?? null) ? $settings['deposit_quick_amounts'] : [200, 300, 500, 1000, 2000, 5000, 10000]
+                )),
+                'deposit_message' => $settings['deposit_message']
+                    ?? "Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}",
                 'withdrawal_message_no_amount' => $settings['withdrawal_message_no_amount']
                     ?? 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw — I will share the amount and my withdrawal code shortly.',
                 'recents_enabled' => filter_var($settings['recents_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),

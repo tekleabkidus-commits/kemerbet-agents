@@ -242,4 +242,16 @@ select.pf option{background:#0e1d33;color:var(--text-light)}
 .psug-name{font-size:.76rem;font-weight:800;color:var(--text-light);padding-left:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .psug-meta{font-size:.62rem;color:var(--text-muted);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nb-video{margin-top:11px;margin-bottom:0}
+.idchip{display:inline-flex;align-items:center;gap:6px;background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.35);color:var(--gold);border-radius:9px;padding:6px 10px;font:700 .7rem 'Inter',sans-serif;cursor:pointer;transition:.2s;margin:2px 0 10px;font-family:inherit}
+.idchip:hover{background:rgba(245,197,24,.16);border-color:rgba(245,197,24,.6)}
+.idchip:active{transform:scale(.97)}
+.idchip b{font-weight:900;letter-spacing:.4px}
+.pid-row{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 9px}
+.pid-chip{display:inline-flex;align-items:center;background:rgba(0,168,107,.07);border:1px solid rgba(0,168,107,.28);border-radius:9px;overflow:hidden}
+.pid-use{background:transparent;border:0;color:var(--text-light);font:800 .72rem 'Inter',sans-serif;padding:6px 4px 6px 10px;cursor:pointer;font-family:inherit}
+.pid-x{background:transparent;border:0;color:var(--text-dim);font-size:.9rem;font-weight:800;padding:6px 8px;cursor:pointer;line-height:1;font-family:inherit}
+.pid-x:hover{color:#ff6b6b}
+.psug-wrap{display:flex;align-items:stretch;gap:0}
+.psug-wrap .psug{flex:1;border-top-right-radius:0;border-bottom-right-radius:0}
+.psug-wrap .psug-x{border:1px solid rgba(0,168,107,.28);border-left:0;border-radius:0 10px 10px 0;background:rgba(0,168,107,.07)}
 `;

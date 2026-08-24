@@ -10,6 +10,7 @@ import {
   type PayoutDetails,
 } from './withdrawal';
 import { savePayout, suggestForBank, recentSaved, deletePayout } from './payouts';
+import { savePlayerId, deletePlayerId, suggestPlayerIds } from './playerids';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,7 @@ import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 // rendered by render.ts as before — untouched.
 // ---------------------------------------------------------------------------
 
-export type ScreenName = 'home' | 'deposit' | 'amount' | 'results';
+export type ScreenName = 'home' | 'depask' | 'deposit' | 'amount' | 'results';
 
 export interface FlowDeps {
   shadow: ShadowRoot;
@@ -37,6 +38,8 @@ export interface FlowDeps {
 
 let currentAmount = 0;
 let currentPayout: PayoutDetails = { name: '', bank: '', account: '' };
+let currentWPlayerId = '';
+let currentDeposit = { amount: 0, playerId: '' };
 let deepLinkHandled = false;
 let hashListenerAttached = false;
 
@@ -59,12 +62,13 @@ function fmt(n: number): string {
 }
 
 export function showScreen(shadow: ShadowRoot, name: ScreenName): void {
-  ['Home', 'Deposit', 'Amount', 'Results'].forEach((s) => {
+  ['Home', 'DepAsk', 'Deposit', 'Amount', 'Results'].forEach((s) => {
     const el = shadow.getElementById('screen' + s);
     if (el) el.classList.toggle('active', s.toLowerCase() === name);
   });
-  shadow.getElementById('screen' + name.charAt(0).toUpperCase() + name.slice(1))
-    ?.scrollIntoView({ block: 'nearest' });
+  const id = name === 'depask' ? 'screenDepAsk'
+    : 'screen' + name.charAt(0).toUpperCase() + name.slice(1);
+  shadow.getElementById(id)?.scrollIntoView({ block: 'nearest' });
 }
 
 function youTubeId(url: string): string | null {
@@ -122,7 +126,12 @@ export function renderHomeExtras(deps: FlowDeps): void {
   const depBack = shadow.querySelector('#screenDeposit .backrow') as HTMLElement | null;
   if (!withdrawalsOn) {
     if (depBack) depBack.style.display = 'none';
-    showScreen(shadow, 'deposit');
+    // Land on the deposit questionnaire unless the player already moved past it.
+    const active = shadow.querySelector('.screen.active') as HTMLElement | null;
+    if (!active || active.id === 'screenHome') {
+      renderDepAskScreen(deps);
+      showScreen(shadow, 'depask');
+    }
   } else if (depBack) {
     depBack.style.display = '';
   }
@@ -224,6 +233,101 @@ export function renderHomeExtras(deps: FlowDeps): void {
 
 // ---- AMOUNT ----------------------------------------------------------------
 
+
+/** Compose the deposit Telegram message from the questionnaire, or null. */
+export function getDepositMessage(data: PublicAgentsResponse): string | null {
+  if (!currentDeposit.playerId.trim() || currentDeposit.amount <= 0) return null;
+  const template = data.settings.deposit_message
+    || 'Hi Kemerbet agent, I want to deposit {amount} ETB. My Player ID: {player_id}';
+  return fillTemplate(template, {
+    amount: currentDeposit.amount,
+    player_id: currentDeposit.playerId,
+  });
+}
+
+function playerIdChips(ctx: 'deposit' | 'withdrawal', inputId: string): string {
+  const ids = suggestPlayerIds(ctx);
+  if (ids.length === 0) return '';
+  return `<div class="pid-row" data-pid-ctx="${ctx}" data-pid-input="${inputId}">${ids
+    .map((id) => `<span class="pid-chip"><button class="pid-use" data-pid="${esc(id)}">${esc(id)}</button><button class="pid-x" data-pid-del="${esc(id)}">\u00d7</button></span>`)
+    .join('')}</div>`;
+}
+
+function wirePlayerIdChips(deps: FlowDeps, rerender: () => void, onPick: (id: string) => void): void {
+  const { shadow } = deps;
+  shadow.querySelectorAll('.pid-row .pid-use').forEach((b) =>
+    b.addEventListener('click', () => onPick((b as HTMLElement).dataset.pid || '')),
+  );
+  shadow.querySelectorAll('.pid-row .pid-x').forEach((b) =>
+    b.addEventListener('click', () => {
+      deletePlayerId((b as HTMLElement).dataset.pidDel || '');
+      rerender();
+    }),
+  );
+}
+
+export function renderDepAskScreen(deps: FlowDeps): void {
+  const { shadow, getData } = deps;
+  const data = getData();
+  if (!data) return;
+  const lang = getLang();
+  const t = I18N[lang];
+  const wrap = shadow.getElementById('screenDepAsk');
+  if (!wrap) return;
+
+  const quick = (data.settings.deposit_quick_amounts ?? [])
+    .map((v) => `<button class="q" data-dep-quick="${v}">${fmt(v)}</button>`)
+    .join('');
+
+  wrap.innerHTML = `
+    <div class="backrow" id="depAskBack"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
+    <div class="payout">
+      <div class="payout-title">${t.depask_title}</div>
+      <div class="amt-line" style="justify-content:flex-start;padding:0 2px 7px">
+        <input id="depAmtInput" type="text" inputmode="numeric" placeholder="0" style="width:130px;background:transparent;border:0;outline:0;color:var(--text-light);font:900 26px 'Inter',sans-serif" />
+        <b>ETB</b>
+      </div>
+      ${quick ? `<div class="quick" style="margin:8px 0 4px">${quick}</div>` : ''}
+      <input class="pf" id="depPidInput" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentDeposit.playerId)}" style="margin-top:8px" />
+      ${playerIdChips('deposit', 'depPidInput')}
+    </div>
+    <button class="bigcta" id="depGo" disabled>${t.depask_see_agents}</button>
+  `;
+
+  const amt = shadow.getElementById('depAmtInput') as HTMLInputElement | null;
+  const pid = shadow.getElementById('depPidInput') as HTMLInputElement | null;
+  const go = shadow.getElementById('depGo') as HTMLButtonElement | null;
+  if (amt && currentDeposit.amount > 0) amt.value = fmt(currentDeposit.amount);
+
+  const recompute = () => {
+    if (!amt || !go) return;
+    const raw = amt.value.replace(/[^0-9]/g, '');
+    currentDeposit.amount = parseInt(raw || '0', 10);
+    if (raw) amt.value = fmt(currentDeposit.amount);
+    currentDeposit.playerId = pid?.value ?? '';
+    go.disabled = !(currentDeposit.amount > 0 && currentDeposit.playerId.trim() !== '');
+  };
+  amt?.addEventListener('input', recompute);
+  pid?.addEventListener('input', recompute);
+  shadow.querySelectorAll('#screenDepAsk [data-dep-quick]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (amt) amt.value = fmt(parseInt((b as HTMLElement).dataset.depQuick!, 10));
+      recompute();
+    }),
+  );
+  wirePlayerIdChips(deps, () => renderDepAskScreen(deps), (id) => {
+    if (pid) pid.value = id;
+    recompute();
+  });
+  recompute();
+  go?.addEventListener('click', () => {
+    if (currentDeposit.amount > 0 && currentDeposit.playerId.trim() !== '') {
+      savePlayerId(currentDeposit.playerId, 'deposit');
+      showScreen(shadow, 'deposit');
+    }
+  });
+}
+
 export function renderAmountScreen(deps: FlowDeps): void {
   const { shadow, getData } = deps;
   const data = getData();
@@ -256,6 +360,8 @@ export function renderAmountScreen(deps: FlowDeps): void {
     ? `
     <div class="payout">
       <div class="payout-title">${t.payout_title}</div>
+      <input class="pf" id="pfPlayerId" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentWPlayerId)}" />
+      ${playerIdChips('withdrawal', 'pfPlayerId')}
       <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />
       <select class="pf" id="pfBank">${bankOpts}</select>
       <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
@@ -282,6 +388,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
   const input = shadow.getElementById('amtInput') as HTMLInputElement | null;
   const hint = shadow.getElementById('amtHint');
   const go = shadow.getElementById('amtGo') as HTMLButtonElement | null;
+  const pfPlayerId = shadow.getElementById('pfPlayerId') as HTMLInputElement | null;
   const pfName = shadow.getElementById('pfName') as HTMLInputElement | null;
   const pfBank = shadow.getElementById('pfBank') as HTMLSelectElement | null;
   const pfAccount = shadow.getElementById('pfAccount') as HTMLInputElement | null;
@@ -290,6 +397,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
   if (pfBank && currentPayout.bank) pfBank.value = currentPayout.bank;
 
   const payoutComplete = (): boolean => {
+    if (currentWPlayerId.trim() === '') return false;
     if (!requirePayout) return true;
     return (
       currentPayout.name.trim() !== '' &&
@@ -299,6 +407,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
   };
 
   const syncPayout = () => {
+    currentWPlayerId = pfPlayerId?.value ?? '';
     currentPayout = {
       name: pfName?.value ?? '',
       bank: pfBank?.value ?? '',
@@ -323,6 +432,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
   };
 
   input?.addEventListener('input', recompute);
+  pfPlayerId?.addEventListener('input', () => { syncPayout(); recompute(); });
   pfName?.addEventListener('input', () => { syncPayout(); recompute(); });
   pfAccount?.addEventListener('input', () => { syncPayout(); recompute(); });
   pfBank?.addEventListener('change', () => {
@@ -363,6 +473,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
   go?.addEventListener('click', () => {
     if (currentAmount >= min && payoutComplete()) {
       if (requirePayout) savePayout(currentPayout);
+      savePlayerId(currentWPlayerId, 'withdrawal');
       renderResultsScreen(deps, currentAmount);
       showScreen(shadow, 'results');
     }
@@ -375,6 +486,30 @@ export function renderAmountScreen(deps: FlowDeps): void {
   shadow.querySelector('#screenAmount [data-nav="home"]')?.addEventListener('click', () => showScreen(shadow, 'home'));
   wireVideoBoxes(shadow);
   recompute();
+}
+
+/** Copy text to the clipboard (secure-context API with a fallback). */
+function copyText(text: string): void {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      void navigator.clipboard.writeText(text);
+      return;
+    }
+  } catch {
+    /* fall through */
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch {
+    /* clipboard unavailable — chip still shows the ID for manual copy */
+  }
 }
 
 function cashierToastMsg(path: string): string {
@@ -456,6 +591,7 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
             <span class="cap-chip">${t.results_cap_prefix} ${fmt(a.withdrawal_max ?? 0)} ETB</span>
           </div>
           <div class="waiting-text"><span class="typing-dots"><span></span><span></span><span></span></span>${t.results_ready}</div>
+          <button class="idchip" data-copy-id="${esc(a.withdrawal_id ?? '')}">${t.results_id_label}: <b>${esc(a.withdrawal_id ?? '')}</b> \u29C9</button>
           <div class="banks">${banks}</div>
           <button class="deposit-btn gold" data-withdraw-here data-agent-id="${a.id}"><span>${label}</span><span>\u2192</span></button>
         </div>`;
@@ -482,6 +618,14 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
     toast(shadow, cashierToastMsg(path));
     withdrawWithoutAgent(path);
   });
+  shadow.querySelectorAll('#screenResults .idchip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const idText = (chip as HTMLElement).dataset.copyId ?? '';
+      if (!idText) return;
+      copyText(idText);
+      toast(shadow, `${t.results_id_copied} <b>${esc(idText)}</b>`);
+    });
+  });
   shadow.querySelectorAll('#screenResults [data-withdraw-here]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = parseInt((btn as HTMLElement).dataset.agentId!, 10);
@@ -489,13 +633,15 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
       if (!agent) return;
       const covers = (agent.withdrawal_max ?? 0) >= amount;
       deps.trackClick(id, 'withdrawal', { amount, source: covers ? 'list' : 'partial' });
-      toast(shadow, cashierToastMsg(data.settings.withdrawal_redirect_path));
+      if (agent.withdrawal_id) copyText(agent.withdrawal_id);
+      toast(shadow, `${t.results_id_copied} <b>${esc(agent.withdrawal_id ?? '')}</b> \u00b7 ` + cashierToastMsg(data.settings.withdrawal_redirect_path));
       withdrawHere({
         agent,
         amount,
         messageTemplate: data.settings.withdrawal_message_with_amount,
         redirectPath: data.settings.withdrawal_redirect_path,
         payout: currentPayout,
+        playerId: currentWPlayerId,
       });
     });
   });

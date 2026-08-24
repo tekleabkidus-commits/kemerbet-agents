@@ -27,6 +27,8 @@ class UpdateSettingsRequest extends FormRequest
         'withdrawal_message_with_amount',
         'withdrawal_message_no_amount',
         'deposit_prefill_message',
+        'deposit_quick_amounts',
+        'deposit_message',
         'recents_enabled',
         'recents_count',
     ];
@@ -74,6 +76,9 @@ class UpdateSettingsRequest extends FormRequest
             'withdrawal_message_with_amount' => ['sometimes', 'string', 'max:600'],
             'withdrawal_message_no_amount' => ['sometimes', 'string', 'max:600'],
             'deposit_prefill_message' => ['sometimes', 'string', 'max:200'],
+            'deposit_quick_amounts' => ['sometimes', 'array', 'max:12'],
+            'deposit_quick_amounts.*' => ['integer', 'min:1'],
+            'deposit_message' => ['sometimes', 'string', 'max:600'],
             'recents_enabled' => ['sometimes', 'boolean'],
             'recents_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];

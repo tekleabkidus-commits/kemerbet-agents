@@ -55,6 +55,9 @@ class SettingSeeder extends Seeder
                 // NOTE: {withdrawal_id} and {account} are wrapped in backticks by
                 // the widget so Telegram renders them as tap-to-copy once sent.
                 'deposit_prefill_message' => 'Hi Kemerbet agent, I want to deposit',
+                // Deposit questionnaire (amount + player id before the list)
+                'deposit_quick_amounts' => [200, 300, 500, 1000, 2000, 5000, 10000],
+                'deposit_message' => "Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}",
                 'withdrawal_message_with_amount' => "Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw {amount} ETB.\nPlease send to:\nName: {name}\nBank: {bank}\nAccount: {account}\nI will share my withdrawal code shortly.",
                 'withdrawal_message_no_amount' => 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw — I will share the amount and my withdrawal code shortly.',
 

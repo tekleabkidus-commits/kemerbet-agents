@@ -2,10 +2,13 @@ import { STYLES } from './styles';
 import { I18N, getLang, setLang } from './i18n';
 import { renderPage } from './render';
 import { recordRecent } from './recents';
+import { buildTelegramUrl } from './withdrawal';
 import {
   showScreen,
   renderHomeExtras,
   renderAmountScreen,
+  renderDepAskScreen,
+  getDepositMessage,
   handleRecentMain,
   handleRecentContact,
   wireVideoBoxes,
@@ -216,14 +219,24 @@ function init(): void {
     const agentId = btn.dataset.agentId!;
     const methods: string[] = JSON.parse(btn.dataset.paymentMethods || '[]');
 
+    const tgUser = btn.dataset.tgUser || '';
+    const d = lastApiData;
+    const composed = d ? getDepositMessage(d) : null;
+
     if (btn.dataset.offline === 'true') {
       e.preventDefault();
-      pendingDepositUrl = btn.dataset.depositUrl || null;
+      pendingDepositUrl = composed && tgUser
+        ? buildTelegramUrl(tgUser, composed)
+        : (btn.dataset.depositUrl || null);
       pendingAgentId = agentId;
       pendingPaymentMethods = methods;
       showModal();
     } else {
-      // Live link: tracking fires in parallel, <a target="_blank"> proceeds naturally
+      // Live link: rewrite href with the questionnaire message (amount +
+      // player ID, tap-to-copy) just before the browser follows it.
+      if (composed && tgUser) {
+        (btn as HTMLAnchorElement).href = buildTelegramUrl(tgUser, composed);
+      }
       trackClick(agentId, methods);
       recordRecent(parseInt(agentId, 10), 'deposit');
     }
@@ -240,15 +253,22 @@ function init(): void {
         renderAmountScreen(flowDeps);
         showScreen(shadow, 'amount');
       } else {
-        // Deposit is its own screen (the live agent list lives there).
-        showScreen(shadow, 'deposit');
+        // Deposit questionnaire first (amount + player ID), then the list.
+        renderDepAskScreen(flowDeps);
+        showScreen(shadow, 'depask');
       }
       return;
     }
 
-    // Back buttons on the deposit screen
+    // Back buttons: deposit list -> questionnaire; questionnaire -> home
     const depBack = target.closest('#screenDeposit [data-nav="home"]') as HTMLElement | null;
     if (depBack) {
+      renderDepAskScreen(flowDeps);
+      showScreen(shadow, 'depask');
+      return;
+    }
+    const depAskBack = target.closest('#screenDepAsk [data-nav="home"]') as HTMLElement | null;
+    if (depAskBack) {
       showScreen(shadow, 'home');
       return;
     }
@@ -370,6 +390,8 @@ function buildShellHTML(lang: Lang): string {
       </div>
 
       <!-- ============ DEPOSIT (own screen) ============ -->
+      <div class="screen" id="screenDepAsk"></div>
+
       <div class="screen" id="screenDeposit">
         <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
 
