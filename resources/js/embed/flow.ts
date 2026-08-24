@@ -368,6 +368,9 @@ export function renderAmountScreen(deps: FlowDeps): void {
   if (!wrap) return;
 
   const requirePayout = data.settings.withdrawal_require_payout_details !== false;
+  const wQuick = (data.settings.withdrawal_quick_amounts ?? [])
+    .map((v) => `<button class="q" data-wq="${v}">${fmt(v)}</button>`)
+    .join('');
   const banks = data.settings.withdrawal_bank_options ?? [];
   const bankOpts = ['<option value="">' + t.payout_bank_ph + '</option>']
     .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
@@ -421,6 +424,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
       </div>
       <div class="amt-hint" id="amtHint">${t.withdraw_min_prefix} ${fmt(min)} ETB</div>
     </div>
+    ${wQuick ? `<div class="quick">${wQuick}</div>` : ''}
     <button class="bigcta" id="amtGo" disabled>${t.withdraw_see_agents}</button>
     <button class="ownagent" id="ownAgentBtn"><span class="ow">${t.withdraw_own_agent}<small>${t.withdraw_own_agent_desc}</small></span><span>\u2192</span></button>
   `;
@@ -472,6 +476,12 @@ export function renderAmountScreen(deps: FlowDeps): void {
   };
 
   input?.addEventListener('input', recompute);
+  shadow.querySelectorAll('#screenAmount [data-wq]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (input) input.value = fmt(parseInt((b as HTMLElement).dataset.wq!, 10));
+      recompute();
+    }),
+  );
   pfPlayerId?.addEventListener('input', () => { syncPayout(); recompute(); });
   pfName?.addEventListener('input', () => { syncPayout(); recompute(); });
   pfAccount?.addEventListener('input', () => { syncPayout(); recompute(); });
