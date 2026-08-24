@@ -800,7 +800,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="form-row">
                                     <label className="form-label">
-                                        Quick amounts <span className="hint">comma-separated; not shown on the widget currently</span>
+                                        Quick amounts <span className="hint">comma-separated; shown on the withdrawal amount screen</span>
                                     </label>
                                     <input
                                         type="text"
