@@ -1,5 +1,5 @@
 import { I18N, getLang } from './i18n';
-import { esc } from './render';
+import { esc } from './util';
 import { resolveRecents } from './recents';
 import {
   buildTelegramUrl,
@@ -707,14 +707,10 @@ export function handleRecentMain(deps: FlowDeps, agentId: number, intent: string
     return;
   }
 
-  // Recent deposit → straight to Telegram with deposit prefill.
-  const url = buildTelegramUrl(dirEntry.telegram_username, data.settings.chat_prefilled_message);
-  if (!dirEntry.online) {
-    deps.openOfflineModal(url, agentId, []);
-  } else {
-    deps.trackClick(agentId, 'deposit', { source: 'recent' });
-    window.open(url, '_blank', 'noopener');
-  }
+  // Recent deposit → through the questionnaire (amount + player ID are
+  // required before any deposit), then the agent list.
+  renderDepAskScreen(deps);
+  showScreen(shadow, 'depask');
 }
 
 export function handleRecentContact(deps: FlowDeps, agentId: number): void {

@@ -1,17 +1,10 @@
+import { getDepositMessage } from './flow';
+import { esc } from './util';
+export { esc };
 import { I18N, getLang } from './i18n';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
-const ESC_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
 
-export function esc(s: string): string {
-  return String(s).replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-}
 
 export function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -184,7 +177,10 @@ export function renderPage(data: PublicAgentsResponse, shadow: ShadowRoot): void
     ...pinnedLive,
     ...(data.settings.shuffle_live_agents ? shuffleArray(unpinnedLive) : unpinnedLive),
   ];
-  const prefillMsg = data.settings?.chat_prefilled_message || 'Hi Kemerbet agent, I want to deposit';
+  const composed = getDepositMessage(data);
+  const prefillMsg = composed
+    || data.settings?.chat_prefilled_message
+    || 'Hi Kemerbet agent, I want to deposit';
 
   const liveCountText = shadow.getElementById('liveCountText');
   if (liveCountText) {
