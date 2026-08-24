@@ -37,6 +37,22 @@ export interface FlowDeps {
 
 let currentAmount = 0;
 let currentPayout: PayoutDetails = { name: '', bank: '', account: '' };
+let deepLinkHandled = false;
+let hashListenerAttached = false;
+
+/**
+ * True when the host page URL asks to open the withdrawal screen directly:
+ * either a "#withdraw" hash or a "?withdraw=1"/"?intent=withdraw" query param.
+ */
+function wantsWithdrawDeepLink(): boolean {
+  try {
+    if (window.location.hash.toLowerCase() === '#withdraw') return true;
+    const qs = new URLSearchParams(window.location.search);
+    return qs.get('withdraw') === '1' || qs.get('intent') === 'withdraw';
+  } catch {
+    return false;
+  }
+}
 
 function fmt(n: number): string {
   return n.toLocaleString('en-US');
@@ -109,6 +125,29 @@ export function renderHomeExtras(deps: FlowDeps): void {
     showScreen(shadow, 'deposit');
   } else if (depBack) {
     depBack.style.display = '';
+  }
+
+  // Deep link: open the withdrawal screen directly (one click from anywhere on
+  // the host site via "#withdraw"). Only once per page load, only when the
+  // master switch is on.
+  if (withdrawalsOn && !deepLinkHandled && wantsWithdrawDeepLink()) {
+    deepLinkHandled = true;
+    renderAmountScreen(deps);
+    showScreen(shadow, 'amount');
+  }
+
+  // Also react to the hash changing WHILE the page is open (a "Withdraw"
+  // button on the same page as the widget), not just on page load.
+  if (!hashListenerAttached) {
+    hashListenerAttached = true;
+    window.addEventListener('hashchange', () => {
+      const d = deps.getData();
+      const on = d && d.settings.withdrawals_enabled !== false;
+      if (on && window.location.hash.toLowerCase() === '#withdraw') {
+        renderAmountScreen(deps);
+        showScreen(deps.shadow, 'amount');
+      }
+    });
   }
 
   // Player notice board (admin-managed, audience=player/both)
@@ -365,13 +404,14 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
   if (!wrap) return;
 
   // Only LIVE, withdrawal-capable agents whose WITHDRAWAL banks include the
-  // player's chosen bank (exact match). Offline never appears. Covering agents
-  // are shuffled; if none cover, show closest few (still bank-matched).
-  const chosenBank = currentPayout.bank.trim();
+  // player's chosen bank. Matching is case- and space-insensitive so a
+  // settings-list name like "Telebirr" still matches the catalog's "TeleBirr".
+  const norm = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, '');
+  const chosenBank = norm(currentPayout.bank);
   const bankMatches = (a: PublicAgent): boolean => {
     if (!chosenBank) return true; // no bank chosen (payout not required) → no bank filter
     return (a.withdrawal_methods ?? []).some(
-      (m) => m.display_name === chosenBank || m.slug === chosenBank,
+      (m) => norm(m.display_name) === chosenBank || norm(m.slug) === chosenBank,
     );
   };
 
