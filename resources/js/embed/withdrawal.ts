@@ -43,9 +43,9 @@ export interface PayoutDetails {
  * Fill a message template's placeholders.
  * Supported: {amount}, {withdrawal_id}, {name}, {bank}, {account}.
  *
- * NOTE: no backtick wrapping — Telegram strips backticks from ?text= prefilled
- * messages (leaving stray spaces), so monospace tap-to-copy is not possible in
- * player-sent prefills. (The future agent bot CAN send formatted messages.)
+ * {withdrawal_id} and {account} are wrapped in single backticks: Telegram
+ * parses them on SEND into monospace tap-to-copy (confirmed working). They
+ * appear as literal backticks in the compose box until the player sends.
  * Lines whose placeholders resolve empty (e.g. "Name:" with no name) are
  * removed so the message never shows a blank payout skeleton.
  */
@@ -57,12 +57,14 @@ export function fillTemplate(
     payout?: PayoutDetails | null;
   },
 ): string {
+  const id = vars.withdrawal_id ?? '';
+  const account = vars.payout?.account ?? '';
   const filled = template
     .replace(/\{amount\}/g, vars.amount != null ? vars.amount.toLocaleString('en-US') : '')
-    .replace(/\{withdrawal_id\}/g, vars.withdrawal_id ?? '')
+    .replace(/\{withdrawal_id\}/g, id ? '`' + id + '`' : '')
     .replace(/\{name\}/g, vars.payout?.name ?? '')
     .replace(/\{bank\}/g, vars.payout?.bank ?? '')
-    .replace(/\{account\}/g, vars.payout?.account ?? '');
+    .replace(/\{account\}/g, account ? '`' + account + '`' : '');
 
   // Remove label-only lines left behind by empty placeholders ("Name:",
   // "Please send to:", etc.) and collapse repeated blank lines.
