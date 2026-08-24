@@ -38,11 +38,13 @@ class SettingSeeder extends Seeder
                 // 'empty' shows only the empty-state message.
                 'withdrawal_no_match_behavior' => 'closest',
 
-                // Banks/methods offered in the withdrawal payout form (player picks one).
+                // Banks/methods offered in the withdrawal payout form (player
+                // picks one). Keep these aligned with the payment-methods
+                // catalog names (editable later in Settings -> Withdrawals).
                 'withdrawal_bank_options' => [
-                    'Telebirr', 'CBE', 'CBE Birr', 'Awash Bank', 'Dashen Bank',
-                    'Bank of Abyssinia', 'Wegagen Bank', 'Hibret Bank', 'Nib Bank',
-                    'Cooperative Bank of Oromia', 'M-Pesa',
+                    'TeleBirr', 'M-Pesa', 'CBE Birr', 'Dashen Bank',
+                    'Awash Bank', 'Bank of Abyssinia', 'Cooperative Bank',
+                    'Wegagen Bank',
                 ],
                 // Require the player to enter payout details (name/bank/account)
                 // before they can see matched agents.
