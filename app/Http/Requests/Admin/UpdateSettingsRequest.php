@@ -29,6 +29,8 @@ class UpdateSettingsRequest extends FormRequest
         'deposit_prefill_message',
         'deposit_quick_amounts',
         'deposit_message',
+        'player_id_storage_key',
+        'player_id_dom_selector',
         'recents_enabled',
         'recents_count',
     ];
@@ -79,6 +81,8 @@ class UpdateSettingsRequest extends FormRequest
             'deposit_quick_amounts' => ['sometimes', 'array', 'max:12'],
             'deposit_quick_amounts.*' => ['integer', 'min:1'],
             'deposit_message' => ['sometimes', 'string', 'max:600'],
+            'player_id_storage_key' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'player_id_dom_selector' => ['sometimes', 'nullable', 'string', 'max:300'],
             'recents_enabled' => ['sometimes', 'boolean'],
             'recents_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];

@@ -8,6 +8,8 @@ interface Settings {
     prefill_message: string;
     deposit_quick_amounts: number[];
     deposit_message: string;
+    player_id_storage_key: string;
+    player_id_dom_selector: string;
     onboarding_video_url: string;
     agent_hide_after_hours: number;
     public_refresh_interval_seconds: number;
@@ -39,6 +41,8 @@ const DEFAULT_SETTINGS: Settings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
     deposit_quick_amounts: [200, 300, 500, 1000, 2000, 5000, 10000],
     deposit_message: 'Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}',
+    player_id_storage_key: '',
+    player_id_dom_selector: '',
     onboarding_video_url: '',
     agent_hide_after_hours: 12,
     public_refresh_interval_seconds: 60,
@@ -401,6 +405,20 @@ export default function SettingsPage() {
                                         onChange={(e) => updateField('deposit_message', e.target.value)}
                                         maxLength={600}
                                     />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Player-ID auto-detect: storage key <span className="hint">{'optional; sessionStorage then localStorage; supports key.field for JSON (e.g. player.id)'}</span>
+                                    </label>
+                                    <input type="text" className="form-input" value={form.player_id_storage_key}
+                                        onChange={(e) => updateField('player_id_storage_key', e.target.value)} placeholder="e.g. player.id" />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Player-ID auto-detect: CSS selector <span className="hint">optional; element on the site showing the logged-in ID</span>
+                                    </label>
+                                    <input type="text" className="form-input" value={form.player_id_dom_selector}
+                                        onChange={(e) => updateField('player_id_dom_selector', e.target.value)} placeholder=".user-panel .player-id" />
                                 </div>
                                 <div className="form-row">
                                     <label className="form-label">Message Sent When Player Clicks Deposit</label>

@@ -33,6 +33,8 @@ class PublicAgentsController extends Controller
             'deposit_prefill_message',
             'deposit_quick_amounts',
             'deposit_message',
+            'player_id_storage_key',
+            'player_id_dom_selector',
             'show_offline_agents',
             'shuffle_live_agents',
             'onboarding_video_url',
@@ -160,6 +162,8 @@ class PublicAgentsController extends Controller
                 'deposit_quick_amounts' => array_values(array_map('intval',
                     is_array($settings['deposit_quick_amounts'] ?? null) ? $settings['deposit_quick_amounts'] : [200, 300, 500, 1000, 2000, 5000, 10000]
                 )),
+                'player_id_storage_key' => (string) ($settings['player_id_storage_key'] ?? ''),
+                'player_id_dom_selector' => (string) ($settings['player_id_dom_selector'] ?? ''),
                 'deposit_message' => $settings['deposit_message']
                     ?? "Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}",
                 'withdrawal_message_no_amount' => $settings['withdrawal_message_no_amount']
