@@ -245,10 +245,9 @@ export function getDepositMessage(data: PublicAgentsResponse): string | null {
   });
 }
 
-function playerIdChips(ctx: 'deposit' | 'withdrawal', inputId: string): string {
-  const ids = suggestPlayerIds(ctx);
+function playerIdChips(ids: string[], inputId: string): string {
   if (ids.length === 0) return '';
-  return `<div class="pid-row" data-pid-ctx="${ctx}" data-pid-input="${inputId}">${ids
+  return `<div class="pid-row" data-pid-input="${inputId}">${ids
     .map((id) => `<span class="pid-chip"><button class="pid-use" data-pid="${esc(id)}">${esc(id)}</button><button class="pid-x" data-pid-del="${esc(id)}">\u00d7</button></span>`)
     .join('')}</div>`;
 }
@@ -279,6 +278,18 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     .map((v) => `<button class="q" data-dep-quick="${v}">${fmt(v)}</button>`)
     .join('');
 
+  // Amount is never remembered — every visit starts empty.
+  currentDeposit.amount = 0;
+
+  // ID suggestions: deposit's own history first, topped up with IDs stored
+  // inside saved withdrawal accounts (deduped), max 4.
+  const depIds = suggestPlayerIds('deposit');
+  for (const p of recentSaved(8)) {
+    if (depIds.length >= 4) break;
+    const pid = (p.playerId ?? '').trim();
+    if (pid && !depIds.includes(pid)) depIds.push(pid);
+  }
+
   wrap.innerHTML = `
     <div class="backrow" id="depAskBack"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
     <div class="payout">
@@ -289,7 +300,7 @@ export function renderDepAskScreen(deps: FlowDeps): void {
       </div>
       ${quick ? `<div class="quick" style="margin:8px 0 4px">${quick}</div>` : ''}
       <input class="pf" id="depPidInput" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentDeposit.playerId)}" style="margin-top:8px" />
-      ${playerIdChips('deposit', 'depPidInput')}
+      ${playerIdChips(depIds.slice(0, 4), 'depPidInput')}
     </div>
     <button class="bigcta" id="depGo" disabled>${t.depask_see_agents}</button>
   `;
@@ -297,7 +308,6 @@ export function renderDepAskScreen(deps: FlowDeps): void {
   const amt = shadow.getElementById('depAmtInput') as HTMLInputElement | null;
   const pid = shadow.getElementById('depPidInput') as HTMLInputElement | null;
   const go = shadow.getElementById('depGo') as HTMLButtonElement | null;
-  if (amt && currentDeposit.amount > 0) amt.value = fmt(currentDeposit.amount);
 
   const recompute = () => {
     if (!amt || !go) return;
@@ -347,11 +357,19 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .join('');
 
   const saved = requirePayout ? recentSaved(4) : [];
+  // Separate ID-only chips: ONLY deposit-derived IDs, only to top up while
+  // fewer than 4 saved accounts exist. A full 4 shows no separate ID chips.
+  const savedIds = saved.map((p) => (p.playerId ?? '').trim()).filter(Boolean);
+  const wdIdChips = saved.length >= 4
+    ? []
+    : suggestPlayerIds('deposit')
+        .filter((id) => !savedIds.includes(id))
+        .slice(0, 4 - saved.length);
   const savedHtml = saved.length
     ? `<div class="payout-saved" id="payoutSaved">${saved
         .map(
           (s, i) =>
-            `<div class="psug" data-sug="${i}"><button class="psug-x" data-del="${i}" aria-label="Delete">\u2715</button><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}</span></div>`,
+            `<div class="psug" data-sug="${i}"><button class="psug-x" data-del="${i}" aria-label="Delete">\u2715</button><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}${s.playerId ? ' \u00b7 ID ' + esc(s.playerId) : ''}</span></div>`,
         )
         .join('')}</div>`
     : '';
@@ -361,7 +379,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
     <div class="payout">
       <div class="payout-title">${t.payout_title}</div>
       <input class="pf" id="pfPlayerId" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentWPlayerId)}" />
-      ${playerIdChips('withdrawal', 'pfPlayerId')}
+      ${playerIdChips(wdIdChips, 'pfPlayerId')}
       <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />
       <select class="pf" id="pfBank">${bankOpts}</select>
       <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
@@ -447,6 +465,12 @@ export function renderAmountScreen(deps: FlowDeps): void {
     recompute();
   });
 
+  wirePlayerIdChips(deps, () => renderAmountScreen(deps), (pid) => {
+    if (pfPlayerId) pfPlayerId.value = pid;
+    syncPayout();
+    recompute();
+  });
+
   // Saved-account suggestions: clicking a card fills ALL three fields,
   // replacing whatever was there. The ✕ deletes that saved account instead.
   shadow.querySelectorAll('#screenAmount .psug').forEach((b) => {
@@ -465,6 +489,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
       if (pfName) pfName.value = s.name;
       if (pfBank) pfBank.value = s.bank;
       if (pfAccount) pfAccount.value = s.account;
+      if (pfPlayerId && s.playerId) pfPlayerId.value = s.playerId;
       syncPayout();
       recompute();
     });
@@ -472,8 +497,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
 
   go?.addEventListener('click', () => {
     if (currentAmount >= min && payoutComplete()) {
-      if (requirePayout) savePayout(currentPayout);
-      savePlayerId(currentWPlayerId, 'withdrawal');
+      if (requirePayout) savePayout({ ...currentPayout, playerId: currentWPlayerId });
       renderResultsScreen(deps, currentAmount);
       showScreen(shadow, 'results');
     }

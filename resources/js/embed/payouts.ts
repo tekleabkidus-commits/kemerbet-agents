@@ -39,12 +39,13 @@ export function savePayout(p: PayoutDetails): void {
   const name = p.name.trim();
   const bank = p.bank.trim();
   const account = p.account.trim();
+  const playerId = (p.playerId ?? '').trim();
   if (!name || !bank || !account) return;
 
   const list = read().filter(
     (e) => !(e.bank === bank && e.account === account),
   );
-  list.unshift({ name, bank, account, ts: Date.now() });
+  list.unshift({ name, bank, account, playerId, ts: Date.now() });
   write(list);
 }
 
@@ -65,7 +66,9 @@ export function suggestForBank(bank: string): PayoutDetails | null {
   const match = read()
     .filter((e) => e.bank === b)
     .sort((a, z) => z.ts - a.ts)[0];
-  return match ? { name: match.name, bank: match.bank, account: match.account } : null;
+  return match
+    ? { name: match.name, bank: match.bank, account: match.account, playerId: match.playerId }
+    : null;
 }
 
 /** All saved accounts for a bank, newest first (for a future dropdown of options). */
@@ -74,7 +77,7 @@ export function allForBank(bank: string): PayoutDetails[] {
   return read()
     .filter((e) => e.bank === b)
     .sort((a, z) => z.ts - a.ts)
-    .map((e) => ({ name: e.name, bank: e.bank, account: e.account }));
+    .map((e) => ({ name: e.name, bank: e.bank, account: e.account, playerId: e.playerId }));
 }
 
 /** Most recent saved accounts overall, newest first, capped at `n`. */
@@ -82,5 +85,5 @@ export function recentSaved(n: number): PayoutDetails[] {
   return read()
     .sort((a, z) => z.ts - a.ts)
     .slice(0, n)
-    .map((e) => ({ name: e.name, bank: e.bank, account: e.account }));
+    .map((e) => ({ name: e.name, bank: e.bank, account: e.account, playerId: e.playerId }));
 }

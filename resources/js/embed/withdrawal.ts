@@ -37,6 +37,7 @@ export interface PayoutDetails {
   name: string;
   bank: string;
   account: string;
+  playerId?: string;
 }
 
 /**
