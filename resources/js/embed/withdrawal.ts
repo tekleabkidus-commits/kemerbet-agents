@@ -41,7 +41,7 @@ export interface PayoutDetails {
 
 /**
  * Fill a message template's placeholders.
- * Supported: {amount}, {withdrawal_id}, {name}, {bank}, {account}.
+ * Supported: {amount}, {withdrawal_id}, {name}, {bank}, {account}, {player_id}.
  *
  * {withdrawal_id} and {account} are wrapped in single backticks: Telegram
  * parses them on SEND into monospace tap-to-copy (confirmed working). They
@@ -55,16 +55,19 @@ export function fillTemplate(
     amount?: number | null;
     withdrawal_id?: string | null;
     payout?: PayoutDetails | null;
+    player_id?: string | null;
   },
 ): string {
   const id = vars.withdrawal_id ?? '';
   const account = vars.payout?.account ?? '';
+  const playerId = (vars.player_id ?? '').trim();
   const filled = template
     .replace(/\{amount\}/g, vars.amount != null ? vars.amount.toLocaleString('en-US') : '')
     .replace(/\{withdrawal_id\}/g, id ? '`' + id + '`' : '')
     .replace(/\{name\}/g, vars.payout?.name ?? '')
     .replace(/\{bank\}/g, vars.payout?.bank ?? '')
-    .replace(/\{account\}/g, account ? '`' + account + '`' : '');
+    .replace(/\{account\}/g, account ? '`' + account + '`' : '')
+    .replace(/\{player_id\}/g, playerId ? '`' + playerId + '`' : '');
 
   // Remove label-only lines left behind by empty placeholders ("Name:",
   // "Please send to:", etc.) and collapse repeated blank lines.
@@ -102,11 +105,13 @@ export function withdrawHere(opts: {
   messageTemplate: string;
   redirectPath: string;
   payout?: PayoutDetails | null;
+  playerId?: string | null;
 }): void {
   const message = fillTemplate(opts.messageTemplate, {
     amount: opts.amount,
     withdrawal_id: opts.agent.withdrawal_id ?? '',
     payout: opts.payout ?? null,
+    player_id: opts.playerId ?? null,
   });
 
   const telegramUrl = buildTelegramUrl(opts.agent.telegram_username, message);

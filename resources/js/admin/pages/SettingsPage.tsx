@@ -6,6 +6,8 @@ import api from '@/api';
 
 interface Settings {
     prefill_message: string;
+    deposit_quick_amounts: number[];
+    deposit_message: string;
     onboarding_video_url: string;
     agent_hide_after_hours: number;
     public_refresh_interval_seconds: number;
@@ -35,6 +37,8 @@ interface SettingsResponse {
 
 const DEFAULT_SETTINGS: Settings = {
     prefill_message: 'Hi Kemerbet agent, I want to deposit',
+    deposit_quick_amounts: [200, 300, 500, 1000, 2000, 5000, 10000],
+    deposit_message: 'Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}',
     onboarding_video_url: '',
     agent_hide_after_hours: 12,
     public_refresh_interval_seconds: 60,
@@ -372,6 +376,32 @@ export default function SettingsPage() {
                         </div>
                         <div className="panel-body">
                             <div className="form-grid">
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Deposit quick amounts <span className="hint">comma-separated; shown on the deposit questionnaire</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={form.deposit_quick_amounts.join(', ')}
+                                        onChange={(e) => updateField('deposit_quick_amounts',
+                                            e.target.value.split(',').map((x) => parseInt(x.trim(), 10)).filter((n) => !isNaN(n) && n > 0))}
+                                        placeholder="200, 300, 500, 1000"
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
+                                        Deposit message with details <span className="hint">{'placeholders: {amount} {player_id} — used when the player fills the questionnaire'}</span>
+                                    </label>
+                                    <textarea
+                                        className="form-textarea"
+                                        rows={3}
+                                        style={{ fontSize: '.9rem' }}
+                                        value={form.deposit_message}
+                                        onChange={(e) => updateField('deposit_message', e.target.value)}
+                                        maxLength={600}
+                                    />
+                                </div>
                                 <div className="form-row">
                                     <label className="form-label">Message Sent When Player Clicks Deposit</label>
                                     <textarea

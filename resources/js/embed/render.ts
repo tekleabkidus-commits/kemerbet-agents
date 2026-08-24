@@ -111,11 +111,11 @@ export function renderCard(agent: PublicAgent, prefillMsg: string, lang: Lang): 
     : `<div class="badge offline">${t.offline_label}</div>`;
 
   const depositLink = isLive
-    ? `<a href="${depositUrl}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${agent.id}" data-payment-methods="${methodsAttr}">
+    ? `<a href="${depositUrl}" class="deposit-btn" target="_blank" rel="noopener" data-agent-id="${agent.id}" data-tg-user="${username}" data-payment-methods="${methodsAttr}">
          <span>${t.deposit}</span>
          <span class="arrow">\u2192</span>
        </a>`
-    : `<button class="deposit-btn" data-agent-id="${agent.id}" data-deposit-url="${esc(depositUrl)}" data-offline="true" data-payment-methods="${methodsAttr}">
+    : `<button class="deposit-btn" data-agent-id="${agent.id}" data-tg-user="${username}" data-deposit-url="${esc(depositUrl)}" data-offline="true" data-payment-methods="${methodsAttr}">
          <span>${t.deposit}</span>
          <span class="arrow">\u2192</span>
        </button>`;

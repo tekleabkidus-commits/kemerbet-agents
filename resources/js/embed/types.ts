@@ -60,6 +60,8 @@ export interface PublicAgentsResponse {
     withdrawal_require_payout_details: boolean;
     withdrawal_message_with_amount: string;
     withdrawal_message_no_amount: string;
+    deposit_quick_amounts?: number[];
+    deposit_message?: string;
     recents_enabled: boolean;
     recents_count: number;
   };

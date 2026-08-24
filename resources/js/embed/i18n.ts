@@ -63,6 +63,11 @@ export interface Translations {
   payout_bank_ph: string;
   payout_account_ph: string;
   payout_note: string;
+  depask_title: string;
+  depask_see_agents: string;
+  player_id_ph: string;
+  results_id_label: string;
+  results_id_copied: string;
 }
 
 export const I18N: Record<Lang, Translations> = {
@@ -128,6 +133,11 @@ export const I18N: Record<Lang, Translations> = {
     payout_bank_ph: 'ባንክ ይምረጡ',
     payout_account_ph: 'የሂሳብ ቁጥር',
     payout_note: 'ይህ መረጃ ለኤጀንቱ በቴሌግራም መልእክት ውስጥ ይላካል። በመሳሪያዎ ላይ ብቻ ይቀመጣል።',
+    depask_title: 'ምን ያህል ማስገባት ይፈልጋሉ?',
+    depask_see_agents: 'ዝግጁ ኤጀንቶችን ይመልከቱ',
+    player_id_ph: 'የተጫዋች መለያ (Player ID)',
+    results_id_label: 'የመውጫ መለያ',
+    results_id_copied: 'መለያው ተቀድቷል:',
   },
   en: {
     title: 'Kemerbet Agents',
@@ -191,6 +201,11 @@ export const I18N: Record<Lang, Translations> = {
     payout_bank_ph: 'Select bank',
     payout_account_ph: 'Account number',
     payout_note: 'This is included in your Telegram message to the agent. Saved only on your device.',
+    depask_title: 'How much will you deposit?',
+    depask_see_agents: 'See available agents',
+    player_id_ph: 'Player ID',
+    results_id_label: 'Withdrawal ID',
+    results_id_copied: 'ID copied:',
   },
 };
 
