@@ -315,7 +315,8 @@ export function renderDepAskScreen(deps: FlowDeps): void {
         <b>ETB</b>
       </div>
       ${quick ? `<div class="quick" style="margin:8px 0 4px">${quick}</div>` : ''}
-      <input class="pf" id="depPidInput" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentDeposit.playerId)}" style="margin-top:8px" />
+      <div class="pid-note${detectedId ? ' auto' : ''}" style="margin-top:8px">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
+      <input class="pf" id="depPidInput" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentDeposit.playerId)}" />
       ${playerIdChips(depIds.slice(0, 4), 'depPidInput')}
     </div>
     <button class="bigcta" id="depGo" disabled>${t.depask_see_agents}</button>
@@ -398,6 +399,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
     ? `
     <div class="payout">
       <div class="payout-title">${t.payout_title}</div>
+      <div class="pid-note${detectedId ? ' auto' : ''}">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
       <input class="pf" id="pfPlayerId" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentWPlayerId)}" />
       ${playerIdChips(wdIdChips, 'pfPlayerId')}
       <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />

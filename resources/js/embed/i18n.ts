@@ -66,6 +66,8 @@ export interface Translations {
   depask_title: string;
   depask_see_agents: string;
   player_id_ph: string;
+  pid_auto_label: string;
+  pid_login_hint: string;
   results_id_label: string;
   results_id_copied: string;
 }
@@ -136,6 +138,8 @@ export const I18N: Record<Lang, Translations> = {
     depask_title: 'ምን ያህል ማስገባት ይፈልጋሉ?',
     depask_see_agents: 'ዝግጁ ኤጀንቶችን ይመልከቱ',
     player_id_ph: 'የተጫዋች መለያ (Player ID)',
+    pid_auto_label: 'የተጫዋች መለያ — በራስ-ሰር ተሞልቷል',
+    pid_login_hint: 'የተጫዋች መለያዎ በራስ-ሰር እንዲሞላ ወደ ሳይቱ ይግቡ',
     results_id_label: 'የመውጫ መለያ',
     results_id_copied: 'መለያው ተቀድቷል:',
   },
@@ -204,6 +208,8 @@ export const I18N: Record<Lang, Translations> = {
     depask_title: 'How much will you deposit?',
     depask_see_agents: 'See available agents',
     player_id_ph: 'Player ID',
+    pid_auto_label: 'Player ID — filled automatically',
+    pid_login_hint: 'Log in to fill your Player ID automatically',
     results_id_label: 'Withdrawal ID',
     results_id_copied: 'ID copied:',
   },
