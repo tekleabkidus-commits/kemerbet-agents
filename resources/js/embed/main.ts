@@ -366,6 +366,7 @@ function buildShellHTML(lang: Lang): string {
 
         <!-- player notice board (admin-managed) -->
         <div id="noticeWrap"></div>
+        <div id="howtoWrap"></div>
 
         <!-- intent choice -->
         <div class="section-title"><h2 id="intentQuestion">${t.intent_question}</h2></div>
@@ -396,6 +397,7 @@ function buildShellHTML(lang: Lang): string {
         <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
 
         <div id="noticeWrapDep"></div>
+        <div id="depHowtoWrap"></div>
         <div id="videoWrap"></div>
 
         <div class="section-title">

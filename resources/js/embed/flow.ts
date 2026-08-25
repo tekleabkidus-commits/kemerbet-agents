@@ -93,12 +93,12 @@ function youTubeId(url: string): string | null {
   return null;
 }
 
-function videoBoxHtml(t: (typeof I18N)[Lang], howtoUrl: string): string {
+function videoBoxHtml(title: string, sub: string, url: string): string {
   return `
-    <div class="videobox" data-video="${esc(howtoUrl)}">
+    <div class="videobox" data-video="${esc(url)}">
       <div class="vplay">\u25B6</div>
-      <b>${t.withdraw_howto}</b>
-      <small>${t.withdraw_howto_sub}</small>
+      <b>${esc(title)}</b>
+      ${sub ? `<small>${esc(sub)}</small>` : ''}
     </div>`;
 }
 
@@ -173,6 +173,29 @@ export function renderHomeExtras(deps: FlowDeps): void {
   const noticeTarget = withdrawalsOn ? noticeWrap : noticeWrapDep;
   const noticeOther = withdrawalsOn ? noticeWrapDep : noticeWrap;
   if (noticeOther) noticeOther.innerHTML = '';
+  // Deposit how-to on the deposit agent list screen.
+  const depHowtoWrap = shadow.getElementById('depHowtoWrap');
+  if (depHowtoWrap) {
+    const dep = data.settings.deposit_howto_video_url || '';
+    depHowtoWrap.innerHTML = dep ? videoBoxHtml(t.howto_dep_title, '', dep) : '';
+  }
+
+  // How-to videos card (deposit + withdraw) on the home notice board.
+  const howtoWrap = shadow.getElementById('howtoWrap');
+  if (howtoWrap) {
+    const dep = data.settings.deposit_howto_video_url || '';
+    const wd = data.settings.withdrawal_howto_video_url || '';
+    if (!withdrawalsOn || (!dep && !wd)) {
+      howtoWrap.innerHTML = '';
+    } else {
+      howtoWrap.innerHTML = `
+        <div class="notice">
+          ${dep ? videoBoxHtml(t.howto_dep_title, '', dep) : ''}
+          ${wd ? videoBoxHtml(t.howto_wd_title, '', wd) : ''}
+        </div>`;
+    }
+  }
+
   if (noticeTarget) {
     const notices = data.notices ?? [];
     if (notices.length === 0) {
@@ -180,8 +203,10 @@ export function renderHomeExtras(deps: FlowDeps): void {
     } else {
       noticeTarget.innerHTML = notices
         .map((n) => {
-          const vid = n.video_url ? youTubeId(n.video_url) : null;
-          const videoHtml = vid
+          const playable = n.video_url
+            ? (youTubeId(n.video_url) !== null || /\.(mp4|webm|mov)(\?|#|$)/i.test(n.video_url))
+            : false;
+          const videoHtml = playable
             ? `<div class="videobox nb-video" data-video="${esc(n.video_url ?? '')}"><div class="vplay">\u25B6</div><b>${t.withdraw_howto}</b></div>`
             : '';
           return `
@@ -306,8 +331,10 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     }
   }
 
+  const depHowto = data.settings.deposit_howto_video_url || '';
   wrap.innerHTML = `
     <div class="backrow" id="depAskBack"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.intent_deposit}</h2></div>
+    ${depHowto ? videoBoxHtml(t.howto_dep_title, '', depHowto) : ''}
     <div class="payout">
       <div class="payout-title">${t.depask_title}</div>
       <div class="amt-line" style="justify-content:flex-start;padding:0 2px 7px">
@@ -346,6 +373,7 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     if (pid) pid.value = id;
     recompute();
   });
+  wireVideoBoxes(shadow);
   recompute();
   go?.addEventListener('click', () => {
     if (currentDeposit.amount > 0 && currentDeposit.playerId.trim() !== '') {
@@ -414,7 +442,7 @@ export function renderAmountScreen(deps: FlowDeps): void {
 
   wrap.innerHTML = `
     <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.withdraw_title}</h2></div>
-    ${howto ? videoBoxHtml(t, howto) : ''}
+    ${howto ? videoBoxHtml(t.howto_wd_title, t.withdraw_howto_sub, howto) : ''}
     ${payoutHtml}
     <div class="amount-wrap">
       <label>${t.withdraw_amount_label}</label>
@@ -654,8 +682,10 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
     })
     .join('');
 
+  const wHowto = data.settings.withdrawal_howto_video_url || '';
   wrap.innerHTML = `
     <div class="backrow"><button class="backbtn" data-nav="amount">\u2190</button><h2>${t.results_title}</h2></div>
+    ${wHowto ? videoBoxHtml(t.howto_wd_title, '', wHowto) : ''}
     <div class="res-head">
       <div><small>${t.results_withdrawing}</small><b>${fmt(amount)} ETB</b></div>
       <button data-nav="amount">${t.results_change}</button>
@@ -682,6 +712,7 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
       toast(shadow, `${t.results_id_copied} <b>${esc(idText)}</b>`);
     });
   });
+  wireVideoBoxes(shadow);
   shadow.querySelectorAll('#screenResults [data-withdraw-here]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = parseInt((btn as HTMLElement).dataset.agentId!, 10);
@@ -741,10 +772,28 @@ export function wireVideoBoxes(shadow: ShadowRoot): void {
   shadow.querySelectorAll('.videobox').forEach((box) => {
     box.addEventListener('click', () => {
       const url = (box as HTMLElement).dataset.video || '';
+      if (!url || box.querySelector('iframe, video')) return;
+
+      // Bunny Stream embeds (iframe/player.mediadelivery.net) play in their iframe.
+      if (/(?:iframe|player)\.mediadelivery\.net\//i.test(url)) {
+        const sep = url.includes('?') ? '&' : '?';
+        box.innerHTML = `<iframe src="${esc(url)}${sep}autoplay=true" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>`;
+        (box as HTMLElement).style.cursor = 'default';
+        return;
+      }
+
+      // Direct video files (self-hosted MP4/WebM) play natively — no YouTube,
+      // no age gate. Anything else goes through the YouTube embed as before.
+      if (/\.(mp4|webm|mov)(\?|#|$)/i.test(url)) {
+        box.innerHTML = `<video controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;background:#000" src="${esc(url)}"></video>`;
+        (box as HTMLElement).style.cursor = 'default';
+        return;
+      }
+
       const id = youTubeId(url);
       if (!id) return;
-      (box as HTMLElement).innerHTML =
-        `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen title="How to withdraw"></iframe>`;
+      box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>`;
+      (box as HTMLElement).style.cursor = 'default';
     });
   });
 }

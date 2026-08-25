@@ -55,6 +55,7 @@ export interface PublicAgentsResponse {
     withdrawal_quick_amounts: number[];
     withdrawal_redirect_path: string; // relative, e.g. /sport/popup/withdrawal
     withdrawal_howto_video_url: string;
+    deposit_howto_video_url?: string;
     withdrawal_no_match_behavior: 'closest' | 'empty';
     withdrawal_bank_options: string[];
     withdrawal_require_payout_details: boolean;

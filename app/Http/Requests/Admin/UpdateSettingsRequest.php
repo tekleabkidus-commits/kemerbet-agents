@@ -21,6 +21,7 @@ class UpdateSettingsRequest extends FormRequest
         'withdrawal_quick_amounts',
         'withdrawal_redirect_path',
         'withdrawal_howto_video_url',
+        'deposit_howto_video_url',
         'withdrawal_no_match_behavior',
         'withdrawal_bank_options',
         'withdrawal_require_payout_details',
@@ -54,7 +55,7 @@ class UpdateSettingsRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:500',
-                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i',
+                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+|^https?:\/\/\S+\.(mp4|webm|mov)(\?\S*)?$|^https?:\/\/(iframe|player)\.mediadelivery\.net\/\S+$/i',
             ],
 
             // --- Withdrawal system ---
@@ -69,7 +70,14 @@ class UpdateSettingsRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:500',
-                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i',
+                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+|^https?:\/\/\S+\.(mp4|webm|mov)(\?\S*)?$|^https?:\/\/(iframe|player)\.mediadelivery\.net\/\S+$/i',
+            ],
+            'deposit_howto_video_url' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:500',
+                'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+|^https?:\/\/\S+\.(mp4|webm|mov)(\?\S*)?$|^https?:\/\/(iframe|player)\.mediadelivery\.net\/\S+$/i',
             ],
             'withdrawal_no_match_behavior' => ['sometimes', 'string', 'in:closest,empty'],
             'withdrawal_bank_options' => ['sometimes', 'array', 'max:40'],

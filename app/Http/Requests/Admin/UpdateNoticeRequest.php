@@ -18,7 +18,7 @@ class UpdateNoticeRequest extends FormRequest
             'body' => ['sometimes', 'required', 'string', 'max:1000'],
             'priority' => ['nullable', 'string', 'in:urgent,info'],
             'audience' => ['nullable', 'string', 'in:agent,player,both'],
-            'video_url' => ['nullable', 'string', 'max:500', 'regex:/^$|^https?:\\/\\/(www\\.)?(youtube\\.com\\/(watch\\?v=|embed\\/)|youtu\\.be\\/)[\\w\\-_]+/i'],
+            'video_url' => ['nullable', 'string', 'max:500', 'regex:/^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+|^https?:\/\/\S+\.(mp4|webm|mov)(\?\S*)?$|^https?:\/\/(iframe|player)\.mediadelivery\.net\/\S+$/i'],
             'is_active' => ['nullable', 'boolean'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => $this->filled('starts_at')
