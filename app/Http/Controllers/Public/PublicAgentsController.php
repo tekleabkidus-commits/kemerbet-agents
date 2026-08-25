@@ -43,6 +43,7 @@ class PublicAgentsController extends Controller
             'withdrawal_quick_amounts',
             'withdrawal_redirect_path',
             'withdrawal_howto_video_url',
+            'deposit_howto_video_url',
             'withdrawal_no_match_behavior',
             'withdrawal_bank_options',
             'withdrawal_require_payout_details',
@@ -147,6 +148,7 @@ class PublicAgentsController extends Controller
                 'withdrawal_min' => (int) ($settings['withdrawal_min'] ?? 200),
                 'withdrawal_quick_amounts' => array_values(array_map('intval', $quickAmounts)),
                 'withdrawal_redirect_path' => $settings['withdrawal_redirect_path'] ?? '/sport/popup/withdrawal',
+                'deposit_howto_video_url' => (string) ($settings['deposit_howto_video_url'] ?? ''),
                 'withdrawal_howto_video_url' => $settings['withdrawal_howto_video_url'] ?? '',
                 'withdrawal_no_match_behavior' => $settings['withdrawal_no_match_behavior'] ?? 'closest',
                 'withdrawal_bank_options' => array_values(array_filter(array_map(

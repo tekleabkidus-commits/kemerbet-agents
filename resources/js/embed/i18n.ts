@@ -68,6 +68,8 @@ export interface Translations {
   player_id_ph: string;
   pid_auto_label: string;
   pid_login_hint: string;
+  howto_dep_title: string;
+  howto_wd_title: string;
   results_id_label: string;
   results_id_copied: string;
 }
@@ -140,6 +142,8 @@ export const I18N: Record<Lang, Translations> = {
     player_id_ph: 'የተጫዋች መለያ (Player ID)',
     pid_auto_label: 'የተጫዋች መለያ — በራስ-ሰር ተሞልቷል',
     pid_login_hint: 'የተጫዋች መለያዎ በራስ-ሰር እንዲሞላ ወደ ሳይቱ ይግቡ',
+    howto_dep_title: 'እንዴት ገንዘብ ማስገባት እንደሚቻል',
+    howto_wd_title: 'እንዴት ገንዘብ ማውጣት እንደሚቻል',
     results_id_label: 'የመውጫ መለያ',
     results_id_copied: 'መለያው ተቀድቷል:',
   },
@@ -210,6 +214,8 @@ export const I18N: Record<Lang, Translations> = {
     player_id_ph: 'Player ID',
     pid_auto_label: 'Player ID — filled automatically',
     pid_login_hint: 'Log in to fill your Player ID automatically',
+    howto_dep_title: 'How to deposit',
+    howto_wd_title: 'How to withdraw',
     results_id_label: 'Withdrawal ID',
     results_id_copied: 'ID copied:',
   },

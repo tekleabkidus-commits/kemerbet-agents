@@ -33,6 +33,7 @@ class SettingSeeder extends Seeder
                 // domain it is embedded on, so this works across all domains.
                 'withdrawal_redirect_path' => '/sport/popup/withdrawal',
                 'withdrawal_howto_video_url' => '',
+                'deposit_howto_video_url' => '',
                 // Shown when no online agent covers the requested amount:
                 // 'closest' shows the highest-capacity agents anyway,
                 // 'empty' shows only the empty-state message.

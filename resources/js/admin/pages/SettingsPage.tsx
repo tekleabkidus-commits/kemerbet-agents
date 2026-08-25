@@ -23,6 +23,7 @@ interface Settings {
     withdrawal_quick_amounts: number[];
     withdrawal_redirect_path: string;
     withdrawal_howto_video_url: string;
+    deposit_howto_video_url: string;
     withdrawal_no_match_behavior: string;
     withdrawal_bank_options: string[];
     withdrawal_require_payout_details: boolean;
@@ -55,6 +56,7 @@ const DEFAULT_SETTINGS: Settings = {
     withdrawal_quick_amounts: [200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000],
     withdrawal_redirect_path: '/sport/popup/withdrawal',
     withdrawal_howto_video_url: '',
+    deposit_howto_video_url: '',
     withdrawal_no_match_behavior: 'closest',
     withdrawal_bank_options: [],
     withdrawal_require_payout_details: true,
@@ -864,7 +866,7 @@ export default function SettingsPage() {
                                     <label className="form-label">How-to video URL <span className="hint">YouTube; shown on the amount screen</span></label>
                                     <input
                                         type="text"
-                                        className={`form-input${form.withdrawal_howto_video_url && !YOUTUBE_URL_REGEX.test(form.withdrawal_howto_video_url) ? ' input-error' : ''}`}
+                                        className={`form-input${form.withdrawal_howto_video_url && !(YOUTUBE_URL_REGEX.test(form.withdrawal_howto_video_url) || /\.(mp4|webm|mov)(\?|$)/i.test(form.withdrawal_howto_video_url) || /mediadelivery\.net/i.test(form.withdrawal_howto_video_url)) ? ' input-error' : ''}`}
                                         value={form.withdrawal_howto_video_url}
                                         onChange={(e) => updateField('withdrawal_howto_video_url', e.target.value)}
                                         placeholder="https://www.youtube.com/watch?v=..."
