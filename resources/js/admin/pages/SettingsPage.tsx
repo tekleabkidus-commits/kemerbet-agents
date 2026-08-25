@@ -410,6 +410,18 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="form-row">
                                     <label className="form-label">
+                                        Deposit how-to video URL <span className="hint">YouTube, .mp4/.webm/.mov, or Bunny Stream embed; shown on the deposit questionnaire and agent list</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className={`form-input${form.deposit_howto_video_url && !(YOUTUBE_URL_REGEX.test(form.deposit_howto_video_url) || /\.(mp4|webm|mov)(\?|$)/i.test(form.deposit_howto_video_url) || /mediadelivery\.net/i.test(form.deposit_howto_video_url)) ? ' input-error' : ''}`}
+                                        value={form.deposit_howto_video_url}
+                                        onChange={(e) => updateField('deposit_howto_video_url', e.target.value)}
+                                        placeholder="https://player.mediadelivery.net/embed/..."
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
                                         Player-ID auto-detect: storage key <span className="hint">{'optional; sessionStorage then localStorage; supports key.field for JSON (e.g. player.id)'}</span>
                                     </label>
                                     <input type="text" className="form-input" value={form.player_id_storage_key}
