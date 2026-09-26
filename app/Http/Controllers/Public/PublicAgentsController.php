@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
 use App\Models\ClickEvent;
+use App\Models\Notice;
 use App\Models\Setting;
 use App\Models\StatusEvent;
 use App\Models\VisitEvent;
+use App\Services\AgentPairingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -51,6 +53,8 @@ class PublicAgentsController extends Controller
             'withdrawal_message_no_amount',
             'recents_enabled',
             'recents_count',
+            'pair_mode_enabled',
+            'pair_size',
         ])->pluck('value', 'key');
 
         // deposit_prefill_message supersedes the legacy prefill_message key.
@@ -60,6 +64,14 @@ class PublicAgentsController extends Controller
         $showOffline = filter_var($settings['show_offline_agents'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $shuffleLive = filter_var($settings['shuffle_live_agents'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $withdrawalsEnabled = filter_var($settings['withdrawals_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        // Pair rule: each player only gets their own agents from POST
+        // /api/public/pair, so the full list is never sent to the browser.
+        $pairMode = filter_var($settings['pair_mode_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $pairSize = max(1, min(AgentPairingService::MAX_SIZE, (int) ($settings['pair_size'] ?? AgentPairingService::DEFAULT_SIZE)));
+        if ($pairMode) {
+            // No offline agents in pair mode.
+            $showOffline = false;
+        }
 
         $agents = Agent::where('status', Agent::STATUS_ACTIVE)
             ->with(['paymentMethods' => fn ($q) => $q->select('payment_methods.id', 'slug', 'display_name')->orderBy('display_order')])
@@ -127,12 +139,15 @@ class PublicAgentsController extends Controller
 
         return [
             'cached_at' => $now->toIso8601String(),
-            'live_count' => $live->count(),
-            'agents' => $result,
-            'directory' => $directory,
-            'notices' => \App\Models\Notice::currentlyVisible(\App\Models\Notice::AUDIENCE_PLAYER)
+            // Pair mode hides the roster: no list, no directory, no count —
+            // only whether anyone is online at all.
+            'live_count' => $pairMode ? 0 : $live->count(),
+            'agents_available' => $live->isNotEmpty(),
+            'agents' => $pairMode ? [] : $result,
+            'directory' => $pairMode ? [] : $directory,
+            'notices' => Notice::currentlyVisible(Notice::AUDIENCE_PLAYER)
                 ->get()
-                ->map(fn (\App\Models\Notice $n) => [
+                ->map(fn (Notice $n) => [
                     'id' => $n->id,
                     'title' => $n->title,
                     'body' => $n->body,
@@ -170,10 +185,69 @@ class PublicAgentsController extends Controller
                     ?? "Hi Kemerbet agent, I want to deposit {amount} ETB.\nMy Player ID: {player_id}",
                 'withdrawal_message_no_amount' => $settings['withdrawal_message_no_amount']
                     ?? 'Hi dear agent, to your Withdrawal ID {withdrawal_id} I want to withdraw — I will share the amount and my withdrawal code shortly.',
-                'recents_enabled' => filter_var($settings['recents_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                // No "recent agents" section in pair mode.
+                'recents_enabled' => ! $pairMode && filter_var($settings['recents_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN),
                 'recents_count' => (int) ($settings['recents_count'] ?? 5),
+                'pair_mode_enabled' => $pairMode,
+                'pair_size' => $pairSize,
             ],
         ];
+    }
+
+    /**
+     * Pair rule: the agents this player may use right now (deposit or
+     * withdrawal). See AgentPairingService for the selection rules.
+     */
+    public function pair(Request $request, AgentPairingService $pairing): JsonResponse
+    {
+        $data = $request->validate([
+            'device_id' => ['required', 'string', 'regex:/^[A-Za-z0-9-]{16,64}$/'],
+            'player_id' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{3,32}$/'],
+            'intent' => ['required', 'string', 'in:deposit,withdrawal'],
+            'amount' => ['nullable', 'numeric', 'min:0', 'max:100000000', 'required_if:intent,withdrawal'],
+            'bank' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        if (! $pairing->isEnabled()) {
+            return response()->json(['enabled' => false, 'agents' => [], 'partial' => false]);
+        }
+
+        $result = $pairing->choose(
+            $data['device_id'],
+            $data['player_id'],
+            $data['intent'],
+            isset($data['amount']) ? (float) $data['amount'] : null,
+            $data['bank'] ?? null,
+        );
+
+        return response()->json([
+            'enabled' => true,
+            'agents' => $result['agents']
+                ->map(fn (Agent $a) => $this->transformAgent($a, 'live', forPair: true))
+                ->values()
+                ->all(),
+            'partial' => $result['partial'],
+        ]);
+    }
+
+    /**
+     * Pair rule: link this device to the logged-in player ID (merges both
+     * agent memories). Called by the widget when it detects a login.
+     */
+    public function pairSync(Request $request, AgentPairingService $pairing): JsonResponse
+    {
+        $data = $request->validate([
+            'device_id' => ['required', 'string', 'regex:/^[A-Za-z0-9-]{16,64}$/'],
+            'player_id' => ['required', 'string', 'regex:/^[A-Za-z0-9_-]{3,32}$/'],
+        ]);
+
+        if (! $pairing->isEnabled()) {
+            return response()->json(['enabled' => false]);
+        }
+
+        $pairing->sync($data['device_id'], $data['player_id']);
+
+        return response()->json(['enabled' => true, 'ok' => true]);
     }
 
     public function click(Request $request, int $agent): JsonResponse
@@ -235,16 +309,14 @@ class PublicAgentsController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function transformAgent(Agent $agent, string $status): array
+    private function transformAgent(Agent $agent, string $status, bool $forPair = false): array
     {
         $canWithdraw = $agent->canWithdraw();
 
         $data = [
             'id' => $agent->id,
-            'display_number' => $agent->display_number,
             'telegram_username' => $agent->telegram_username,
             'status' => $status,
-            'is_pinned' => $agent->pinned_at !== null,
             'accepts_withdrawals' => $canWithdraw,
             'withdrawal_max' => $canWithdraw ? (float) $agent->withdrawal_max : null,
             // withdrawal_id is needed client-side only to build the auto-message;
@@ -263,6 +335,13 @@ class PublicAgentsController extends Controller
                 ])->values()->all()
                 : [],
         ];
+
+        // Pair responses carry no agent number and no pin flag (pins are
+        // ignored in pair mode and numbers are never shown to players).
+        if (! $forPair) {
+            $data['display_number'] = $agent->display_number;
+            $data['is_pinned'] = $agent->pinned_at !== null;
+        }
 
         if ($status === 'recently_offline') {
             $data['last_seen_at'] = $agent->last_offline_at instanceof \DateTimeInterface

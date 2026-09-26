@@ -5,7 +5,8 @@ export interface AgentPaymentMethod {
 
 export interface PublicAgent {
   id: number;
-  display_number: number;
+  // Not sent by the pair endpoint, and never displayed to players.
+  display_number?: number;
   telegram_username: string;
   status: 'live' | 'recently_offline';
   is_pinned?: boolean;
@@ -41,6 +42,8 @@ export interface PlayerNotice {
 export interface PublicAgentsResponse {
   cached_at: string;
   live_count: number;
+  // True when at least one agent is online (pair mode shows no count).
+  agents_available?: boolean;
   agents: PublicAgent[];
   directory: AgentDirectoryEntry[];
   notices?: PlayerNotice[];
@@ -67,6 +70,10 @@ export interface PublicAgentsResponse {
     player_id_dom_selector?: string;
     recents_enabled: boolean;
     recents_count: number;
+    // Pair rule: each player only sees their own agents (fetched from
+    // /api/public/pair), and the player ID must be auto-detected.
+    pair_mode_enabled?: boolean;
+    pair_size?: number;
   };
 }
 

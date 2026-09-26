@@ -70,6 +70,14 @@ class SettingSeeder extends Seeder
                 // --- Recents (per-player, client-side) ---
                 'recents_enabled' => true,
                 'recents_count' => 5,
+
+                // --- Pair rule ---
+                // Ships OFF. When on, each player only sees their own agents
+                // (pair_size of them), remembered per device + player ID; no
+                // full list, no offline agents, no recents, pins ignored, and
+                // the player ID must be auto-detected (not typed).
+                'pair_mode_enabled' => false,
+                'pair_size' => 2,
             ];
 
             foreach ($settings as $key => $value) {

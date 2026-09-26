@@ -34,6 +34,9 @@ class UpdateSettingsRequest extends FormRequest
         'player_id_dom_selector',
         'recents_enabled',
         'recents_count',
+        // --- Pair rule ---
+        'pair_mode_enabled',
+        'pair_size',
     ];
 
     public function authorize(): bool
@@ -93,6 +96,8 @@ class UpdateSettingsRequest extends FormRequest
             'player_id_dom_selector' => ['sometimes', 'nullable', 'string', 'max:300'],
             'recents_enabled' => ['sometimes', 'boolean'],
             'recents_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            'pair_mode_enabled' => ['sometimes', 'boolean'],
+            'pair_size' => ['sometimes', 'integer', 'min:1', 'max:5'],
         ];
     }
 

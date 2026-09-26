@@ -39,5 +39,16 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public-visits', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
         });
+
+        // Pair endpoints: per device (so players sharing a carrier IP don't
+        // block each other) plus a generous per-IP ceiling.
+        RateLimiter::for('public-pair', function (Request $request) {
+            $device = substr((string) $request->input('device_id', ''), 0, 64);
+
+            return [
+                Limit::perMinute(20)->by('pair-dev|'.$request->ip().'|'.$device),
+                Limit::perMinute(240)->by('pair-ip|'.$request->ip()),
+            ];
+        });
     }
 }

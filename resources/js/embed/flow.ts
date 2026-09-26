@@ -12,6 +12,8 @@ import {
 import { savePayout, suggestForBank, recentSaved, deletePayout } from './payouts';
 import { savePlayerId, deletePlayerId, suggestPlayerIds } from './playerids';
 import { detectPlayerId } from './autodetect';
+import { AGENT_ICON, renderCard } from './card';
+import { fetchPair, syncLogin, displayOrder } from './pairing';
 import type { Lang, PublicAgent, PublicAgentsResponse } from './types';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +37,8 @@ export interface FlowDeps {
     opts?: { amount?: number; source?: string; paymentMethods?: string[] },
   ) => void;
   openOfflineModal: (depositUrl: string, agentId: number, methods: string[]) => void;
+  /** Pair rule was switched off while the page was open: reload the widget data. */
+  onPairDisabled: () => void;
 }
 
 let currentAmount = 0;
@@ -47,6 +51,40 @@ function autoPlayerId(data: PublicAgentsResponse): string | null {
     storageKey: data.settings.player_id_storage_key || undefined,
     domSelector: data.settings.player_id_dom_selector || undefined,
   });
+}
+
+/** The logged-in player's ID detected on the host page, or null. */
+export function detectedPlayerId(data: PublicAgentsResponse): string | null {
+  return autoPlayerId(data);
+}
+
+// ---- PAIR RULE ---------------------------------------------------------------
+// When on, the player only sees their own agents (fetched from the server),
+// and the Player ID comes ONLY from the logged-in account — it can't be typed
+// or edited. No ID detected = the player can't continue.
+
+function isPairMode(data: PublicAgentsResponse): boolean {
+  return data.settings.pair_mode_enabled === true;
+}
+
+let depPairAgents: PublicAgent[] = [];
+let depPairIds: number[] = [];
+let depPairSeq = 0;
+let resPairSeq = 0;
+
+/** Locked (read-only) Player ID, or the "not detected" block with a retry. */
+function pidBlockHtml(t: (typeof I18N)[Lang], detectedId: string | null, retryId: string): string {
+  if (detectedId) {
+    return `
+      <div class="pid-note auto">${t.pid_locked_label}</div>
+      <div class="pf pf-locked">${esc(detectedId)}<span class="lock">\uD83D\uDD12</span></div>`;
+  }
+  return `
+    <div class="pid-missing">
+      <b>${t.pid_missing_title}</b>
+      <span>${t.pid_missing_desc}</span>
+      <button class="pid-retry" id="${retryId}">${t.pid_retry}</button>
+    </div>`;
 }
 let deepLinkHandled = false;
 let hashListenerAttached = false;
@@ -221,7 +259,7 @@ export function renderHomeExtras(deps: FlowDeps): void {
   }
   const recentsWrap = shadow.getElementById('recentsWrap');
   if (recentsWrap) {
-    if (data.settings.recents_enabled) {
+    if (data.settings.recents_enabled && !isPairMode(data)) {
       const recents = resolveRecents(data.directory ?? [], data.settings.recents_count ?? 5);
       if (recents.length === 0) {
         recentsWrap.style.display = 'none';
@@ -230,7 +268,6 @@ export function renderHomeExtras(deps: FlowDeps): void {
         const rows = recents
           .map((r) => {
             const a = r.agent;
-            const num = String(a.display_number).padStart(2, '0');
             const online = a.online;
             const sub = online ? t.recents_online : t.recents_offline;
             // Which transaction button: match the intent they last used.
@@ -239,9 +276,9 @@ export function renderHomeExtras(deps: FlowDeps): void {
             const mainClass = online ? (isWithdraw ? 'wdr' : 'dep') : 'grey';
             return `
               <div class="recent${online ? '' : ' is-off'}">
-                <div class="agent-avatar ${online ? 'live' : 'off'}">${num}</div>
+                <div class="agent-avatar ${online ? 'live' : 'off'}">${AGENT_ICON}</div>
                 <div class="rc-mid">
-                  <div class="rc-name">${t.agent} ${esc(String(a.display_number))}</div>
+                  <div class="rc-name">${t.agent}</div>
                   <div class="rc-sub">${sub}</div>
                 </div>
                 <div class="rc-btns">
@@ -298,7 +335,7 @@ function wirePlayerIdChips(deps: FlowDeps, rerender: () => void, onPick: (id: st
   );
 }
 
-export function renderDepAskScreen(deps: FlowDeps): void {
+export function renderDepAskScreen(deps: FlowDeps, opts: { keepAmount?: boolean } = {}): void {
   const { shadow, getData } = deps;
   const data = getData();
   if (!data) return;
@@ -306,24 +343,32 @@ export function renderDepAskScreen(deps: FlowDeps): void {
   const t = I18N[lang];
   const wrap = shadow.getElementById('screenDepAsk');
   if (!wrap) return;
+  const pair = isPairMode(data);
 
   const quick = (data.settings.deposit_quick_amounts ?? [])
     .map((v) => `<button class="q" data-dep-quick="${v}">${fmt(v)}</button>`)
     .join('');
 
-  // Amount is never remembered — every visit starts empty.
-  currentDeposit.amount = 0;
+  // Amount is never remembered — every visit starts empty (a "Try again"
+  // after logging in keeps what the player already typed).
+  if (!opts.keepAmount) currentDeposit.amount = 0;
 
   // Auto-detect the player ID from the host page. The CURRENT session's ID is
   // authoritative: it always wins over remembered values (players can log out
-  // and back in with a different account). Still editable by the player.
+  // and back in with a different account). Classic mode: still editable.
+  // Pair mode: the detected ID is the ONLY source — locked, never typed.
   const detectedId = autoPlayerId(data);
-  if (detectedId) currentDeposit.playerId = detectedId;
+  if (pair) {
+    currentDeposit.playerId = detectedId ?? '';
+    if (detectedId) syncLogin(deps.apiBase, detectedId);
+  } else if (detectedId) {
+    currentDeposit.playerId = detectedId;
+  }
 
   // ID suggestions: deposit's own history first, topped up with IDs stored
-  // inside saved withdrawal accounts (deduped), max 4.
-  const depIds: string[] = detectedId ? [] : suggestPlayerIds('deposit');
-  if (!detectedId) {
+  // inside saved withdrawal accounts (deduped), max 4. Never in pair mode.
+  const depIds: string[] = detectedId || pair ? [] : suggestPlayerIds('deposit');
+  if (!detectedId && !pair) {
     for (const p of recentSaved(8)) {
       if (depIds.length >= 4) break;
       const pid = (p.playerId ?? '').trim();
@@ -338,13 +383,15 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     <div class="payout">
       <div class="payout-title">${t.depask_title}</div>
       <div class="amt-line" style="justify-content:flex-start;padding:0 2px 7px">
-        <input id="depAmtInput" type="text" inputmode="numeric" placeholder="0" style="width:130px;background:transparent;border:0;outline:0;color:var(--text-light);font:900 26px 'Inter',sans-serif" />
+        <input id="depAmtInput" type="text" inputmode="numeric" placeholder="0" value="${opts.keepAmount && currentDeposit.amount > 0 ? fmt(currentDeposit.amount) : ''}" style="width:130px;background:transparent;border:0;outline:0;color:var(--text-light);font:900 26px 'Inter',sans-serif" />
         <b>ETB</b>
       </div>
       ${quick ? `<div class="quick" style="margin:8px 0 4px">${quick}</div>` : ''}
-      <div class="pid-note${detectedId ? ' auto' : ''}" style="margin-top:8px">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
+      ${pair
+        ? `<div style="margin-top:8px">${pidBlockHtml(t, detectedId, 'depPidRetry')}</div>`
+        : `<div class="pid-note${detectedId ? ' auto' : ''}" style="margin-top:8px">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
       <input class="pf" id="depPidInput" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentDeposit.playerId)}" />
-      ${playerIdChips(depIds.slice(0, 4), 'depPidInput')}
+      ${playerIdChips(depIds.slice(0, 4), 'depPidInput')}`}
     </div>
     <button class="bigcta" id="depGo" disabled>${t.depask_see_agents}</button>
   `;
@@ -358,7 +405,8 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     const raw = amt.value.replace(/[^0-9]/g, '');
     currentDeposit.amount = parseInt(raw || '0', 10);
     if (raw) amt.value = fmt(currentDeposit.amount);
-    currentDeposit.playerId = pid?.value ?? '';
+    // Pair mode has no ID input: the detected ID set above stays untouched.
+    if (!pair) currentDeposit.playerId = pid?.value ?? '';
     go.disabled = !(currentDeposit.amount > 0 && currentDeposit.playerId.trim() !== '');
   };
   amt?.addEventListener('input', recompute);
@@ -373,14 +421,119 @@ export function renderDepAskScreen(deps: FlowDeps): void {
     if (pid) pid.value = id;
     recompute();
   });
+  // Pair mode, ID not detected: re-check after the player logs in.
+  shadow.getElementById('depPidRetry')?.addEventListener('click', () =>
+    renderDepAskScreen(deps, { keepAmount: true }),
+  );
   wireVideoBoxes(shadow);
   recompute();
   go?.addEventListener('click', () => {
     if (currentDeposit.amount > 0 && currentDeposit.playerId.trim() !== '') {
+      if (pair) {
+        showScreen(shadow, 'deposit');
+        renderDepositPair(deps, true);
+        return;
+      }
       savePlayerId(currentDeposit.playerId, 'deposit');
       showScreen(shadow, 'deposit');
     }
   });
+}
+
+// ---- PAIR RULE: deposit list -------------------------------------------------
+
+/**
+ * Fetch and paint this player's deposit agents. fresh=true when the player
+ * opens the list (loading state, new random display order); fresh=false for
+ * the background refresh (cards keep their places, errors keep the last list).
+ */
+export function renderDepositPair(deps: FlowDeps, fresh: boolean): void {
+  const { shadow, getData, apiBase } = deps;
+  const data = getData();
+  if (!data || !isPairMode(data)) return;
+  const t = I18N[getLang()];
+  const grid = shadow.getElementById('liveGrid');
+  if (!grid) return;
+
+  // The ID must be the one detected from the login RIGHT NOW (never a typed
+  // one — e.g. if the admin switched the pair rule on mid-session). If the
+  // player switched accounts, send them back to the questionnaire. A detection
+  // blip during a background refresh just skips that refresh.
+  const detected = autoPlayerId(data);
+  const playerId = currentDeposit.playerId.trim();
+  if (!fresh && !detected) return;
+  if (!playerId || !detected || detected !== playerId) {
+    renderDepAskScreen(deps);
+    showScreen(shadow, 'depask');
+    return;
+  }
+
+  if (fresh) {
+    depPairAgents = [];
+    depPairIds = [];
+    grid.innerHTML = `<div class="empty-state"><h3>${t.pair_loading}</h3></div>`;
+  }
+
+  const seq = ++depPairSeq;
+  fetchPair(apiBase, { playerId, intent: 'deposit' })
+    .then((res) => {
+      if (seq !== depPairSeq) return;
+      if (!res.enabled) {
+        deps.onPairDisabled();
+        return;
+      }
+      depPairAgents = displayOrder(res.agents, fresh ? null : depPairIds);
+      depPairIds = depPairAgents.map((a) => a.id);
+      paintDepositPair(deps);
+    })
+    .catch(() => {
+      if (seq !== depPairSeq) return;
+      if (!fresh && depPairAgents.length > 0) return; // keep the last good list
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">!</div>
+          <h3>${t.pair_error}</h3>
+          <button class="pid-retry pair-retry" id="depPairRetry">${t.pid_retry}</button>
+        </div>`;
+      shadow.getElementById('depPairRetry')?.addEventListener('click', () => renderDepositPair(deps, true));
+    });
+}
+
+function paintDepositPair(deps: FlowDeps): void {
+  const data = deps.getData();
+  if (!data) return;
+  const lang = getLang();
+  const t = I18N[lang];
+  const grid = deps.shadow.getElementById('liveGrid');
+  if (!grid) return;
+
+  if (depPairAgents.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">\u25CB</div>
+        <h3>${t.no_agents_title}</h3>
+        <p>${t.pair_none_desc}</p>
+      </div>`;
+    return;
+  }
+
+  // Same cards as the classic list (live only). The click handler in main.ts
+  // swaps in the questionnaire message (amount + player ID) on tap.
+  const prefill = getDepositMessage(data) || data.settings.chat_prefilled_message || '';
+  grid.innerHTML = depPairAgents.map((a) => renderCard(a, prefill, lang)).join('');
+}
+
+/**
+ * Called on every background poll (refetch=true) and on language change
+ * (refetch=false) — keeps an open pair-mode deposit list up to date.
+ */
+export function refreshPairScreens(deps: FlowDeps, refetch: boolean): void {
+  const data = deps.getData();
+  if (!data || !isPairMode(data)) return;
+  const active = deps.shadow.querySelector('.screen.active');
+  if (active?.id !== 'screenDeposit') return;
+  if (refetch) renderDepositPair(deps, false);
+  else paintDepositPair(deps);
 }
 
 export function renderAmountScreen(deps: FlowDeps): void {
@@ -404,15 +557,22 @@ export function renderAmountScreen(deps: FlowDeps): void {
     .concat(banks.map((b) => `<option value="${esc(b)}">${esc(b)}</option>`))
     .join('');
 
-  // Current session's ID is authoritative (see deposit screen note).
+  // Current session's ID is authoritative (see deposit screen note). Pair
+  // mode: the detected ID is the only source — locked, never typed.
+  const pair = isPairMode(data);
   const detectedId = autoPlayerId(data);
-  if (detectedId) currentWPlayerId = detectedId;
+  if (pair) {
+    currentWPlayerId = detectedId ?? '';
+    if (detectedId) syncLogin(deps.apiBase, detectedId);
+  } else if (detectedId) {
+    currentWPlayerId = detectedId;
+  }
 
   const saved = requirePayout ? recentSaved(4) : [];
   // Separate ID-only chips: ONLY deposit-derived IDs, only to top up while
   // fewer than 4 saved accounts exist. A full 4 shows no separate ID chips.
   const savedIds = saved.map((p) => (p.playerId ?? '').trim()).filter(Boolean);
-  const wdIdChips = (detectedId || saved.length >= 4)
+  const wdIdChips = (pair || detectedId || saved.length >= 4)
     ? []
     : suggestPlayerIds('deposit')
         .filter((id) => !savedIds.includes(id))
@@ -421,24 +581,30 @@ export function renderAmountScreen(deps: FlowDeps): void {
     ? `<div class="payout-saved" id="payoutSaved">${saved
         .map(
           (s, i) =>
-            `<div class="psug" data-sug="${i}"><button class="psug-x" data-del="${i}" aria-label="Delete">\u2715</button><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}${s.playerId ? ' \u00b7 ID ' + esc(s.playerId) : ''}</span></div>`,
+            `<div class="psug" data-sug="${i}"><button class="psug-x" data-del="${i}" aria-label="Delete">\u2715</button><span class="psug-name">${esc(s.name)}</span><span class="psug-meta">${esc(s.bank)} \u00b7 ${esc(s.account)}${s.playerId && !pair ? ' \u00b7 ID ' + esc(s.playerId) : ''}</span></div>`,
         )
         .join('')}</div>`
     : '';
+
+  const pidHtml = pair
+    ? pidBlockHtml(t, detectedId, 'wdPidRetry')
+    : `<div class="pid-note${detectedId ? ' auto' : ''}">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
+      <input class="pf" id="pfPlayerId" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentWPlayerId)}" />
+      ${playerIdChips(wdIdChips, 'pfPlayerId')}`;
 
   const payoutHtml = requirePayout
     ? `
     <div class="payout">
       <div class="payout-title">${t.payout_title}</div>
-      <div class="pid-note${detectedId ? ' auto' : ''}">${detectedId ? t.pid_auto_label : t.pid_login_hint}</div>
-      <input class="pf" id="pfPlayerId" type="text" autocomplete="off" placeholder="${t.player_id_ph}" value="${esc(currentWPlayerId)}" />
-      ${playerIdChips(wdIdChips, 'pfPlayerId')}
+      ${pidHtml}
       <input class="pf" id="pfName" type="text" autocomplete="off" placeholder="${t.payout_name_ph}" value="${esc(currentPayout.name)}" />
       <select class="pf" id="pfBank">${bankOpts}</select>
       <input class="pf" id="pfAccount" type="text" inputmode="numeric" autocomplete="off" placeholder="${t.payout_account_ph}" value="${esc(currentPayout.account)}" />
       ${savedHtml}
     </div>`
-    : '';
+    : pair
+      ? `<div class="payout">${pidHtml}</div>`
+      : '';
 
   wrap.innerHTML = `
     <div class="backrow"><button class="backbtn" data-nav="home">\u2190</button><h2>${t.withdraw_title}</h2></div>
@@ -479,7 +645,8 @@ export function renderAmountScreen(deps: FlowDeps): void {
   };
 
   const syncPayout = () => {
-    currentWPlayerId = pfPlayerId?.value ?? '';
+    // Pair mode has no ID input: keep the detected ID.
+    if (pfPlayerId) currentWPlayerId = pfPlayerId.value;
     currentPayout = {
       name: pfName?.value ?? '',
       bank: pfBank?.value ?? '',
@@ -530,6 +697,8 @@ export function renderAmountScreen(deps: FlowDeps): void {
     syncPayout();
     recompute();
   });
+  // Pair mode, ID not detected: re-check after the player logs in.
+  shadow.getElementById('wdPidRetry')?.addEventListener('click', () => renderAmountScreen(deps));
 
   // Saved-account suggestions: clicking a card fills ALL three fields,
   // replacing whatever was there. The ✕ deletes that saved account instead.
@@ -613,14 +782,43 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function renderResultsScreen(deps: FlowDeps, amount: number): void {
-  const { shadow, getData } = deps;
+  const { getData } = deps;
   const data = getData();
   if (!data) return;
-  const lang = getLang();
-  const t = I18N[lang];
 
-  const wrap = shadow.getElementById('screenResults');
-  if (!wrap) return;
+  // PAIR RULE: the server picks this player's withdrawal agents (their own
+  // agents first, if they can pay the amount to the chosen bank).
+  if (isPairMode(data)) {
+    // Only ever the ID detected from the login right now (see deposit note).
+    const detected = autoPlayerId(data);
+    if (!detected || detected !== currentWPlayerId.trim()) {
+      renderAmountScreen(deps);
+      showScreen(deps.shadow, 'amount');
+      return;
+    }
+    const seq = ++resPairSeq;
+    paintResults(deps, amount, [], false, 'loading');
+    fetchPair(deps.apiBase, {
+      playerId: currentWPlayerId.trim(),
+      intent: 'withdrawal',
+      amount,
+      bank: currentPayout.bank || undefined,
+    })
+      .then((res) => {
+        if (seq !== resPairSeq) return;
+        if (!res.enabled) {
+          deps.onPairDisabled();
+          return;
+        }
+        const list = displayOrder(res.agents, null);
+        paintResults(deps, amount, list, res.partial || list.length === 0);
+      })
+      .catch(() => {
+        if (seq !== resPairSeq) return;
+        paintResults(deps, amount, [], false, 'error');
+      });
+    return;
+  }
 
   // Only LIVE, withdrawal-capable agents whose WITHDRAWAL banks include the
   // player's chosen bank. Matching is case- and space-insensitive so a
@@ -659,9 +857,28 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
     list = [];
   }
 
+  paintResults(deps, amount, list, showNone);
+}
+
+/** Paint the withdrawal results screen (both modes) and wire its buttons. */
+function paintResults(
+  deps: FlowDeps,
+  amount: number,
+  list: PublicAgent[],
+  showNone: boolean,
+  state: 'ready' | 'loading' | 'error' = 'ready',
+): void {
+  const { shadow, getData } = deps;
+  const data = getData();
+  if (!data) return;
+  const lang = getLang();
+  const t = I18N[lang];
+
+  const wrap = shadow.getElementById('screenResults');
+  if (!wrap) return;
+
   const cards = list
     .map((a) => {
-      const num = String(a.display_number).padStart(2, '0');
       const covers = (a.withdrawal_max ?? 0) >= amount;
       // Show the agent's WITHDRAWAL banks (what they pay out to), not deposit.
       const banks = (a.withdrawal_methods || [])
@@ -671,7 +888,7 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
       return `
         <div class="agent-card live">
           <div class="agent-top">
-            <div class="agent-name-wrap"><div class="agent-avatar live">${num}</div><div class="agent-name">${t.agent} ${esc(String(a.display_number))}</div></div>
+            <div class="agent-name-wrap"><div class="agent-avatar live">${AGENT_ICON}</div><div class="agent-name">${t.agent}</div></div>
             <span class="cap-chip">${t.results_cap_prefix} ${fmt(a.withdrawal_max ?? 0)} ETB</span>
           </div>
           <div class="waiting-text"><span class="typing-dots"><span></span><span></span><span></span></span>${t.results_ready}</div>
@@ -681,6 +898,12 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
         </div>`;
     })
     .join('');
+
+  const listHtml = state === 'loading'
+    ? `<div class="empty-state"><h3>${t.pair_loading}</h3></div>`
+    : state === 'error'
+      ? `<div class="empty-state"><div class="icon">!</div><h3>${t.pair_error}</h3><button class="pid-retry pair-retry" id="resPairRetry">${t.pid_retry}</button></div>`
+      : cards;
 
   const wHowto = data.settings.withdrawal_howto_video_url || '';
   wrap.innerHTML = `
@@ -692,13 +915,14 @@ export function renderResultsScreen(deps: FlowDeps, amount: number): void {
     </div>
     <button class="ownagent" style="margin:0 0 15px" id="ownAgentBtn2"><span class="ow">${t.withdraw_own_agent}<small>${t.withdraw_own_agent_desc}</small></span><span>\u2192</span></button>
     ${showNone ? `<div class="nores"><h4>${t.results_none_title}</h4><p>${t.results_none_desc}</p></div>` : ''}
-    <div class="agent-grid" id="resList">${cards}</div>
+    <div class="agent-grid" id="resList">${listHtml}</div>
   `;
 
   // wiring
   shadow.querySelectorAll('#screenResults [data-nav="amount"]').forEach((b) =>
     b.addEventListener('click', () => showScreen(shadow, 'amount')),
   );
+  shadow.getElementById('resPairRetry')?.addEventListener('click', () => renderResultsScreen(deps, amount));
   shadow.getElementById('ownAgentBtn2')?.addEventListener('click', () => {
     const path = data.settings.withdrawal_redirect_path;
     toast(shadow, cashierToastMsg(path));

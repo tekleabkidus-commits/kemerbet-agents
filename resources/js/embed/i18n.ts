@@ -72,6 +72,15 @@ export interface Translations {
   howto_wd_title: string;
   results_id_label: string;
   results_id_copied: string;
+  // --- Pair rule ---
+  agents_online_plain: string;
+  pair_loading: string;
+  pair_error: string;
+  pair_none_desc: string;
+  pid_locked_label: string;
+  pid_missing_title: string;
+  pid_missing_desc: string;
+  pid_retry: string;
 }
 
 export const I18N: Record<Lang, Translations> = {
@@ -146,6 +155,14 @@ export const I18N: Record<Lang, Translations> = {
     howto_wd_title: 'እንዴት ገንዘብ ማውጣት እንደሚቻል',
     results_id_label: 'የመውጫ መለያ',
     results_id_copied: 'መለያው ተቀድቷል:',
+    agents_online_plain: 'ኤጀንቶች ኦንላይን ናቸው',
+    pair_loading: 'ኤጀንቶችዎን በመፈለግ ላይ…',
+    pair_error: 'ኤጀንቶችን መጫን አልተቻለም። ግንኙነትዎን አረጋግጠው እንደገና ይሞክሩ።',
+    pair_none_desc: 'እባክዎ ከጥቂት ደቂቃዎች በኋላ እንደገና ይሞክሩ።',
+    pid_locked_label: 'የተጫዋች መለያዎ (ከአካውንትዎ የተወሰደ)',
+    pid_missing_title: 'የተጫዋች መለያ (Player ID) አልተገኘም',
+    pid_missing_desc: 'ለመቀጠል ወደ አካውንትዎ ይግቡ፣ ከዚያ «እንደገና ሞክር» ይጫኑ።',
+    pid_retry: 'እንደገና ሞክር',
   },
   en: {
     title: 'Kemerbet Agents',
@@ -218,6 +235,14 @@ export const I18N: Record<Lang, Translations> = {
     howto_wd_title: 'How to withdraw',
     results_id_label: 'Withdrawal ID',
     results_id_copied: 'ID copied:',
+    agents_online_plain: 'Agents online',
+    pair_loading: 'Finding your agents…',
+    pair_error: 'Couldn’t load your agents. Check your connection and try again.',
+    pair_none_desc: 'Please check back in a few minutes.',
+    pid_locked_label: 'Your Player ID (from your account)',
+    pid_missing_title: 'Player ID not detected',
+    pid_missing_desc: 'Log in to your account to continue, then tap Try again.',
+    pid_retry: 'Try again',
   },
 };
 

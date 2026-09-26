@@ -31,6 +31,9 @@ interface Settings {
     withdrawal_message_no_amount: string;
     recents_enabled: boolean;
     recents_count: number;
+    // --- Pair rule ---
+    pair_mode_enabled: boolean;
+    pair_size: number;
 }
 
 interface SettingsResponse {
@@ -64,6 +67,8 @@ const DEFAULT_SETTINGS: Settings = {
     withdrawal_message_no_amount: '',
     recents_enabled: true,
     recents_count: 5,
+    pair_mode_enabled: false,
+    pair_size: 2,
 };
 
 const YOUTUBE_URL_REGEX = /^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i;
@@ -410,6 +415,18 @@ export default function SettingsPage() {
                                 </div>
                                 <div className="form-row">
                                     <label className="form-label">
+                                        Deposit how-to video URL <span className="hint">YouTube, .mp4/.webm/.mov, or Bunny Stream embed; shown on the deposit questionnaire and agent list</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className={`form-input${form.deposit_howto_video_url && !(YOUTUBE_URL_REGEX.test(form.deposit_howto_video_url) || /\.(mp4|webm|mov)(\?|$)/i.test(form.deposit_howto_video_url) || /mediadelivery\.net/i.test(form.deposit_howto_video_url)) ? ' input-error' : ''}`}
+                                        value={form.deposit_howto_video_url}
+                                        onChange={(e) => updateField('deposit_howto_video_url', e.target.value)}
+                                        placeholder="https://player.mediadelivery.net/embed/..."
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <label className="form-label">
                                         Player-ID auto-detect: storage key <span className="hint">{'optional; sessionStorage then localStorage; supports key.field for JSON (e.g. player.id)'}</span>
                                     </label>
                                     <input type="text" className="form-input" value={form.player_id_storage_key}
@@ -559,6 +576,84 @@ export default function SettingsPage() {
                                 <span>&#8505;</span>
                                 <span>The widget uses Shadow DOM, so its styling won&apos;t conflict with the host site&apos;s CSS. The current public refresh interval is <strong>{form.public_refresh_interval_seconds} seconds</strong> (configurable below).</span>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Player Agent Pairing (pair rule) */}
+                    <div className="panel">
+                        <div className="panel-head">
+                            <div className="panel-title">Player Agent Pairing</div>
+                        </div>
+                        <div className="panel-body">
+                            <div className="form-grid">
+                                <ToggleRow
+                                    title="Pair rule — each player only sees their own agents"
+                                    desc="Players get a fixed set of online agents, picked at random the first time and remembered by device and Player ID. They keep getting the same agents; a new random agent is only given when none of their previous agents is online. Applies to deposits and withdrawals."
+                                    value={!!form.pair_mode_enabled}
+                                    onChange={(v) => updateField('pair_mode_enabled', v)}
+                                />
+                                <div className="form-row">
+                                    <label className="form-label">Agents shown to each player</label>
+                                    <select
+                                        className="form-select"
+                                        style={{ maxWidth: 300 }}
+                                        value={form.pair_size ?? 2}
+                                        onChange={(e) => updateField('pair_size', parseInt(e.target.value, 10))}
+                                    >
+                                        {[1, 2, 3, 4, 5].map((n) => (
+                                            <option key={n} value={n}>
+                                                {n} {n === 1 ? 'agent' : 'agents'}{n === 2 ? ' (recommended)' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div style={{
+                                    padding: '10px 14px',
+                                    background: 'rgba(59,130,246,0.06)',
+                                    border: '1px solid rgba(59,130,246,0.18)',
+                                    borderRadius: 8,
+                                    fontSize: '.78rem',
+                                    color: 'var(--text-muted)',
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: 8,
+                                    lineHeight: 1.6,
+                                }}>
+                                    <span>&#8505;</span>
+                                    <span>
+                                        While this is on: no full agent list, no offline agents, no &ldquo;recent agents&rdquo;, no agent count, and pins are ignored.
+                                        The Player ID is taken <strong>only</strong> from the player&apos;s login &mdash; players can&apos;t type or edit it.
+                                        Switch it off to go back to the classic list instantly.
+                                    </span>
+                                </div>
+                                {form.pair_mode_enabled && !form.player_id_storage_key && !form.player_id_dom_selector && (
+                                    <div style={{
+                                        padding: '10px 14px',
+                                        background: 'rgba(245,197,24,0.08)',
+                                        border: '1px solid rgba(245,197,24,0.25)',
+                                        borderRadius: 8,
+                                        fontSize: '.8rem',
+                                        color: 'var(--gold)',
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        gap: 8,
+                                        lineHeight: 1.6,
+                                    }}>
+                                        <span>&#9888;</span>
+                                        <span>
+                                            Player-ID auto-detect isn&apos;t configured (storage key and CSS selector above are both empty).
+                                            Unless the site sets <code>window.KEMERBET_PLAYER_ID</code>, every player will see
+                                            &ldquo;Player ID not detected&rdquo; and won&apos;t be able to continue.
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="panel-foot">
+                            {isDirty && <button className="btn btn-secondary" onClick={handleDiscard} disabled={saving}>Discard</button>}
+                            <button className="btn btn-primary" onClick={handleSave} disabled={!isDirty || saving}>
+                                {saving ? <><Loader2 size={14} className="loader-spin" /> Saving&hellip;</> : 'Save Changes'}
+                            </button>
                         </div>
                     </div>
 

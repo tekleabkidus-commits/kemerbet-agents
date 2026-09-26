@@ -12,8 +12,11 @@ import {
   handleRecentMain,
   handleRecentContact,
   wireVideoBoxes,
+  refreshPairScreens,
+  detectedPlayerId,
   type FlowDeps,
 } from './flow';
+import { syncLogin } from './pairing';
 import type { Lang, PublicAgentsResponse } from './types';
 
 function getApiBase(container: HTMLElement): string {
@@ -125,6 +128,11 @@ function init(): void {
       pendingPaymentMethods = methods;
       showModal();
     },
+    // Pair rule switched off by admin while the page was open: reload data;
+    // the classic list takes over on the next render.
+    onPairDisabled: () => {
+      void fetchAndRender();
+    },
   };
 
   // --- Fetch + render ---
@@ -138,6 +146,14 @@ function init(): void {
       renderPage(data, shadow);
       renderHomeExtras(flowDeps);
       wireVideoBoxes(shadow);
+      if (data.settings.pair_mode_enabled) {
+        // Pair rule: a detected login links this device to the player ID on
+        // the server (once per device + ID), and an open deposit list is
+        // refreshed so it only ever shows online agents.
+        const pid = detectedPlayerId(data);
+        if (pid) syncLogin(apiBase, pid);
+        refreshPairScreens(flowDeps, true);
+      }
     } catch {
       console.warn('[kemerbet-agents] fetch failed, retrying in 60s');
     }
@@ -211,9 +227,12 @@ function init(): void {
   });
 
   // --- Deposit click delegation ---
+  // Only the deposit list's cards. (Withdraw buttons on the results screen and
+  // the recents buttons also carry data-agent-id; they track their own clicks
+  // and must not ALSO be counted as deposits.)
   shadow.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
-    const btn = target.closest('[data-agent-id]') as HTMLElement | null;
+    const btn = target.closest('#liveGrid [data-agent-id], #offlineGrid [data-agent-id]') as HTMLElement | null;
     if (!btn) return;
 
     const agentId = btn.dataset.agentId!;
@@ -295,6 +314,7 @@ function init(): void {
       if (lastApiData) {
         renderPage(lastApiData, shadow);
         renderHomeExtras(flowDeps);
+        refreshPairScreens(flowDeps, false);
         // If the amount screen is currently showing, re-render it in the new
         // language. (Results re-render whenever re-entered from amount.)
         if (shadow.getElementById('screenAmount')?.classList.contains('active')) {

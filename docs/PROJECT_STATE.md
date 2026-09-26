@@ -141,6 +141,24 @@ Open work that could be picked up:
 
 ---
 
+## Pair rule — each player only sees their own agents (2026-09-26)
+
+Admin switch: Settings → General → **Player Agent Pairing** (`pair_mode_enabled`, ships **off**; `pair_size`, default 2).
+
+**Rules (agreed with Kidus):**
+- A player = device id (random, localStorage `kemerbet_device_id`) + Player ID auto-detected from the login. Every agent a player is given is remembered under BOTH (`player_agent_assignments`, subject_type `device` / `player`) and the two memories are merged on every request.
+  - New account on the same device → same agents. Same account on another device → same agents. Login detected → device agents copied to the Player ID (`POST /api/public/pair/sync`). Clashes merge (nothing lost).
+- `POST /api/public/pair` picks the agents: previous agents who can serve the request first (most recently shown on the deposit list, then most recently shown anywhere), and only then random never-given agents to fill the pair. New agents join the memory.
+- Withdrawals use the same memory: the deposit agents first if they are online, accept withdrawals, cover the amount and pay to the chosen bank; otherwise topped up with new agents who can. Nobody covers the amount → `withdrawal_no_match_behavior` (closest / empty), previous agents first.
+- While on: no full list / directory / count in `GET /api/public/agents`, no offline agents, no recents, pins ignored. Player ID can't be typed or edited — not detected = "Player ID not detected" + Try again, cannot continue.
+- Agent numbers are never shown to players (both modes): cards read "Agent" with a person icon.
+
+**Code:** `app/Services/AgentPairingService.php`, `PublicAgentsController@pair/@pairSync`, `resources/js/embed/pairing.ts`, `card.ts`, pair sections in `flow.ts`.
+**Tests:** `tests/Feature/Public/AgentPairingTest.php`, `tests/Feature/Admin/PairSettingsTest.php`, `resources/js/embed/__tests__/pairing.test.ts`, `resources/js/admin/__tests__/PairSettings.test.tsx`.
+**Side fix:** withdraw buttons (and recents buttons) no longer also record a phantom *deposit* click (`main.ts` click delegation scoped to the deposit grids).
+
+---
+
 ## Key file locations
 
 - Public docs: `docs/PROJECT_STATE.md` (this file), `docs/SPECIFICATION.md`, `docs/F-AND-G-FINAL-SMOKE-TEST.md`, `docs/staging-deployment-checklist.md`

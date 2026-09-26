@@ -90,6 +90,11 @@ Route::prefix('public')->group(function () {
         ->middleware('throttle:public-clicks');
     Route::post('visit', [PublicAgentsController::class, 'visit'])
         ->middleware('throttle:public-visits');
+    // Pair rule: this player's own agents + login (device <-> player ID) sync.
+    Route::post('pair', [PublicAgentsController::class, 'pair'])
+        ->middleware('throttle:public-pair');
+    Route::post('pair/sync', [PublicAgentsController::class, 'pairSync'])
+        ->middleware('throttle:public-pair');
 });
 
 Route::prefix('agent/{token}')
