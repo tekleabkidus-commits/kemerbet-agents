@@ -31,6 +31,11 @@ use Illuminate\Support\Facades\Cache;
  *      has never had. They join the player's memory.
  * For withdrawals "can serve" means online, withdrawal-capable, pays out to
  * the chosen bank and covers the amount.
+ *
+ * Pair reset (admin switch + hours): once a player's pairing is older than the
+ * reset interval, it is forgotten on their next visit and they get a fresh
+ * random pair — agents they didn't have last time first, previous ones only if
+ * not enough others are online.
  */
 class AgentPairingService
 {
@@ -42,9 +47,25 @@ class AgentPairingService
 
     public const MAX_SIZE = 5;
 
+    public const DEFAULT_RESET_HOURS = 72;
+
+    public const MAX_RESET_HOURS = 720;
+
     public function isEnabled(): bool
     {
         return filter_var($this->setting('pair_mode_enabled', false), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /** Reset interval in hours, or null when the pair reset is switched off. */
+    public function resetHours(): ?int
+    {
+        if (! filter_var($this->setting('pair_reset_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+            return null;
+        }
+
+        $hours = (int) $this->setting('pair_reset_hours', self::DEFAULT_RESET_HOURS);
+
+        return max(1, min(self::MAX_RESET_HOURS, $hours ?: self::DEFAULT_RESET_HOURS));
     }
 
     public function pairSize(): int
@@ -76,6 +97,18 @@ class AgentPairingService
             $size = $this->pairSize();
             $memory = $this->loadMemory($deviceId, $playerId);
 
+            // Pair reset: the pairing is older than the admin's interval —
+            // forget it (device + player ID) and start a fresh pair, trying
+            // agents they didn't have last time first.
+            $avoid = [];
+            $resetHours = $this->resetHours();
+            if ($resetHours !== null && $memory !== []
+                && $this->pairingStartedAt($memory)->lte($now->copy()->subHours($resetHours))) {
+                $avoid = array_keys($memory);
+                $this->forget($deviceId, $playerId);
+                $memory = [];
+            }
+
             $live = Agent::query()
                 ->where('status', Agent::STATUS_ACTIVE)
                 ->where('live_until', '>', $now)
@@ -88,7 +121,7 @@ class AgentPairingService
             if ($intent === self::INTENT_WITHDRAWAL) {
                 $withdrawers = $live->filter(fn (Agent $a) => $a->canWithdraw() && $this->paysToBank($a, $bank));
                 $eligible = $withdrawers->filter(fn (Agent $a) => $a->coversWithdrawal((float) $amount));
-                $chosen = $this->pick($eligible, $memory, $size);
+                $chosen = $this->pick($eligible, $memory, $size, $avoid);
 
                 if ($chosen->isEmpty() && $this->setting('withdrawal_no_match_behavior', 'closest') === 'closest') {
                     // Nobody can pay the full amount: show the highest-capacity
@@ -98,7 +131,7 @@ class AgentPairingService
                     $partial = $chosen->isNotEmpty();
                 }
             } else {
-                $chosen = $this->pick($live, $memory, $size);
+                $chosen = $this->pick($live, $memory, $size, $avoid);
             }
 
             $this->remember($deviceId, $playerId, $memory, $chosen, $now, $intent);
@@ -130,12 +163,15 @@ class AgentPairingService
     /**
      * Previous agents that can serve the request first (most recently shown
      * first), then random never-given agents to fill the remaining slots.
+     * After a pair reset, $avoid holds the agents of the forgotten pairing:
+     * they are only used when not enough other agents are online.
      *
      * @param  Collection<int, Agent>  $eligible
      * @param  array<int, array{first: CarbonInterface, last: ?CarbonInterface, dep: ?CarbonInterface}>  $memory
+     * @param  int[]  $avoid
      * @return Collection<int, Agent>
      */
-    private function pick(Collection $eligible, array $memory, int $size): Collection
+    private function pick(Collection $eligible, array $memory, int $size, array $avoid = []): Collection
     {
         $byId = $eligible->keyBy('id');
 
@@ -148,12 +184,13 @@ class AgentPairingService
             return $previous->values();
         }
 
-        $fresh = $eligible
-            ->reject(fn (Agent $a) => isset($memory[$a->id]))
-            ->shuffle()
-            ->take($size - $previous->count());
+        $fresh = $eligible->reject(fn (Agent $a) => isset($memory[$a->id]));
+        $new = $fresh->reject(fn (Agent $a) => in_array($a->id, $avoid, true))->shuffle();
+        $reused = $fresh->filter(fn (Agent $a) => in_array($a->id, $avoid, true))->shuffle();
 
-        return $previous->concat($fresh)->values();
+        return $previous
+            ->concat($new->concat($reused)->take($size - $previous->count()))
+            ->values();
     }
 
     /**
@@ -240,6 +277,29 @@ class AgentPairingService
         }
 
         return $memory;
+    }
+
+    /**
+     * When the current pairing started: the earliest time any of these agents
+     * was given to this device / player.
+     *
+     * @param  array<int, array{first: CarbonInterface, last: ?CarbonInterface, dep: ?CarbonInterface}>  $memory
+     */
+    private function pairingStartedAt(array $memory): CarbonInterface
+    {
+        $firsts = array_map(fn (array $m) => $m['first'], $memory);
+        usort($firsts, fn (CarbonInterface $a, CarbonInterface $b) => $a <=> $b);
+
+        return $firsts[0];
+    }
+
+    /** Forget every agent remembered for this device and this player ID. */
+    private function forget(string $deviceId, string $playerId): void
+    {
+        PlayerAgentAssignment::query()
+            ->where(fn ($q) => $q->where('subject_type', PlayerAgentAssignment::SUBJECT_DEVICE)->where('subject_key', $deviceId))
+            ->orWhere(fn ($q) => $q->where('subject_type', PlayerAgentAssignment::SUBJECT_PLAYER)->where('subject_key', $playerId))
+            ->delete();
     }
 
     private function latest(?CarbonInterface $a, ?CarbonInterface $b): ?CarbonInterface

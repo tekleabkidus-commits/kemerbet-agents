@@ -78,6 +78,10 @@ class SettingSeeder extends Seeder
                 // the player ID must be auto-detected (not typed).
                 'pair_mode_enabled' => false,
                 'pair_size' => 2,
+                // Pair reset: when on, a player's pairing is forgotten after
+                // this many hours and they get a fresh random pair.
+                'pair_reset_enabled' => false,
+                'pair_reset_hours' => 72,
             ];
 
             foreach ($settings as $key => $value) {

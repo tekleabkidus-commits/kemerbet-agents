@@ -9,7 +9,9 @@ export default defineConfig({
       name: 'KemerbetAgents',
       fileName: () => 'embed.js',
     },
-    outDir: 'public/embed',
+    // Not in public/: /embed/embed.js is served by EmbedScriptController with
+    // a short cache lifetime, so widget updates reach every phone quickly.
+    outDir: 'resources/embed-dist',
     emptyOutDir: true,
     cssCodeSplit: false,
   },

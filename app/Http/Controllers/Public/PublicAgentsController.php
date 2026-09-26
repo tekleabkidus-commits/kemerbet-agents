@@ -13,16 +13,47 @@ use App\Services\AgentPairingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Random\Engine\Mt19937;
+use Random\Randomizer;
 
 class PublicAgentsController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $data = Cache::remember('public_agents', 60, function () {
             return $this->buildPayload();
         });
 
+        // Pair rule: the full list is never sent. But widgets from BEFORE the
+        // pair rule (still saved in some phones' browser cache) only know how
+        // to show this list — with an empty list they'd show "no agents" and
+        // the player couldn't deposit. So they get a small sample of online
+        // agents instead: the same agents for the same visitor for the whole
+        // hour. Current widgets ignore this list in pair mode.
+        $pool = $data['pair_pool'] ?? null;
+        unset($data['pair_pool']);
+        if (is_array($pool)) {
+            $data['agents'] = $this->legacySample($pool, $request, (int) ($data['settings']['pair_size'] ?? AgentPairingService::DEFAULT_SIZE));
+            $data['live_count'] = count($data['agents']);
+        }
+
         return response()->json($data);
+    }
+
+    /**
+     * Pick `$size` agents from the pool, stable per visitor (IP + browser) per
+     * hour so the old widget's cards don't reshuffle on every refresh.
+     */
+    private function legacySample(array $pool, Request $request, int $size): array
+    {
+        if ($pool === []) {
+            return [];
+        }
+
+        $seed = crc32($request->ip().'|'.$request->userAgent().'|'.now()->format('YmdH'));
+        $randomizer = new Randomizer(new Mt19937($seed));
+
+        return array_slice($randomizer->shuffleArray($pool), 0, max(1, $size));
     }
 
     private function buildPayload(): array
@@ -145,6 +176,11 @@ class PublicAgentsController extends Controller
             'agents_available' => $live->isNotEmpty(),
             'agents' => $pairMode ? [] : $result,
             'directory' => $pairMode ? [] : $directory,
+            // Server-side only (removed in index() before sending): online
+            // agents that pre-pair-rule widgets may be sampled from.
+            'pair_pool' => $pairMode
+                ? $live->map(fn (Agent $a) => $this->legacyAgent($a))->values()->all()
+                : null,
             'notices' => Notice::currentlyVisible(Notice::AUDIENCE_PLAYER)
                 ->get()
                 ->map(fn (Notice $n) => [
@@ -307,6 +343,19 @@ class PublicAgentsController extends Controller
         ]);
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * An online agent in the shape pre-pair-rule widgets expect. The number
+     * is blanked (two spaces: the old widget then shows an empty avatar and
+     * just "Agent"), and pins mean nothing in pair mode.
+     */
+    private function legacyAgent(Agent $agent): array
+    {
+        return array_merge($this->transformAgent($agent, 'live', forPair: true), [
+            'display_number' => '  ',
+            'is_pinned' => false,
+        ]);
     }
 
     private function transformAgent(Agent $agent, string $status, bool $forPair = false): array

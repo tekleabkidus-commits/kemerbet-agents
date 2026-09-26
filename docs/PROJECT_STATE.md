@@ -157,6 +157,11 @@ Admin switch: Settings → General → **Player Agent Pairing** (`pair_mode_enab
 **Tests:** `tests/Feature/Public/AgentPairingTest.php`, `tests/Feature/Admin/PairSettingsTest.php`, `resources/js/embed/__tests__/pairing.test.ts`, `resources/js/admin/__tests__/PairSettings.test.tsx`.
 **Side fix:** withdraw buttons (and recents buttons) no longer also record a phantom *deposit* click (`main.ts` click delegation scoped to the deposit grids).
 
+**Follow-up (2026-09-26 evening):**
+- *Incident:* a few players saw "no agents" after the questionnaire. Their phones still had the pre-pair-rule widget cached; with the pair rule on the public list is empty. Fix: in pair mode `GET /api/public/agents` now sends old widgets a small numberless sample of online agents (`pair_size`, stable per IP + browser per hour; `pair_pool` is cached server-side only). Current widgets ignore it.
+- *Widget delivery:* `/embed/embed.js` is no longer a static file (static files could be cached for hours). The bundle is built to `resources/embed-dist/embed.js` and served by `EmbedScriptController` (route registered outside the web group in `bootstrap/app.php`: no session/cookies) with `Cache-Control: public, max-age=300, s-maxage=300` + ETag/304. New widget versions reach phones within ~5 minutes.
+- *Pair reset:* Settings → General → Player Agent Pairing → "Reset pairs automatically" (`pair_reset_enabled`, ships off) + "Reset every N hours" (`pair_reset_hours`, 1–720, default 72). Counted per player from when the current pairing started; on the next visit after it expires the device + player memory is forgotten and a fresh random pair is chosen, agents from the old pairing only if not enough others are online.
+
 ---
 
 ## Key file locations

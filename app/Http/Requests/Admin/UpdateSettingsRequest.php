@@ -37,6 +37,8 @@ class UpdateSettingsRequest extends FormRequest
         // --- Pair rule ---
         'pair_mode_enabled',
         'pair_size',
+        'pair_reset_enabled',
+        'pair_reset_hours',
     ];
 
     public function authorize(): bool
@@ -98,6 +100,8 @@ class UpdateSettingsRequest extends FormRequest
             'recents_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'pair_mode_enabled' => ['sometimes', 'boolean'],
             'pair_size' => ['sometimes', 'integer', 'min:1', 'max:5'],
+            'pair_reset_enabled' => ['sometimes', 'boolean'],
+            'pair_reset_hours' => ['sometimes', 'integer', 'min:1', 'max:720'],
         ];
     }
 

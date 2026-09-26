@@ -34,6 +34,8 @@ interface Settings {
     // --- Pair rule ---
     pair_mode_enabled: boolean;
     pair_size: number;
+    pair_reset_enabled: boolean;
+    pair_reset_hours: number;
 }
 
 interface SettingsResponse {
@@ -69,6 +71,8 @@ const DEFAULT_SETTINGS: Settings = {
     recents_count: 5,
     pair_mode_enabled: false,
     pair_size: 2,
+    pair_reset_enabled: false,
+    pair_reset_hours: 72,
 };
 
 const YOUTUBE_URL_REGEX = /^$|^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[\w\-_]+/i;
@@ -606,6 +610,30 @@ export default function SettingsPage() {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                                <ToggleRow
+                                    title="Reset pairs automatically"
+                                    desc="After the time below, a player's agents are forgotten. On their next deposit or withdrawal they get a new random pair (agents they didn't have last time first)."
+                                    value={!!form.pair_reset_enabled}
+                                    onChange={(v) => updateField('pair_reset_enabled', v)}
+                                />
+                                <div className="form-row">
+                                    <label className="form-label" htmlFor="pair-reset-hours">
+                                        Reset every <span className="hint">hours, 1&ndash;720 (72 = 3 days)</span>
+                                    </label>
+                                    <input
+                                        id="pair-reset-hours"
+                                        type="number"
+                                        className="form-input"
+                                        style={{ maxWidth: 160 }}
+                                        min={1}
+                                        max={720}
+                                        value={form.pair_reset_hours ?? 72}
+                                        onChange={(e) => updateField('pair_reset_hours', parseInt(e.target.value || '0', 10))}
+                                    />
+                                    <div className="form-help">
+                                        Counted per player, from when they first got their current pair.
+                                    </div>
                                 </div>
                                 <div style={{
                                     padding: '10px 14px',

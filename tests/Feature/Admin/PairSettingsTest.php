@@ -27,6 +27,28 @@ test('pair rule ships off with a size of 2', function () {
     expect($settings['pair_size'])->toBe(2);
 });
 
+test('pair reset ships off with 72 hours', function () {
+    $settings = $this->actingAs($this->admin)->getJson('/api/admin/settings')->json('data.settings');
+
+    expect($settings['pair_reset_enabled'])->toBeFalse();
+    expect($settings['pair_reset_hours'])->toBe(72);
+});
+
+test('admin can turn the pair reset on and set the hours', function () {
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', ['pair_reset_enabled' => true, 'pair_reset_hours' => 36])
+        ->assertOk()
+        ->assertJsonPath('data.settings.pair_reset_enabled', true)
+        ->assertJsonPath('data.settings.pair_reset_hours', 36);
+});
+
+test('pair reset hours must be between 1 and 720', function (mixed $hours) {
+    $this->actingAs($this->admin)
+        ->patchJson('/api/admin/settings', ['pair_reset_hours' => $hours])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('pair_reset_hours');
+})->with([0, 721, 'three days']);
+
 test('admin can turn the pair rule on and change the size', function () {
     $this->actingAs($this->admin)
         ->patchJson('/api/admin/settings', ['pair_mode_enabled' => true, 'pair_size' => 3])
@@ -60,8 +82,11 @@ test('turning the pair rule on takes effect on the public widget immediately', f
         ->assertOk();
 
     $res = $this->getJson('/api/public/agents');
-    expect($res->json('agents'))->toBe([]);
     expect($res->json('settings.pair_mode_enabled'))->toBeTrue();
+    // No full list any more: no directory, and only a small numberless
+    // sample for widgets saved from before the pair rule.
+    expect($res->json('directory'))->toBe([]);
+    expect(trim($res->json('agents.0.display_number')))->toBe('');
 });
 
 test('re-running the setting seeder never overwrites an admin choice', function () {

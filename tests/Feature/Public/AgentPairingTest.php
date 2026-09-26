@@ -431,20 +431,81 @@ it('shows nothing when nobody covers the amount and the admin chose "empty"', fu
 
 // --- Public agents endpoint in pair mode -----------------------------------
 
-it('stops sending the agent list, directory and count to the browser', function () {
-    pairAgent();
+it('stops sending the full list, directory and count to the browser', function () {
+    foreach (range(1, 6) as $i) {
+        pairAgent();
+    }
     pairAgent(['live_until' => now()->subMinutes(5)]);
 
     $res = $this->getJson('/api/public/agents')->assertOk();
 
-    expect($res->json('agents'))->toBe([]);
+    // Only a small sample (for widgets saved from before the pair rule).
+    expect($res->json('agents'))->toHaveCount(2);
+    expect($res->json('live_count'))->toBe(2);
     expect($res->json('directory'))->toBe([]);
-    expect($res->json('live_count'))->toBe(0);
+    expect($res->json())->not->toHaveKey('pair_pool');
     expect($res->json('agents_available'))->toBeTrue();
     expect($res->json('settings.pair_mode_enabled'))->toBeTrue();
     expect($res->json('settings.pair_size'))->toBe(2);
     expect($res->json('settings.recents_enabled'))->toBeFalse();
     expect($res->json('settings.show_offline_agents'))->toBeFalse();
+});
+
+it('gives widgets saved from before the pair rule online agents instead of "no agents"', function () {
+    $online = collect(range(1, 6))->map(fn () => pairAgent(['pinned_at' => now()]));
+    $offline = pairAgent(['live_until' => now()->subMinutes(5)]);
+
+    $agents = collect($this->getJson('/api/public/agents')->json('agents'));
+
+    expect($agents)->toHaveCount(2);
+    expect($agents->pluck('id')->diff($online->pluck('id')))->toBeEmpty();
+    expect($agents->pluck('id'))->not->toContain($offline->id);
+    foreach ($agents as $a) {
+        expect($a['status'])->toBe('live');
+        // Old widgets print display_number; blank so no number shows.
+        expect(trim($a['display_number']))->toBe('');
+        expect($a['is_pinned'])->toBeFalse();
+    }
+});
+
+it('keeps the same sample for the same visitor within the hour', function () {
+    foreach (range(1, 12) as $i) {
+        pairAgent();
+    }
+
+    $ua = ['User-Agent' => 'Mozilla/5.0 (Linux; Android 14) PlayerPhone'];
+    $first = collect($this->withHeaders($ua)->getJson('/api/public/agents')->json('agents'))->pluck('id')->all();
+
+    Carbon::setTestNow(now()->addMinutes(20));
+    Cache::flush();
+    $again = collect($this->withHeaders($ua)->getJson('/api/public/agents')->json('agents'))->pluck('id')->all();
+
+    expect($again)->toBe($first);
+});
+
+it('spreads different visitors across different agents', function () {
+    foreach (range(1, 12) as $i) {
+        pairAgent();
+    }
+
+    $seen = collect();
+    foreach (range(1, 15) as $i) {
+        $ids = $this->withHeaders(['User-Agent' => "Phone model {$i}"])
+            ->getJson('/api/public/agents')->json('agents');
+        $seen = $seen->merge(collect($ids)->pluck('id'));
+    }
+
+    // 15 visitors x 2 agents from a pool of 12 should touch many agents.
+    expect($seen->unique()->count())->toBeGreaterThan(4);
+});
+
+it('sends an empty sample when nobody is online', function () {
+    pairAgent(['live_until' => now()->subMinutes(5)]);
+
+    $res = $this->getJson('/api/public/agents')->assertOk();
+    expect($res->json('agents'))->toBe([]);
+    expect($res->json('live_count'))->toBe(0);
+    expect($res->json('agents_available'))->toBeFalse();
 });
 
 it('keeps the classic list when the pair rule is off', function () {
@@ -463,4 +524,130 @@ it('reports no agents available when nobody is online', function () {
     pairAgent(['live_until' => now()->subMinutes(5)]);
 
     expect($this->getJson('/api/public/agents')->json('agents_available'))->toBeFalse();
+});
+
+// --- Pair reset (admin switch + hours) --------------------------------------
+
+function allOnline(): void
+{
+    Agent::query()->update(['live_until' => now()->addHours(2)]);
+}
+
+function pairReset(bool $on, int $hours = 72): void
+{
+    pairSetting('pair_reset_enabled', $on);
+    pairSetting('pair_reset_hours', $hours);
+}
+
+it('resets the pair after the admin interval and gives new agents', function () {
+    pairReset(true, 72);
+    foreach (range(1, 6) as $i) {
+        pairAgent();
+    }
+
+    $first = pairIds($this, DEV1, 'PL100');
+
+    Carbon::setTestNow(now()->addHours(73));
+    allOnline();
+
+    $second = pairIds($this, DEV1, 'PL100');
+    expect($second)->toHaveCount(2);
+    expect(array_values(array_intersect($first, $second)))->toBe([]);
+    // The old pairing is forgotten; only the new one is remembered.
+    expect(PlayerAgentAssignment::where('subject_type', 'player')->where('subject_key', 'pl100')
+        ->pluck('agent_id')->sort()->values()->all())->toBe($second);
+});
+
+it('keeps the pair until the interval is over', function () {
+    pairReset(true, 72);
+    foreach (range(1, 6) as $i) {
+        pairAgent();
+    }
+
+    $first = pairIds($this, DEV1, 'PL100');
+
+    Carbon::setTestNow(now()->addHours(71));
+    allOnline();
+
+    expect(pairIds($this, DEV1, 'PL100'))->toBe($first);
+});
+
+it('never resets while the reset switch is off', function () {
+    pairReset(false, 1);
+    foreach (range(1, 6) as $i) {
+        pairAgent();
+    }
+
+    $first = pairIds($this, DEV1, 'PL100');
+
+    Carbon::setTestNow(now()->addDays(30));
+    allOnline();
+
+    expect(pairIds($this, DEV1, 'PL100'))->toBe($first);
+});
+
+it('counts from when the pair started, not from the last visit', function () {
+    pairReset(true, 72);
+    foreach (range(1, 6) as $i) {
+        pairAgent();
+    }
+
+    $first = pairIds($this, DEV1, 'PL100');
+
+    // Daily visits don't extend the pairing...
+    foreach ([1, 2] as $day) {
+        Carbon::setTestNow(now()->addHours(24));
+        allOnline();
+        expect(pairIds($this, DEV1, 'PL100'))->toBe($first);
+    }
+
+    // ...73 hours after it started, it resets.
+    Carbon::setTestNow(now()->addHours(25));
+    allOnline();
+    expect(array_values(array_intersect($first, pairIds($this, DEV1, 'PL100'))))->toBe([]);
+});
+
+it('reuses previous agents after a reset only when nobody new is online', function () {
+    pairReset(true, 72);
+    [$a, $b] = [pairAgent(), pairAgent()];
+    pairIds($this, DEV1, 'PL100');                    // A, B
+    $c = pairAgent();
+
+    Carbon::setTestNow(now()->addHours(73));
+    allOnline();
+
+    // Only C is new, so the second slot has to reuse A or B.
+    $after = pairIds($this, DEV1, 'PL100');
+    expect($after)->toHaveCount(2)->toContain($c->id);
+});
+
+it('resets the player on every device, not just the one that triggered it', function () {
+    pairReset(true, 72);
+    foreach (range(1, 8) as $i) {
+        pairAgent();
+    }
+
+    pairIds($this, DEV1, 'PL100');
+
+    Carbon::setTestNow(now()->addHours(73));
+    allOnline();
+    $reset = pairIds($this, DEV1, 'PL100');
+
+    Carbon::setTestNow(now()->addMinutes(5));
+    expect(pairIds($this, DEV2, 'PL100'))->toBe($reset);
+});
+
+it('applies the reset to withdrawals too', function () {
+    pairReset(true, 72);
+    foreach (range(1, 6) as $i) {
+        withdrawer();
+    }
+
+    $first = pairIds($this, DEV1, 'PL100', 'withdrawal', ['amount' => 1000]);
+
+    Carbon::setTestNow(now()->addHours(73));
+    allOnline();
+
+    $second = pairIds($this, DEV1, 'PL100', 'withdrawal', ['amount' => 1000]);
+    expect(array_values(array_intersect($first, $second)))->toBe([]);
 });

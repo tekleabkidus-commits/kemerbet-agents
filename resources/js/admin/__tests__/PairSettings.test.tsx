@@ -48,6 +48,8 @@ const fullSettings = {
     recents_count: 5,
     pair_mode_enabled: false,
     pair_size: 2,
+    pair_reset_enabled: false,
+    pair_reset_hours: 72,
 };
 
 function setup(overrides: Record<string, unknown> = {}) {
@@ -90,6 +92,25 @@ describe('Player Agent Pairing panel', () => {
 
         await waitFor(() => expect(mockedPatch).toHaveBeenCalled());
         expect(mockedPatch).toHaveBeenCalledWith('/api/admin/settings', { pair_mode_enabled: true, pair_size: 3 });
+    });
+
+    it('saves the reset switch and the reset hours', async () => {
+        const user = userEvent.setup();
+        setup({ player_id_storage_key: 'player.id' });
+        await waitFor(() => expect(screen.getByText('Reset pairs automatically')).toBeInTheDocument());
+
+        const title = screen.getByText('Reset pairs automatically');
+        await user.click(title.parentElement!.parentElement!.querySelector('button')!);
+        const hours = screen.getByLabelText(/Reset every/) as HTMLInputElement;
+        expect(hours.value).toBe('72');
+        await user.clear(hours);
+        await user.type(hours, '36');
+
+        const panel = title.closest('.panel')!;
+        await user.click(panel.querySelector('.panel-foot .btn-primary')!);
+
+        await waitFor(() => expect(mockedPatch).toHaveBeenCalled());
+        expect(mockedPatch).toHaveBeenCalledWith('/api/admin/settings', { pair_reset_enabled: true, pair_reset_hours: 36 });
     });
 
     it('warns when the pair rule is on but Player-ID auto-detect is not configured', async () => {
