@@ -223,6 +223,16 @@ export default function AgentsPage() {
     const sort = params.get('sort') ?? 'number';
     const page = parseInt(params.get('page') ?? '1', 10);
 
+    useEffect(() => {
+        if (params.get('new') !== '1') return;
+        setIsNewAgentOpen(true);
+        setParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.delete('new');
+            return next;
+        }, { replace: true });
+    }, [params, setParams]);
+
     // Debounced search: local input state that syncs to URL params after 300ms
     const [searchInput, setSearchInput] = useState(search);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
