@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
-    Activity, BarChart3, Banknote, Bell, ChevronRight, Command, CreditCard,
-    Grid2X2, LayoutDashboard, Menu, Megaphone, Moon, Search, Settings2,
+    Activity, BarChart3, Banknote, Bell, ChevronRight, Command,
+    Grid2X2, LayoutDashboard, LogOut, Menu, Megaphone, Moon, Search, Settings2,
     ShieldCheck, Sun, Users, UsersRound, Wallet, X,
 } from 'lucide-react';
 
@@ -54,7 +54,9 @@ function getStoredTheme(): 'light' | 'dark' {
 }
 
 export default function AdminLayout() {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const [loggingOut, setLoggingOut] = useState(false);
+    const [logoutError, setLogoutError] = useState('');
     const location = useLocation();
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -102,6 +104,20 @@ export default function AdminLayout() {
         const next = theme === 'light' ? 'dark' : 'light';
         setTheme(next);
         try { window.localStorage.setItem('kemerbet_admin_theme', next); } catch { /* private browsing */ }
+    };
+
+    const handleLogout = async () => {
+        if (loggingOut) return;
+        setLoggingOut(true);
+        setLogoutError('');
+        try {
+            await logout();
+            navigate('/admin/login', { replace: true });
+        } catch {
+            setLogoutError('Could not sign out. Please try again.');
+        } finally {
+            setLoggingOut(false);
+        }
     };
 
     const openPage = (path: string) => {
@@ -168,6 +184,10 @@ export default function AdminLayout() {
                         <span className="sidebar-user-info"><strong>{user?.name ?? 'Admin'}</strong><small>Account settings</small></span>
                         <ChevronRight size={16} />
                     </NavLink>
+                    {logoutError && <p className="sidebar-logout-error" role="alert">{logoutError}</p>}
+                    <button type="button" className="sidebar-logout" onClick={handleLogout} disabled={loggingOut}>
+                        <LogOut size={16} /> {loggingOut ? 'Signing out...' : 'Sign out'}
+                    </button>
                 </div>
             </aside>
 
