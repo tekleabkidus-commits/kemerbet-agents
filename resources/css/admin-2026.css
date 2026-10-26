@@ -125,3 +125,8 @@
 .login-card .security-note{color:#78869d}
 .login-card :is(input,button):focus-visible{outline:3px solid #8265ff;outline-offset:3px}
 @media(max-width:500px){.login-body{padding:16px}.login-card{padding:25px 21px;border-radius:17px}.login-brand{margin-bottom:24px}}
+
+.premium-app .sidebar-logout{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin-top:10px;border:1px solid #344561;border-radius:10px;padding:10px 14px;background:transparent;color:#c1cee0;font-size:12px;font-weight:700;cursor:pointer}
+.premium-app .sidebar-logout:hover:not(:disabled){background:#283950;color:#fff}
+.premium-app .sidebar-logout:disabled{opacity:.55;cursor:wait}
+.premium-app .sidebar-logout-error{font-size:11px;color:#ff9ba7;padding:6px}
