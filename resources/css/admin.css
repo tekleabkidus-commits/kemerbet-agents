@@ -1,3 +1,4 @@
+@import './admin-2026.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -1736,6 +1737,3 @@ body.modal-open {
   text-transform: uppercase;
   letter-spacing: .5px;
 }
-
-/* Premium admin-only layer. Public embed and agent portal do not import this stylesheet. */
-@import './admin-2026.css';
