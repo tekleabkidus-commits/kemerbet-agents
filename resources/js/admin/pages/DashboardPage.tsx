@@ -346,7 +346,7 @@ export default function DashboardPage() {
                     >
                         Export CSV
                     </button>
-                    <button className="btn btn-primary" onClick={() => navigate('/admin/agents')}>
+                    <button className="btn btn-primary" onClick={() => navigate('/admin/agents?new=1')}>
                         + New Agent
                     </button>
                 </div>
