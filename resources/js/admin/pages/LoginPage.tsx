@@ -49,11 +49,12 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-row">
-                            <label className="form-label">Email</label>
+                            <label className="form-label" htmlFor="admin-login-email">Email</label>
                             <div className="input-with-icon">
                                 <Mail size={16} className="input-icon" />
                                 <input
                                     type="email"
+                                    id="admin-login-email"
                                     className="form-input"
                                     placeholder="kidus@kemerbet.com"
                                     autoComplete="username"
@@ -68,12 +69,13 @@ export default function LoginPage() {
                         </div>
 
                         <div className="form-row">
-                            <label className="form-label">Password</label>
+                            <label className="form-label" htmlFor="admin-login-password">Password</label>
                             <div className="input-with-icon">
                                 <Lock size={16} className="input-icon" />
                                 <input
                                     ref={passwordRef}
                                     type="password"
+                                    id="admin-login-password"
                                     className="form-input"
                                     placeholder="••••••••"
                                     autoComplete="current-password"
@@ -98,7 +100,7 @@ export default function LoginPage() {
 
                     <div className="security-note">
                         <span className="lock">🔒</span>
-                        This portal is restricted to authorized administrators. All access is logged.
+                        This workspace is restricted to authorized administrators.
                     </div>
                 </div>
             </div>
