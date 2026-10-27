@@ -117,11 +117,12 @@ class AgentPairingService
                 ->get();
 
             $partial = false;
+            $viewerSeed = $deviceId.'|'.$playerId;
 
             if ($intent === self::INTENT_WITHDRAWAL) {
                 $withdrawers = $live->filter(fn (Agent $a) => $a->canWithdraw() && $this->paysToBank($a, $bank));
                 $eligible = $withdrawers->filter(fn (Agent $a) => $a->coversWithdrawal((float) $amount));
-                $chosen = $this->pick($eligible, $memory, $size, $avoid);
+                $chosen = $this->pick($eligible, $memory, $size, $avoid, $viewerSeed);
 
                 if ($chosen->isEmpty() && $this->setting('withdrawal_no_match_behavior', 'closest') === 'closest') {
                     // Nobody can pay the full amount: show the highest-capacity
@@ -131,7 +132,7 @@ class AgentPairingService
                     $partial = $chosen->isNotEmpty();
                 }
             } else {
-                $chosen = $this->pick($live, $memory, $size, $avoid);
+                $chosen = $this->pick($live, $memory, $size, $avoid, $viewerSeed);
             }
 
             $this->remember($deviceId, $playerId, $memory, $chosen, $now, $intent);
@@ -171,7 +172,7 @@ class AgentPairingService
      * @param  int[]  $avoid
      * @return Collection<int, Agent>
      */
-    private function pick(Collection $eligible, array $memory, int $size, array $avoid = []): Collection
+    private function pick(Collection $eligible, array $memory, int $size, array $avoid = [], string $viewerSeed = ''): Collection
     {
         $byId = $eligible->keyBy('id');
 
@@ -185,8 +186,13 @@ class AgentPairingService
         }
 
         $fresh = $eligible->reject(fn (Agent $a) => isset($memory[$a->id]));
-        $new = $fresh->reject(fn (Agent $a) => in_array($a->id, $avoid, true))->shuffle();
-        $reused = $fresh->filter(fn (Agent $a) => in_array($a->id, $avoid, true))->shuffle();
+        $sampler = app(AgentRankSampler::class);
+        $newPool = $fresh->reject(fn (Agent $a) => in_array($a->id, $avoid, true));
+        $reusedPool = $fresh->filter(fn (Agent $a) => in_array($a->id, $avoid, true));
+        // A returning player's eligible historical pair always wins. Agent
+        // ranks only influence NEW assignments when spare slots remain.
+        $new = $sampler->sample($newPool, $size, $viewerSeed.'|fresh');
+        $reused = $sampler->sample($reusedPool, $size, $viewerSeed.'|reuse');
 
         return $previous
             ->concat($new->concat($reused)->take($size - $previous->count()))
