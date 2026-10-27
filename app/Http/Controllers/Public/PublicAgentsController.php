@@ -58,7 +58,9 @@ class PublicAgentsController extends Controller
                 && $a->live_until !== null && $a->live_until->isFuture());
             $pinned = $pool->filter(fn (Agent $a) => $a->pinned_at !== null)->values();
             $regular = $pool->filter(fn (Agent $a) => $a->pinned_at === null)->values();
-            $reserved = $sampler->sample($pinned, $limited ? min(2, $limit) : $pinned->count(), $viewer.'|pinned');
+            $reserved = $limited
+                ? $sampler->sample($pinned, min(2, $limit), $viewer.'|pinned')
+                : $pinned->sortBy('pinned_at')->values();
             $remaining = $sampler->sample($regular, $limit - $reserved->count(), $viewer.'|regular');
             // When there are fewer regular agents than open slots, additional
             // pins can fill unused slots; never exceed the total limit.
