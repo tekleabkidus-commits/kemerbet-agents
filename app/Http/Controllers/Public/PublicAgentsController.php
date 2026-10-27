@@ -47,7 +47,8 @@ class PublicAgentsController extends Controller
             $limit = $limited
                 ? max(1, min(30, (int) ($data['settings']['normal_list_limit'] ?? 10)))
                 : count($normalPool);
-            $rawId = (string) $request->query('viewer_id', '');
+            $candidateId = $request->query('viewer_id', '');
+            $rawId = is_string($candidateId) ? $candidateId : '';
             // Current embed supplies an opaque device token. Old cached embeds
             // have no token, so use a best-effort short-term legacy fallback.
             $viewer = preg_match('/^[A-Za-z0-9-]{16,64}$/', $rawId)
