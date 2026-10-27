@@ -10,6 +10,7 @@ use App\Models\Setting;
 use App\Models\StatusEvent;
 use App\Models\VisitEvent;
 use App\Services\AgentPairingService;
+use App\Services\AgentRankSampler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -32,9 +33,54 @@ class PublicAgentsController extends Controller
         // hour. Current widgets ignore this list in pair mode.
         $pool = $data['pair_pool'] ?? null;
         unset($data['pair_pool']);
+        $normalPool = $data['normal_limit_pool'] ?? null;
+        unset($data['normal_limit_pool']);
         if (is_array($pool)) {
             $data['agents'] = $this->legacySample($pool, $request, (int) ($data['settings']['pair_size'] ?? AgentPairingService::DEFAULT_SIZE));
             $data['live_count'] = count($data['agents']);
+        }
+
+        // Personalize only AFTER the shared, 60-second public cache. Never
+        // cache a single visitor's shortlist for every other player.
+        if (is_array($normalPool)) {
+            $limit = max(1, min(30, (int) ($data['settings']['normal_list_limit'] ?? 10)));
+            $rawId = (string) $request->query('viewer_id', '');
+            // Current embed supplies an opaque device token. Old cached embeds
+            // have no token, so use a best-effort short-term legacy fallback.
+            $viewer = preg_match('/^[A-Za-z0-9-]{16,64}$/', $rawId)
+                ? $rawId
+                : hash('sha256', $request->ip().'|'.$request->userAgent().'|'.now()->format('Ymd'));
+            $sampler = app(AgentRankSampler::class);
+            $pool = collect($normalPool)->filter(fn (Agent $a) => $a->status === Agent::STATUS_ACTIVE
+                && $a->live_until !== null && $a->live_until->isFuture());
+            $pinned = $pool->filter(fn (Agent $a) => $a->pinned_at !== null)->values();
+            $regular = $pool->filter(fn (Agent $a) => $a->pinned_at === null)->values();
+            $reserved = $sampler->sample($pinned, min(2, $limit), $viewer.'|pinned');
+            $remaining = $sampler->sample($regular, $limit - $reserved->count(), $viewer.'|regular');
+            // When there are fewer regular agents than open slots, additional
+            // pins can fill unused slots; never exceed the total limit.
+            $extra = $sampler->sample(
+                $pinned->reject(fn (Agent $a) => $reserved->contains('id', $a->id)),
+                $limit - $reserved->count() - $remaining->count(),
+                $viewer.'|extra'
+            );
+            $selected = $reserved->concat($remaining)->concat($extra)->values();
+            if (! ($data['settings']['shuffle_live_agents'] ?? true)) {
+                $selected = $reserved->sortBy('pinned_at')
+                    ->concat($remaining->concat($extra)->sort(fn (Agent $a, Agent $b) =>
+                        ($b->effectiveRank() <=> $a->effectiveRank())
+                        ?: ($a->display_number <=> $b->display_number)))
+                    ->values();
+            }
+            $data['agents'] = $selected->map(fn (Agent $a) => $this->transformAgent($a, 'live'))->all();
+            $data['live_count'] = $selected->count();
+            $data['agents_available'] = $selected->isNotEmpty();
+            // Do not expose every other agent through the directory when
+            // the listing is deliberately limited.
+            $ids = $selected->pluck('id')->all();
+            $data['directory'] = collect($data['directory'] ?? [])
+                ->filter(fn (array $row) => in_array($row['id'], $ids, true))
+                ->values()->all();
         }
 
         return response()->json($data);
@@ -86,6 +132,8 @@ class PublicAgentsController extends Controller
             'recents_count',
             'pair_mode_enabled',
             'pair_size',
+            'normal_list_limit_enabled',
+            'normal_list_limit',
         ])->pluck('value', 'key');
 
         // deposit_prefill_message supersedes the legacy prefill_message key.
@@ -99,6 +147,7 @@ class PublicAgentsController extends Controller
         // /api/public/pair, so the full list is never sent to the browser.
         $pairMode = filter_var($settings['pair_mode_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $pairSize = max(1, min(AgentPairingService::MAX_SIZE, (int) ($settings['pair_size'] ?? AgentPairingService::DEFAULT_SIZE)));
+        $normalLimit = ! $pairMode && filter_var($settings['normal_list_limit_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if ($pairMode) {
             // No offline agents in pair mode.
             $showOffline = false;
@@ -178,6 +227,7 @@ class PublicAgentsController extends Controller
             'directory' => $pairMode ? [] : $directory,
             // Server-side only (removed in index() before sending): online
             // agents that pre-pair-rule widgets may be sampled from.
+            'normal_limit_pool' => $normalLimit ? $live->all() : null,
             'pair_pool' => $pairMode
                 ? $live->map(fn (Agent $a) => $this->legacyAgent($a))->values()->all()
                 : null,
@@ -226,6 +276,8 @@ class PublicAgentsController extends Controller
                 'recents_count' => (int) ($settings['recents_count'] ?? 5),
                 'pair_mode_enabled' => $pairMode,
                 'pair_size' => $pairSize,
+                'normal_list_limit_enabled' => $normalLimit,
+                'normal_list_limit' => max(1, min(30, (int) ($settings['normal_list_limit'] ?? 10))),
             ],
         ];
     }
