@@ -29,6 +29,9 @@ interface AgentDetail {
     withdrawal_id: string | null;
     withdrawal_max: number | null;
     withdrawal_methods: PaymentMethod[];
+    effective_rank: number;
+    rank_override_level: number | null;
+    rank_override_expires_at: string | null;
     active_token_url: string | null;
     active_token_created_at: string | null;
     active_token_last_used_at: string | null;
@@ -148,6 +151,13 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
     const [withdrawalId, setWithdrawalId] = useState('');
     const [withdrawalMax, setWithdrawalMax] = useState('');
     const [withdrawalMethodIds, setWithdrawalMethodIds] = useState<number[]>([]);
+    const [rankLevel, setRankLevel] = useState(5);
+    const [rankHours, setRankHours] = useState('24');
+    const [rankCustomUntil, setRankCustomUntil] = useState('');
+    const [rankReason, setRankReason] = useState('');
+    const [rankSaving, setRankSaving] = useState(false);
+    const [rankError, setRankError] = useState('');
+    const [rankSuccess, setRankSuccess] = useState('');
 
     // UI state
     const [isLoading, setIsLoading] = useState(false);
@@ -172,7 +182,12 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
             setWithdrawalId('');
             setWithdrawalMax('');
             setWithdrawalMethodIds([]);
-            setAllMethods([]);
+            setRankLevel(5);
+            setRankHours('24');
+            setRankCustomUntil('');
+            setRankReason('');
+            setRankError('');
+            setRankSuccess('');            setAllMethods([]);
             setIsLoading(false);
             setError(null);
             setSaveError(null);
@@ -207,6 +222,10 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                 setWithdrawalId(a.withdrawal_id ?? '');
                 setWithdrawalMax(a.withdrawal_max != null ? String(a.withdrawal_max) : '');
                 setWithdrawalMethodIds((a.withdrawal_methods ?? []).map((pm) => pm.id));
+                setRankLevel(a.effective_rank ?? 5);
+                setRankError('');
+                setRankSuccess('');
+                setRankReason('');
                 setAllMethods(methodsRes.data.data);
             })
             .catch((err) => {
@@ -263,6 +282,45 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
             })
             .catch((err) => setSaveError(errorMessage(err)))
             .finally(() => setIsSaving(false));
+    }
+
+    async function handleRankSave() {
+        if (!agent || rankSaving) return;
+        setRankError('');
+        setRankSuccess('');
+        setRankSaving(true);
+        try {
+            if (rankLevel === 5) {
+                const res = await api.delete<{ data: Pick<AgentDetail, 'effective_rank' | 'rank_override_level' | 'rank_override_expires_at'> }>(`/api/admin/agents/${agent.id}/rank-override`);
+                setAgent(prev => prev ? { ...prev, ...res.data.data } : prev);
+                setRankSuccess('Agent returned to normal Level 5.');
+            } else {
+                const expiresAt = rankHours === 'custom'
+                    ? new Date(rankCustomUntil).toISOString()
+                    : new Date(Date.now() + Number(rankHours) * 3_600_000).toISOString();
+                if (new Date(expiresAt).getTime() <= Date.now()) {
+                    throw new Error('Choose a future expiration date.');
+                }
+                if (rankReason.trim().length < 3) {
+                    throw new Error('Please enter a reason (at least 3 characters).');
+                }
+                const res = await api.post<{ data: Pick<AgentDetail, 'effective_rank' | 'rank_override_level' | 'rank_override_expires_at'> }>(`/api/admin/agents/${agent.id}/rank-override`, {
+                    level: rankLevel,
+                    expires_at: expiresAt,
+                    reason: rankReason.trim(),
+                });
+                setAgent(prev => prev ? { ...prev, ...res.data.data } : prev);
+                setRankSuccess(`Level ${rankLevel} applied until ${new Date(expiresAt).toLocaleString()}.`);
+                setRankReason('');
+            }
+            onSaved();
+        } catch (err) {
+            setRankError(err instanceof RangeError
+                ? 'Choose a valid custom expiration date.'
+                : err instanceof Error && !('response' in err) ? err.message : errorMessage(err));
+        } finally {
+            setRankSaving(false);
+        }
     }
 
     function handleDisable() {
@@ -427,6 +485,61 @@ export default function EditAgentModal({ agentId, onClose, onSaved }: EditAgentM
                     <div className="alert alert-error">{error}</div>
                 ) : agent && (
                     <div className="form-grid">
+                        {/* Agent Ranking — separate from the regular agent details form. */}
+                        <section className="agent-ranking-panel" aria-label="Agent ranking">
+                            <div className="agent-ranking-head">
+                                <div>
+                                    <strong>Agent Ranking</strong>
+                                    <p>Level 5 is normal. Temporary overrides automatically expire back to Level 5.</p>
+                                </div>
+                                <span className="agent-ranking-current">Current: Level {agent.rank_override_expires_at && new Date(agent.rank_override_expires_at).getTime() <= Date.now() ? 5 : (agent.effective_rank ?? 5)}</span>
+                            </div>
+                            {agent.rank_override_expires_at && new Date(agent.rank_override_expires_at).getTime() > Date.now() && (
+                                <div className="form-help">Current override ends {new Date(agent.rank_override_expires_at).toLocaleString()}.</div>
+                            )}
+                            <div className="form-row">
+                                <label htmlFor="agent-rank-level" className="form-label">Recommendation priority (1–10)</label>
+                                <select id="agent-rank-level" className="form-select" value={rankLevel} onChange={e => { setRankLevel(Number(e.target.value)); setRankSuccess(''); }}>
+                                    {Array.from({ length: 10 }, (_, i) => i + 1).map(level => (
+                                        <option value={level} key={level}>Level {level}{level === 5 ? ' — Normal (default)' : level < 5 ? ' — Reduced priority' : ' — Increased priority'}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            {rankLevel !== 5 && (
+                                <>
+                                    <div className="form-row">
+                                        <label htmlFor="agent-rank-duration" className="form-label">Temporary duration</label>
+                                        <select id="agent-rank-duration" className="form-select" value={rankHours} onChange={e => setRankHours(e.target.value)}>
+                                            <option value="1">1 hour</option>
+                                            <option value="6">6 hours</option>
+                                            <option value="24">24 hours</option>
+                                            <option value="72">3 days</option>
+                                            <option value="168">7 days</option>
+                                            <option value="custom">Choose expiration date/time</option>
+                                        </select>
+                                    </div>
+                                    {rankHours === 'custom' && (
+                                        <div className="form-row">
+                                            <label htmlFor="agent-rank-until" className="form-label">Expires at (your device's local time)</label>
+                                            <input id="agent-rank-until" className="form-input" type="datetime-local" value={rankCustomUntil} onChange={e => setRankCustomUntil(e.target.value)} required />
+                                        </div>
+                                    )}
+                                    <div className="form-row">
+                                        <label htmlFor="agent-rank-reason" className="form-label">Reason for this temporary adjustment</label>
+                                        <textarea id="agent-rank-reason" className="form-textarea" rows={2} maxLength={500} placeholder="Reason for increasing or decreasing this agent's priority" value={rankReason} onChange={e => setRankReason(e.target.value)} />
+                                    </div>
+                                </>
+                            )}
+                            {rankError && <div role="alert" className="alert alert-error">{rankError}</div>}
+                            {rankSuccess && <div role="status" className="agent-ranking-success">{rankSuccess}</div>}
+                            <div className="agent-ranking-actions">
+                                <button type="button" className="btn btn-primary" onClick={handleRankSave} disabled={rankSaving || (rankLevel !== 5 && rankReason.trim().length < 3)}>
+                                    {rankSaving ? 'Saving ranking…' : rankLevel === 5 ? 'Revert to Level 5' : 'Apply temporary level'}
+                                </button>
+                                {rankLevel !== 5 && <button type="button" className="btn btn-secondary" disabled={rankSaving} onClick={() => { setRankLevel(5); setRankError(''); setRankSuccess(''); }}>Choose Level 5</button>}
+                            </div>
+                        </section>
+
                         {/* Display number */}
                         <div className="form-row">
                             <label className="form-label">
