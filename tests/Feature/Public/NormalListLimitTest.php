@@ -109,3 +109,26 @@ test('rank weights favor higher levels over many distinct viewers', function () 
     }
     expect($highCount)->toBeGreaterThan(160);
 });
+
+test('limited mode reserves at most two pinned slots when enough unpinned agents exist', function () {
+    limitAgents(25);
+    Agent::whereIn('display_number', [1, 2, 3, 4, 5])->update(['pinned_at' => now()->subHour()]);
+    Cache::flush();
+    $response = $this->getJson('/api/public/agents?viewer_id=viewer-eeeeeeeeeeeeeeee');
+    expect($response->json('agents'))->toHaveCount(10);
+    expect(collect($response->json('agents'))->filter(fn (array $a) => $a['is_pinned'])->count())->toBe(2);
+});
+
+test('rank has an effect on uncapped normal listings when shuffle is off', function () {
+    limitAgents(4);
+    Setting::where('key', 'normal_list_limit_enabled')->update(['value' => json_encode(false)]);
+    Setting::updateOrCreate(['key' => 'shuffle_live_agents'], ['value' => false, 'updated_at' => now()]);
+    Agent::where('display_number', 4)->update([
+        'rank_override_level' => 10, 'rank_override_expires_at' => now()->addHours(2),
+    ]);
+    Cache::flush();
+    $res = $this->getJson('/api/public/agents?viewer_id=viewer-ffffffffffffffff')->assertOk();
+    expect($res->json('agents'))->toHaveCount(4);
+    expect($res->json('agents.0.display_number'))->toBe(4);
+    expect($res->json('settings.server_ranked_agents'))->toBeTrue();
+});
