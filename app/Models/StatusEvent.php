@@ -31,7 +31,7 @@ class StatusEvent extends Model
 
     public const EVENT_UNPINNED_BY_ADMIN = 'unpinned_by_admin';
 
-    public const EVENT_RANK_OVERRIDDEN = 'rank_override_by_admin';
+    public const EVENT_RANK_OVERRIDDEN = 'rank_set_by_admin';
 
     public const EVENT_RANK_RESET = 'rank_reset_by_admin';
 
