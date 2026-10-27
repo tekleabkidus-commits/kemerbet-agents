@@ -114,6 +114,12 @@ class AgentController extends Controller
                 'last_status_change_at' => $agent->last_status_change_at?->toIso8601String(),
                 'is_pinned' => $agent->pinned_at !== null,
                 'pinned_at' => $agent->pinned_at?->toIso8601String(),
+            'effective_rank' => $agent->effectiveRank(),
+            'rank_override_level' => $agent->activeRankOverride() ? $agent->rank_override_level : null,
+            'rank_override_expires_at' => $agent->activeRankOverride() ? $agent->rank_override_expires_at?->toIso8601String() : null,
+                'effective_rank' => $agent->effectiveRank(),
+                'rank_override_level' => $agent->activeRankOverride() ? $agent->rank_override_level : null,
+                'rank_override_expires_at' => $agent->activeRankOverride() ? $agent->rank_override_expires_at?->toIso8601String() : null,
                 'payment_methods' => $agent->paymentMethods->map(fn ($pm) => [
                     'id' => $pm->id,
                     'slug' => $pm->slug,
