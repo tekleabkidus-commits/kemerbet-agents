@@ -27,6 +27,8 @@ interface Agent {
     last_status_change_at: string | null;
     is_pinned: boolean;
     pinned_at: string | null;
+    effective_rank: number;
+    rank_override_expires_at: string | null;
     payment_methods: PaymentMethod[];
     notes: string | null;
     clicks_today: number;
@@ -151,6 +153,7 @@ function AgentRow({ agent: a, onEdit, isDeletedView, onRestore, onTogglePin, isP
                 </div>
             </td>
             <td><span className={`status-pill ${a.computed_status}`}>{statusLabel}</span></td>
+            <td><span className="rank-cell-pill" title={a.rank_override_expires_at ? `Temporary until ${new Date(a.rank_override_expires_at).toLocaleString()}` : 'Normal level'}>Level {a.effective_rank ?? 5}{a.rank_override_expires_at && <span className="rank-cell-clock"> ⏱</span>}</span></td>
             <td>
                 <div className="bank-tags">
                     {a.payment_methods.slice(0, 3).map((pm) => <span key={pm.id} className="bank-tag">{pm.display_name}</span>)}
@@ -388,6 +391,7 @@ export default function AgentsPage() {
                                         <th className="col-id">#</th>
                                         <th>Agent</th>
                                         <th>Status</th>
+                                        <th>Rank</th>
                                         <th>Payment Methods</th>
                                         <th>Today / Total</th>
                                         <th>Last Seen</th>
