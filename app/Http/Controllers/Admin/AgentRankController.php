@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agent;
+use App\Models\StatusEvent;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,6 +36,12 @@ class AgentRankController extends Controller
                 'new_level' => (int) $data['level'],
                 'expires_at' => $locked->rank_override_expires_at,
                 'reason' => trim($data['reason']),
+                'created_at' => now(),
+            ]);
+            $locked->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => StatusEvent::EVENT_RANK_OVERRIDDEN,
+                'ip_address' => $request->ip(),
                 'created_at' => now(),
             ]);
             return $locked->fresh();
