@@ -51,6 +51,7 @@ export interface PublicAgentsResponse {
     chat_prefilled_message: string;
     show_offline_agents: boolean;
     shuffle_live_agents: boolean;
+    server_ranked_agents?: boolean;
     onboarding_video_url: string;
     // --- Withdrawal ---
     withdrawals_enabled: boolean;

@@ -130,3 +130,15 @@
 .premium-app .sidebar-logout:hover:not(:disabled){background:#283950;color:#fff}
 .premium-app .sidebar-logout:disabled{opacity:.55;cursor:wait}
 .premium-app .sidebar-logout-error{font-size:11px;color:#ff9ba7;padding:6px}
+
+/* Agent Ranking: admin-only controls, no embed appearance changes. */
+.premium-app .agent-ranking-panel{display:grid;gap:13px;padding:20px;border:1px solid var(--border-strong);border-radius:14px;background:var(--bg-elev-2)}
+.premium-app .agent-ranking-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.premium-app .agent-ranking-head strong{font-size:15px;color:var(--text)}
+.premium-app .agent-ranking-head p{font-size:11px;line-height:1.5;color:var(--text-muted);margin:5px 0 0}
+.premium-app .agent-ranking-current{flex-shrink:0;background:var(--purple-bg);color:var(--purple);border-radius:30px;padding:7px 11px;font-size:11px;font-weight:800}
+.premium-app .agent-ranking-success{font-size:12px;color:var(--green-dark);font-weight:700}
+.premium-app .agent-ranking-actions{display:flex;flex-wrap:wrap;gap:8px}
+.premium-app .rank-cell-pill{background:var(--purple-bg);color:var(--purple);padding:5px 9px;border-radius:8px;font-size:11px;white-space:nowrap;font-weight:800}
+.premium-app .rank-cell-clock{font-size:12px}
+@media(max-width:540px){.premium-app .agent-ranking-panel{padding:14px}.premium-app .agent-ranking-head{flex-direction:column}.premium-app .agent-ranking-actions .btn{flex:1 1 auto}}

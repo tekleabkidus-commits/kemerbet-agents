@@ -96,7 +96,7 @@ export function renderPage(data: PublicAgentsResponse, shadow: ShadowRoot): void
   const unpinnedLive = liveAgents.filter((a) => !a.is_pinned);
   const displayLive = [
     ...pinnedLive,
-    ...(data.settings.shuffle_live_agents ? shuffleArray(unpinnedLive) : unpinnedLive),
+    ...(data.settings.shuffle_live_agents && !data.settings.server_ranked_agents ? shuffleArray(unpinnedLive) : unpinnedLive),
   ];
   const composed = getDepositMessage(data);
   const prefillMsg = composed

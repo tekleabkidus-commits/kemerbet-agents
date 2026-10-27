@@ -18,6 +18,8 @@ class SettingSeeder extends Seeder
                 'show_offline_agents' => true,
                 'warn_on_offline_click' => true,
                 'shuffle_live_agents' => true,
+                'normal_list_limit_enabled' => false,
+                'normal_list_limit' => 10,
                 'onboarding_video_url' => '',
 
                 // --- Withdrawal system ---

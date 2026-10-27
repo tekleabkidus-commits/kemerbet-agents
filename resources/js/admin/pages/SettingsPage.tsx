@@ -16,6 +16,8 @@ interface Settings {
     show_offline_agents: boolean;
     warn_on_offline_click: boolean;
     shuffle_live_agents: boolean;
+    normal_list_limit_enabled: boolean;
+    normal_list_limit: number;
     // --- Withdrawal system ---
     withdrawals_enabled: boolean;
     withdrawal_min: number;
@@ -55,6 +57,8 @@ const DEFAULT_SETTINGS: Settings = {
     show_offline_agents: true,
     warn_on_offline_click: true,
     shuffle_live_agents: true,
+    normal_list_limit_enabled: false,
+    normal_list_limit: 10,
     withdrawals_enabled: true,
     withdrawal_min: 200,
     withdrawal_max_default: 10000,
@@ -741,6 +745,27 @@ export default function SettingsPage() {
                                     value={form.shuffle_live_agents}
                                     onChange={(v) => updateField('shuffle_live_agents', v)}
                                 />
+                                <hr className="section-divider" />
+                                <ToggleRow
+                                    title="Limit agents shown in normal listing"
+                                    desc="When Player Agent Pairing is OFF, show each visitor a stable, rank-weighted shortlist instead of every online agent. The 1–5 pairing limit takes precedence when pairing is ON."
+                                    value={!!form.normal_list_limit_enabled}
+                                    onChange={(v) => updateField('normal_list_limit_enabled', v)}
+                                />
+                                <div className="form-row">
+                                    <label htmlFor="normal-list-limit" className="form-label">Maximum online agents shown per player (1–30)</label>
+                                    <input
+                                        id="normal-list-limit"
+                                        className="form-input"
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        style={{ maxWidth: 160 }}
+                                        value={form.normal_list_limit ?? 10}
+                                        onChange={(e) => updateField('normal_list_limit', Number(e.target.value))}
+                                    />
+                                    <div className="form-help">Recommended: 10. Pinned agents reserve up to 2 slots; rank influences the other selections. Enable the limit explicitly after deployment.</div>
+                                </div>
                             </div>
                         </div>
                         <div className="panel-foot">

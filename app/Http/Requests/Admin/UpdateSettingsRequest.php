@@ -13,6 +13,8 @@ class UpdateSettingsRequest extends FormRequest
         'show_offline_agents',
         'warn_on_offline_click',
         'shuffle_live_agents',
+        'normal_list_limit_enabled',
+        'normal_list_limit',
         'onboarding_video_url',
         // --- Withdrawal system ---
         'withdrawals_enabled',
@@ -55,6 +57,8 @@ class UpdateSettingsRequest extends FormRequest
             'show_offline_agents' => ['sometimes', 'boolean'],
             'warn_on_offline_click' => ['sometimes', 'boolean'],
             'shuffle_live_agents' => ['sometimes', 'boolean'],
+            'normal_list_limit_enabled' => ['sometimes', 'boolean'],
+            'normal_list_limit' => ['sometimes', 'integer', 'min:1', 'max:30'],
             'onboarding_video_url' => [
                 'sometimes',
                 'nullable',

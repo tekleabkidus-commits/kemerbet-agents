@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ActivityController;
 use App\Http\Controllers\Admin\AgentController;
+use App\Http\Controllers\Admin\AgentRankController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\NoticeController;
 use App\Http\Controllers\Admin\PaymentMethodController;
@@ -46,6 +47,8 @@ Route::prefix('admin')->group(function () {
         Route::put('agents/{agent}', [AgentController::class, 'update']);
         Route::post('agents/{agent}/disable', [AgentController::class, 'disable']);
         Route::post('agents/{agent}/enable', [AgentController::class, 'enable']);
+        Route::post('agents/{agent}/rank-override', [AgentRankController::class, 'store']);
+        Route::delete('agents/{agent}/rank-override', [AgentRankController::class, 'destroy']);
         Route::post('agents/{agent}/pin', [AgentController::class, 'pin']);
         Route::post('agents/{agent}/regenerate-token', [AgentController::class, 'regenerateToken']);
         Route::delete('agents/{agent}', [AgentController::class, 'destroy']);

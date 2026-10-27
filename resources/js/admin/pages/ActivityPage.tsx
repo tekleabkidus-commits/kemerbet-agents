@@ -51,6 +51,8 @@ const EVENT_TYPE_OPTIONS: { value: string; label: string; group: 'agent' | 'admi
     { value: 'restored_by_admin', label: 'Restored', group: 'admin' },
     { value: 'disabled_by_admin', label: 'Disabled', group: 'destructive' },
     { value: 'deleted_by_admin', label: 'Deleted', group: 'destructive' },
+    { value: 'rank_set_by_admin', label: 'Rank changed', group: 'admin' },
+    { value: 'rank_reset_by_admin', label: 'Rank reset', group: 'admin' },
 ];
 
 const BADGE_LABELS: Record<string, string> = {
@@ -64,6 +66,8 @@ const BADGE_LABELS: Record<string, string> = {
     token_regenerated: 'Token',
     restored_by_admin: 'Restored',
     deleted_by_admin: 'Deleted',
+    rank_set_by_admin: 'Rank changed',
+    rank_reset_by_admin: 'Rank reset',
 };
 
 const BADGE_CLASS: Record<string, string> = {
@@ -77,6 +81,8 @@ const BADGE_CLASS: Record<string, string> = {
     restored_by_admin: 'admin',
     disabled_by_admin: 'destructive',
     deleted_by_admin: 'destructive',
+    rank_set_by_admin: 'admin',
+    rank_reset_by_admin: 'admin',
 };
 
 const DOT_CLASS: Record<string, string> = {
@@ -90,6 +96,8 @@ const DOT_CLASS: Record<string, string> = {
     restored_by_admin: 'admin',
     disabled_by_admin: 'admin',
     deleted_by_admin: 'admin',
+    rank_set_by_admin: 'admin',
+    rank_reset_by_admin: 'admin',
 };
 
 // --- Helpers ---
@@ -149,6 +157,12 @@ function formatDescription(event: ActivityEvent): { text: string; isDeleted: boo
             break;
         case 'deleted_by_admin':
             text = `${admin} deleted ${agent}`;
+            break;
+        case 'rank_set_by_admin':
+            text = `${admin} adjusted ranking for ${agent}`;
+            break;
+        case 'rank_reset_by_admin':
+            text = `${admin} reset ranking to Level 5 for ${agent}`;
             break;
         default:
             text = `${agent}: ${event.event_type}`;

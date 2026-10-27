@@ -16,7 +16,7 @@ import {
   detectedPlayerId,
   type FlowDeps,
 } from './flow';
-import { syncLogin } from './pairing';
+import { getDeviceId, syncLogin } from './pairing';
 import type { Lang, PublicAgentsResponse } from './types';
 
 function getApiBase(container: HTMLElement): string {
@@ -139,7 +139,7 @@ function init(): void {
   async function fetchAndRender(): Promise<void> {
     showRefreshIndicator();
     try {
-      const res = await fetch(`${apiBase}/api/public/agents`);
+      const res = await fetch(`${apiBase}/api/public/agents?viewer_id=${encodeURIComponent(getDeviceId())}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: PublicAgentsResponse = await res.json();
       lastApiData = data;

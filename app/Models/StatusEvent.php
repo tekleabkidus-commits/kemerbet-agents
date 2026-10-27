@@ -31,6 +31,10 @@ class StatusEvent extends Model
 
     public const EVENT_UNPINNED_BY_ADMIN = 'unpinned_by_admin';
 
+    public const EVENT_RANK_OVERRIDDEN = 'rank_set_by_admin';
+
+    public const EVENT_RANK_RESET = 'rank_reset_by_admin';
+
     public const EVENT_TYPES = [
         self::EVENT_WENT_ONLINE,
         self::EVENT_WENT_OFFLINE,
@@ -44,6 +48,8 @@ class StatusEvent extends Model
         self::EVENT_RESTORED_BY_ADMIN,
         self::EVENT_PINNED_BY_ADMIN,
         self::EVENT_UNPINNED_BY_ADMIN,
+        self::EVENT_RANK_OVERRIDDEN,
+        self::EVENT_RANK_RESET,
     ];
 
     public $timestamps = false;
