@@ -16,6 +16,8 @@ class Agent extends Model
 
     public const STATUS_DISABLED = 'disabled';
 
+    public const DEFAULT_RANK = 5;
+
     protected $fillable = [
         'display_number',
         'telegram_username',
@@ -29,6 +31,8 @@ class Agent extends Model
         'withdrawal_id',
         'live_until',
         'last_status_change_at',
+        'rank_override_level',
+        'rank_override_expires_at',
     ];
 
     protected function casts(): array
@@ -37,11 +41,27 @@ class Agent extends Model
             'live_until' => 'datetime',
             'pinned_at' => 'datetime',
             'last_status_change_at' => 'datetime',
+            'rank_override_level' => 'integer',
+            'rank_override_expires_at' => 'datetime',
             'min_birr' => 'decimal:4',
             'max_birr' => 'decimal:4',
             'accepts_withdrawals' => 'boolean',
             'withdrawal_max' => 'decimal:4',
         ];
+    }
+
+    public function activeRankOverride(): bool
+    {
+        return $this->rank_override_level !== null
+            && $this->rank_override_expires_at !== null
+            && $this->rank_override_expires_at->isFuture()
+            && $this->rank_override_level >= 1
+            && $this->rank_override_level <= 10;
+    }
+
+    public function effectiveRank(): int
+    {
+        return $this->activeRankOverride() ? (int) $this->rank_override_level : self::DEFAULT_RANK;
     }
 
     // --- Relationships ---
