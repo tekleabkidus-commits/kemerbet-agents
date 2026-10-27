@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class AgentRankController extends Controller
 {
@@ -38,6 +39,8 @@ class AgentRankController extends Controller
             ]);
             return $locked->fresh();
         });
+
+        Cache::forget('public_agents');
 
         return response()->json(['data' => $this->fields($agent)]);
     }
