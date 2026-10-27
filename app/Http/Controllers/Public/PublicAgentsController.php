@@ -43,7 +43,10 @@ class PublicAgentsController extends Controller
         // Personalize only AFTER the shared, 60-second public cache. Never
         // cache a single visitor's shortlist for every other player.
         if (is_array($normalPool)) {
-            $limit = max(1, min(30, (int) ($data['settings']['normal_list_limit'] ?? 10)));
+            $limited = (bool) ($data['settings']['normal_list_limit_enabled'] ?? false);
+            $limit = $limited
+                ? max(1, min(30, (int) ($data['settings']['normal_list_limit'] ?? 10)))
+                : count($normalPool);
             $rawId = (string) $request->query('viewer_id', '');
             // Current embed supplies an opaque device token. Old cached embeds
             // have no token, so use a best-effort short-term legacy fallback.
@@ -55,7 +58,7 @@ class PublicAgentsController extends Controller
                 && $a->live_until !== null && $a->live_until->isFuture());
             $pinned = $pool->filter(fn (Agent $a) => $a->pinned_at !== null)->values();
             $regular = $pool->filter(fn (Agent $a) => $a->pinned_at === null)->values();
-            $reserved = $sampler->sample($pinned, min(2, $limit), $viewer.'|pinned');
+            $reserved = $sampler->sample($pinned, $limited ? min(2, $limit) : $pinned->count(), $viewer.'|pinned');
             $remaining = $sampler->sample($regular, $limit - $reserved->count(), $viewer.'|regular');
             // When there are fewer regular agents than open slots, additional
             // pins can fill unused slots; never exceed the total limit.
@@ -72,15 +75,23 @@ class PublicAgentsController extends Controller
                         ?: ($a->display_number <=> $b->display_number)))
                     ->values();
             }
-            $data['agents'] = $selected->map(fn (Agent $a) => $this->transformAgent($a, 'live'))->all();
+            $orderedLive = $selected->map(fn (Agent $a) => $this->transformAgent($a, 'live'))->all();
+            $data['agents'] = $limited
+                ? $orderedLive
+                : array_merge($orderedLive, array_values(array_filter($data['agents'], fn (array $a) => $a['status'] === 'recently_offline')));
+            // Server already weighted/ranked the cards; do not independently
+            // reshuffle them in the embed's renderer.
+            $data['settings']['server_ranked_agents'] = true;
             $data['live_count'] = $selected->count();
             $data['agents_available'] = $selected->isNotEmpty();
-            // Do not expose every other agent through the directory when
-            // the listing is deliberately limited.
-            $ids = $selected->pluck('id')->all();
-            $data['directory'] = collect($data['directory'] ?? [])
-                ->filter(fn (array $row) => in_array($row['id'], $ids, true))
-                ->values()->all();
+            if ($limited) {
+                // Do not expose every other agent through the directory when
+                // the listing is deliberately limited.
+                $ids = $selected->pluck('id')->all();
+                $data['directory'] = collect($data['directory'] ?? [])
+                    ->filter(fn (array $row) => in_array($row['id'], $ids, true))
+                    ->values()->all();
+            }
         }
 
         return response()->json($data);
@@ -227,7 +238,11 @@ class PublicAgentsController extends Controller
             'directory' => $pairMode ? [] : $directory,
             // Server-side only (removed in index() before sending): online
             // agents that pre-pair-rule widgets may be sampled from.
-            'normal_limit_pool' => $normalLimit ? $live->all() : null,
+            // Ranking is independent of the normal-list cap. When a rank
+            // override is active, order the full classic list too; otherwise
+            // retain the preexisting full-list behavior unchanged.
+            'normal_limit_pool' => ! $pairMode && ($normalLimit || $live->contains(fn (Agent $a) => $a->activeRankOverride()))
+                ? $live->all() : null,
             'pair_pool' => $pairMode
                 ? $live->map(fn (Agent $a) => $this->legacyAgent($a))->values()->all()
                 : null,
