@@ -68,8 +68,16 @@ class AgentRankController extends Controller
                 'reason' => 'Manual reset to normal',
                 'created_at' => now(),
             ]);
+            $locked->statusEvents()->create([
+                'admin_id' => $request->user()->id,
+                'event_type' => StatusEvent::EVENT_RANK_RESET,
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
             return $locked->fresh();
         });
+
+        Cache::forget('public_agents');
 
         return response()->json(['data' => $this->fields($agent)]);
     }
